@@ -318,6 +318,6 @@ You may not claim ownership of this script, however much you have modified it. Y
 
 If you are in any doubt as to whether what you wish to do with the script complies with the terms of use, please do not hesitate to contact me.
 
-Please be aware that I DO NOT accept any responsibility for anything that may happen to your site, server or computer as a result of you using this script. I do our best to fully test my scripts, but I cannot guarantee their safety and security. By using this script, you do so AT YOUR OWN RISK.
+Please be aware that I DO NOT accept any responsibility for anything that may happen to your site, server or computer as a result of you using this script. I do my best to fully test my scripts, but I cannot guarantee their safety and security. By using this script, you do so AT YOUR OWN RISK.
 
 PHPAskIt is Copyright © 2005-2008 Amelie M. All rights reserved.

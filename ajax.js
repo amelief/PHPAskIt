@@ -1,6 +1,6 @@
 /*
   ==============================================================================================
-  PHPAskIt 3.0 © 2005-2008 Amelie M.
+  PHPAskIt 3.1 © 2005-2008 Amelie M.
   ==============================================================================================
   																								*/
 
@@ -13,11 +13,15 @@
 
 // ##### ANSWERS #####
 addEvent(window, 'load', function() {
-	var qs = getElementsByClass('answer', null, 'p');
-	var numQs = qs.length;
-	for (i = 0; i < numQs; i++) {
-		addEvent(qs[i], 'click', getAnswerForm);
+	var answers = getElementsByClass('answer', null, 'p');
+	var qs = getElementsByClass('question', null, 'p');
+	for (i = 0; i < answers.length; i++) {
+		addEvent(answers[i], 'click', getAnswerForm);
 	}
+	for (i = 0; i < qs.length; i++) {
+		addEvent(qs[i], 'click', getQuestionForm);
+	}
+
 });
 function getAnswerForm() {
 	el = getEventSource(arguments[0]);
@@ -41,13 +45,6 @@ function submitAnswer(f) {
 }
 
 // ###### QUESTIONS ######
-addEvent(window, 'load', function() {
-	var qs = getElementsByClass('question', null, 'p');
-	var numQs = qs.length;
-	for (i = 0; i < numQs; i++) {
-		addEvent(qs[i], 'click', getQuestionForm);
-	}
-});
 function getQuestionForm() {
 	el = getEventSource(arguments[0]);
 	qID = el.id.replace('question', '');

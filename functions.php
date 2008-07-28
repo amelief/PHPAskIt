@@ -1,7 +1,7 @@
 <?php
 /*
   ==============================================================================================
-  PHPAskIt 3.0 © 2005-2008 Amelie M.
+  PHPAskIt 3.1 © 2005-2008 Amelie M.
   ==============================================================================================
   																								*/
 
@@ -12,10 +12,12 @@
 
 if (!defined('PAI_IN')) exit('<p>This file cannot be loaded directly.</p>');
 
-error_reporting(0);
+//error_reporting(0);
 
-if (basename($_SERVER['PHP_SELF']) == 'import.php' || basename($_SERVER['PHP_SELF']) == 'convertwaks.php' || basename($_SERVER['PHP_SELF']) == 'convertfaqtastic.php' || basename($_SERVER['PHP_SELF']) == 'convertaa.php') $path = '../';
+$upone = array('import.php', 'convertwaks.php', 'convertfaqtastic.php', 'convertaa.php');
+if (in_array(basename($_SERVER['PHP_SELF']), $upone)) $path = '../';
 else $path = '';
+
 if (!file_exists($path . 'config.php')) { ?>
 	<h1>Error</h1>
 	<p><strong><code>config.php</code></strong> could not be found. Without this file, the script cannot operate. Please make sure it is present.</p>
@@ -28,16 +30,19 @@ class pai {
 	var $table;
 	var $connect;
 	var $mask = 'ewieogth389thwkgnwlkhasdg';
+	var $unanswered = 0;
+	var $answered = 0;
+	var $total = 0;
 
 	function pai($mysqlhost, $mysqluser, $mysqlpass, $mysqldb) {
-		$this->connect = @mysql_connect($mysqlhost, $mysqluser, $mysqlpass);
+		$this->connect = mysql_connect($mysqlhost, $mysqluser, $mysqlpass);
 		if (!$this->connect) exit('<p>Error connecting to MySQL - please verify your connection details in config.php.</p>');
-		@mysql_select_db($mysqldb) or exit('<p>Error accessing MySQL database - please verify your connection details in config.php.</p>');
+		mysql_select_db($mysqldb) or exit('<p>Error accessing MySQL database - please verify your connection details in config.php.</p>');
 	}
 	function query($query) {
 		if (!$this->connect) exit('<p>Error: could not connect to MySQL. Your server may be temporarily unavailable; please try again later.</p>');
 		$result = mysql_query($query, $this->connect);
-		if (!$result) return false;
+		if ($result === false) return false;
 		else return $result;
 	}
 	function cleaninput($data) {
@@ -141,9 +146,9 @@ class pai {
 	}
 	function showqs($sql) {
 		if (empty($sql->answer)) $answer = '(Unanswered)';
-		else $answer = $sql->answer;
+		else $answer = $this->convertbb($sql->answer);
 
-		if ($this->getoption('enable_cats') == 'yes') $cat = '<a href="?category=' . $sql->category . '" title="See all questions in the ' . $this->getfromdb('cat_name', 'cats', '`cat_id` = ' . $sql->category, 1) . ' category">' . $this->getfromdb('cat_name', 'cats', '`cat_id` = ' . $sql->category, 1) . '</a>';
+		if ($this->getoption('enable_cats') == 'yes') $cat = '<a href="?category=' . $sql->category . '" title="See all questions in the ' . $sql->cat_name . ' category">' . $sql->cat_name . '</a>';
 		else $cat = '';
 
 		$sub = array('[[question]]', '[[answer]]', '[[category]]', '[[permalink]]', '[[date]]');
@@ -179,20 +184,100 @@ class pai {
 		</form>
 	<?php
 	}
+	function get_categories($current_cat = '') {
+		$cats = $this->query('SELECT * FROM `' . $this->table . '_cats`');
+		while($cat = mysql_fetch_object($cats)) { ?>
+			<option value="<?php echo $cat->cat_id; ?>"<?php if ($cat->cat_id == $current_cat) echo ' selected="selected"'; ?>><?php echo $cat->cat_name; ?></option>
+			<?php
+		}
+	}
 	function adminqs($sql) {
 		global $token;
 		?>
 		<li class="question-container">
-			<h4 class="date"><?php echo date($this->getoption('date_format'), strtotime($sql->dateasked));
-			if ($this->getoption('enable_cats') == 'yes') { ?>
-				<span class="category">(<a href="admin.php?category=<?php echo $sql->category; ?>" title="See all questions in the <?php echo $this->getfromdb('cat_name', 'cats', '`cat_id` = ' . $sql->category, 1); ?> category"><?php echo $this->getfromdb('cat_name', 'cats', '`cat_id` = ' . $sql->category, 1); ?></a>)</span>
+			<form action="admin.php?edit=category&amp;inline=true" method="post" onsubmit="
+				new Ajax.Request('admin.php?edit=category&amp;inline=true', {
+					asynchronous:true,
+					onComplete:function(request) {
+						Element.show('category_read_<?php echo $sql->q_id; ?>');
+						Element.hide('indicator<?php echo $sql->q_id; ?>');
+						Element.hide('category_edit_<?php echo $sql->q_id; ?>');
+						$('category_read_<?php echo $sql->q_id; ?>').update(request.responseText);
+					},
+					onLoading:function(request) {
+						Element.show('indicator<?php echo $sql->q_id; ?>');
+					},
+					parameters:Form.serialize(this)
+				}); return false;">
+				<h4 class="date"><?php echo date($this->getoption('date_format'), strtotime($sql->dateasked));
+				if ($this->getoption('enable_cats') == 'yes') { ?>
+					<span class="category" id="category_read_<?php echo $sql->q_id; ?>">(<a href="admin.php?category=<?php echo $sql->category; ?>" title="See all questions in the <?php echo $sql->cat_name; ?> category"><?php echo $sql->cat_name; ?></a>)</span>
+					<span id="category_edit_<?php echo $sql->q_id; ?>" class="category" style="display: none;">
+						<input type="hidden" name="id" id="category_id_<?php echo $sql->q_id; ?>" value="<?php echo $sql->q_id; ?>" />
+						<input type="hidden" name="token" id="category_token<?php echo $sql->q_id; ?>" value="<?php echo $token; ?>" />
+						<select name="category" id="category_edit_<?php echo $sql->q_id; ?>_menu">
+							<?php $this->get_categories($sql->category); ?>
+						</select>
+						<input type="submit" value="Save category" name="submit_category" id="submit_category_<?php echo $sql->q_id; ?>" style="font-size: 0.8em;" /> <input type="reset" onclick="Element.hide('category_edit_<?php echo $sql->q_id; ?>'); Element.show('category_read_<?php echo $sql->q_id; ?>'); return false;" name="cancel" id="cancel_category_<?php echo $sql->q_id; ?>" value="Cancel" style="font-size: 0.8em" />
+					</span>
+					<a href="admin.php?edit=category" onclick="Element.hide('category_read_<?php echo $sql->q_id; ?>'); Element.show('category_edit_<?php echo $sql->q_id; ?>'); if ($('category_edit_<?php echo $sql->q_id; ?>_menu')) $('category_edit_<?php echo $sql->q_id; ?>_menu').focus(); return false;" style="font-size: 0.6em;">e</a>
 				<?php
 			} ?> <img src="indicator.gif" alt="Saving..." title="Saving..." id="indicator<?php echo $sql->q_id; ?>" style="display: none;" /></h4>
-
-			<p class="question" id="question<?php echo $sql->q_id; ?>" title="Click to edit question"><a href="admin.php?q=<?php echo $sql->q_id; ?>" title="Permalink to this question"><?php echo $sql->question; ?></a></p>
-			<p id="answer<?php echo $sql->q_id; ?>indicator" style="display: none;"><img src="indicator.gif" alt="Loading..." title="Loading..." /></p>
-			<p id="answer<?php echo $sql->q_id; ?>" class="answer<?php if (empty($sql->answer)) echo ' unanswered'; ?>" title="<?php if (!empty($sql->answer)) echo 'Click to edit answer'; else echo 'Click to add an answer'; ?>"><input type="hidden" name="id" value="<?php echo $sql->q_id; ?>" /><?php if (empty($sql->answer)) echo '(No answer)'; else echo $sql->answer; ?></p>
-
+			</form>
+			<form action="admin.php?edit=question&amp;inline=true" method="post" onsubmit="
+				new Ajax.Request('admin.php?edit=question&amp;inline=true', {
+					asynchronous:true,
+					onComplete:function(request) {
+						$('question_read_<?php echo $sql->q_id; ?>').style.display = 'block';
+						Element.hide('indicator<?php echo $sql->q_id; ?>');
+						Element.hide('question_edit_<?php echo $sql->q_id; ?>');
+						$('question_read_<?php echo $sql->q_id; ?>').update(request.responseText);
+					},
+					onLoading:function(request) {
+						Element.show('indicator<?php echo $sql->q_id; ?>');
+					},
+					parameters:Form.serialize(this)
+				}); return false;">
+				<p class="question" id="question<?php echo $sql->q_id; ?>" title="Click to edit question">
+					<span id="question_read_<?php echo $sql->q_id; ?>" style="display: block;" onclick="Element.hide('question_read_<?php echo $sql->q_id; ?>'); Element.show('question_edit_<?php echo $sql->q_id; ?>'); if ($('question_edit_<?php echo $sql->q_id; ?>_box')) $('question_edit_<?php echo $sql->q_id; ?>_box').focus(); return false;">
+						<a href="admin.php?q=<?php echo $sql->q_id; ?>" title="Permalink to this question"><?php echo $sql->question; ?></a>
+					</span>
+					<span id="question_edit_<?php echo $sql->q_id; ?>" style="display: none;">
+						<input type="hidden" name="id" id="question_id_<?php echo $sql->q_id; ?>" value="<?php echo $sql->q_id; ?>" />
+						<input type="hidden" name="token" id="question_token<?php echo $sql->q_id; ?>" value="<?php echo $token; ?>" />
+						<input type="text" name="question" id="question_edit_<?php echo $sql->q_id; ?>_box" style="width: 99%;" value="<?php echo $sql->question; ?>" /><br />
+						<input type="submit" value="Save question" name="submit_question" id="submit_question_<?php echo $sql->q_id; ?>" /> <input type="reset" onclick="Element.hide('question_edit_<?php echo $sql->q_id; ?>'); $('question_read_<?php echo $sql->q_id; ?>').style.display = 'block'; return false;" name="cancel" id="cancel_question_<?php echo $sql->q_id; ?>" value="Cancel" />
+					</span>
+				</p>
+			</form>
+			<form action="admin.php?edit=answer&amp;inline=true" method="post" onsubmit="
+				new Ajax.Request('admin.php?edit=answer&amp;inline=true', {
+					asynchronous:true,
+					onComplete:function(request) {
+						if (request.responseText == '(No answer)') $('answer<?php echo $sql->q_id; ?>').className = 'answer unanswered';
+						else $('answer<?php echo $sql->q_id; ?>').className = 'answer';
+						$('answer_read_<?php echo $sql->q_id; ?>').style.display = 'block';
+						Element.hide('indicator<?php echo $sql->q_id; ?>');
+						Element.hide('answer_edit_<?php echo $sql->q_id; ?>');
+						$('answer_read_<?php echo $sql->q_id; ?>').update(request.responseText);
+					},
+					onLoading:function(request) {
+						Element.show('indicator<?php echo $sql->q_id; ?>');
+					},
+					parameters:Form.serialize(this)
+				}); return false;">
+				<p id="answer<?php echo $sql->q_id; ?>" class="answer<?php if (empty($sql->answer)) echo ' unanswered'; ?>" title="<?php if (!empty($sql->answer)) echo 'Click to edit answer'; else echo 'Click to add an answer'; ?>">
+				<span id="answer_read_<?php echo $sql->q_id; ?>" style="display: block;" onclick="Element.hide('answer_read_<?php echo $sql->q_id; ?>'); Element.show('answer_edit_<?php echo $sql->q_id; ?>'); if ($('answer_edit_<?php echo $sql->q_id; ?>_area')) $('answer_edit_<?php echo $sql->q_id; ?>_area').focus(); return false;">
+					<?php if (empty($sql->answer)) echo '(No answer)'; else echo $this->convertbb($sql->answer); ?>
+				</span>
+				<span id="answer_edit_<?php echo $sql->q_id; ?>" style="display: none;">
+					<input type="hidden" name="id" id="answer_id_<?php echo $sql->q_id; ?>" value="<?php echo $sql->q_id; ?>" />
+					<input type="hidden" name="token" id="answer_token<?php echo $sql->q_id; ?>" value="<?php echo $token; ?>" />
+					<textarea id="answer_edit_<?php echo $sql->q_id; ?>_area" name="answer" style="width: 99%;" rows="10" cols="70"><?php echo (empty($sql->answer) ? '' : strip_tags($sql->answer)); ?></textarea><br />
+					<input type="submit" value="Save answer" name="save" id="save_button_<?php echo $sql->q_id; ?>" /> <input type="reset" onclick="Element.hide('answer_edit_<?php echo $sql->q_id; ?>'); $('answer_read_<?php echo $sql->q_id; ?>').style.display = 'block'; return false;" name="cancel" id="cancel_answer_<?php echo $sql->q_id; ?>" value="Cancel" />
+				</span>
+			</p>
+			</form>
 			<p class="ip"><?php echo $sql->ip; ?> <?php if ($this->getoption('ipban_enable') == 'yes') { ?>[<a href="admin.php?manage=ips&amp;action=add&amp;ip=<?php echo $sql->ip; ?>&amp;token=<?php echo $token; ?>" title="Ban this IP from asking more questions">Ban?</a>]<?php } ?></p>
 
 			<p class="tools center">
@@ -207,7 +292,8 @@ class pai {
 
 				<?php
 				if ($this->getoption('enable_cats') == 'yes') { ?>
-					| <a href="admin.php?edit=category&amp;qu=<?php echo $sql->q_id; ?>&amp;token=<?php echo $token; ?>" title="Change the category of this question">Change Category</a>
+					| <a href="admin.php?edit=category&amp;qu=<?php echo $sql->q_id; ?>&amp;token=<?php echo $token; ?>" title="Change the category of this question">
+					Change Category</a>
 					<?php
 				} ?>
 				| <a href="admin.php?delete=<?php echo $sql->q_id; ?>&amp;token=<?php echo $token; ?>" onclick="return confirm('Are you sure you want to delete this question?')" title="Delete this question">Delete</a>
@@ -219,7 +305,7 @@ class pai {
 		?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
-	<title>PHPAskIt 3.0: Admin</title>
+	<title>PHPAskIt 3.1: Admin</title>
 	<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
 	<style type="text/css">
 		body { color: #222; font: 0.7em/1.2em Verdana, Arial, Helvetica, sans-serif; text-align: center; }
@@ -263,20 +349,15 @@ class pai {
 		.tools { border-top: 1px dotted #32cd32; padding-top: 0.2em; }
 		.unanswered { color: #c0c0c0; letter-spacing: 0.1em; }
 	</style>
-	<script type="text/javascript" src="ajax.js"></script>
+	<script type="text/javascript" src="prototype.js"></script>
 </head>
 
 <body>
 		<?php
 	}
 	function summary() {
-		$total = mysql_fetch_object($this->query('SELECT COUNT(`q_id`) AS `num` FROM `' . $this->table . '`'));
-		$answered = mysql_fetch_object($this->query('SELECT COUNT(`q_id`) AS `num` FROM `' . $this->table . "` WHERE `answer` != ''"));
-		$unanswered = mysql_fetch_object($this->query('SELECT COUNT(`q_id`) AS `num` FROM `' . $this->table . "` WHERE `answer` = ''"));
-		$cats = mysql_fetch_object($this->query('SELECT COUNT(DISTINCT `category`) AS `num` FROM `' . $this->table . '`'));
-
 		$summary = array('[[total]]', '[[answered]]', '[[unanswered]]', '[[categories]]');
-		$replace = array($total->num, $answered->num, $unanswered->num, $cats->num);
+		$replace = array($this->total, $this->answered, $this->unanswered, $this->cats);
 
 		echo str_replace($summary, $replace, $this->getoption('sum_template'));
 	}
@@ -316,6 +397,23 @@ class pai {
 			ob_end_flush();
 			pai_error('Your session has expired. Please refresh the page to correct this problem.');
 		}
+	}
+	function convertbb($text) {
+		$text = preg_replace('/\[code\](.*?)\[\/code\]/is', '<pre>$1</pre>', $text);
+		$text = preg_replace('/\[b\](.*?)\[\/b\]/is', '<strong>$1</strong>', $text);
+		$text = preg_replace('/\[u\](.*?)\[\/u\]/is', '<span style="text-decoration: underline;">$1</span>', $text);
+		$text = preg_replace('/\[i\](.*?)\[\/i\]/is', '<em>$1</em>', $text);
+		$text = preg_replace('/\[q=([0-9]+)\](.*?)\[\/q\]/is', '<a href="?q=$1">$2</a>', $text);
+
+		$patterns[] = "#\[url=([\w]+?://[\w\#$%&~/.\-;:=,?@\[\]+]*?)\]([^?\r\t].*?)\[/url\]#is";
+		$replacements[] = '<a href="$1" title="$2">$2</a>';
+
+		$patterns[] = "#\[url=((www)\.[\w\#$%&~/.\-;:=,?@\[\]+]*?)\]([^?\n\r\t].*?)\[/url\]#is";
+		$replacements[] = '<a href="http://$1" title="$3">$3</a>';
+
+		$text = preg_replace($patterns, $replacements, $text);
+
+		return $text;
 	}
 	function dologin() {
 		global $token;
@@ -453,7 +551,7 @@ class pai {
 
 			<p><input name="submitlogin" id="submitlogin" type="submit" value="Login" /></p>
 		</form>
-		<p class="center">Powered by <a href="http://not-noticeably.net/scripts/phpaskit/" title="PHPAskIt">PHPAskIt 3.0</a></p>
+		<p class="center">Powered by <a href="http://not-noticeably.net/scripts/phpaskit/" title="PHPAskIt">PHPAskIt 3.1</a></p>
 		<?php
 		echo '</body></html>';
 		mysql_close($this->connect);
@@ -462,7 +560,7 @@ class pai {
 	}
 }
 
-$display = '<p style="text-align: center;">Powered by <a href="http://not-noticeably.net/scripts/phpaskit/" title="PHPAskIt">PHPAskIt 3.0</a></p>';
+$display = '<p style="text-align: center;">Powered by <a href="http://not-noticeably.net/scripts/phpaskit/" title="PHPAskIt">PHPAskIt 3.1</a></p>';
 
 function clean_array($data) {
 	if (get_magic_quotes_gpc()) return is_array($data) ? array_map('clean_array', $data) : trim(htmlspecialchars(strip_tags($data)));
@@ -476,7 +574,7 @@ function pai_error($message, $die = true, $header = '') {
 	<p>' . $message . '</p>';
 
 	if ($die == true) {
-		echo '<p style="text-align: center;">Powered by <a href="http://not-noticeably.net/scripts/phpaskit/" title="PHPAskIt">PHPAskIt 3.0</a></p>';
+		echo '<p style="text-align: center;">Powered by <a href="http://not-noticeably.net/scripts/phpaskit/" title="PHPAskIt">PHPAskIt 3.1</a></p>';
 		if (defined('IS_ADMIN')) {
 			echo '</div></div></body></html>';
 		}
@@ -492,7 +590,19 @@ function pai_error($message, $die = true, $header = '') {
 $pai = new pai(PAI_HOST, PAI_USER, PAI_PASS, PAI_DB);
 $pai->table = $pai->cleaninput(PAI_TABLE);
 
-$display = '<p style="text-align: center;">Powered by <a href="http://not-noticeably.net/scripts/phpaskit/" title="PHPAskIt">PHPAskIt 3.0</a></p>';
+$total = mysql_fetch_object($pai->query('SELECT COUNT(`q_id`) AS `num` FROM `' . $pai->table . '`'));
+$pai->total = $total->num;
+
+$unanswered = mysql_fetch_object($pai->query('SELECT COUNT(`q_id`) AS `num` FROM `' . $pai->table . "` WHERE `answer` = '' OR `answer` IS NULL"));
+$pai->unanswered = $unanswered->num;
+
+$pai->answered = $pai->total - $pai->unanswered;
+
+$cats = mysql_fetch_object($pai->query('SELECT COUNT(DISTINCT `category`) AS `num` FROM `' . $pai->table . '`'));
+$pai->cats = $cats->num;
+
+
+$display = '<p style="text-align: center;">Powered by <a href="http://not-noticeably.net/scripts/phpaskit/" title="PHPAskIt">PHPAskIt 3.1</a></p>';
 
 foreach($_SERVER as $key => $value) {
 	$_SERVER[$key] = clean_array($value);

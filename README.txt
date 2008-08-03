@@ -1,6 +1,6 @@
 ~~~~~~~~~~~~~~~~~~
 ##
-## PHPAskIt 3.0 ##
+## PHPAskIt 3.1 ##
                 ##
 ~~~~~~~~~~~~~~~~~~
 
@@ -20,7 +20,7 @@ You may not:
 - Claim ownership of this script, however much you have modified it
 - Earn money by installing, customising, modifying or troubleshooting this script for other people
 - Hold PHPAskIt's creator responsible for anything that arises from its use
-- Remove, modify, hide or use any other method to eliminate or render invisible the "Powered by PHPAskIt 3.0" line at the bottom of the index.php and admin.php files
+- Remove, modify, hide or use any other method to eliminate or render invisible the "Powered by PHPAskIt 3.1" line at the bottom of the index.php and admin.php files
 
 Amelie, Not-Noticeably.net
 ===================================================================
@@ -52,6 +52,10 @@ PHPAskIt is a question and answer script which incorporates categories and perma
 
 CHANGE LOG
 ----------------------------------------
+
+VERSION 3.1
+- Optimised queries and general performance
+- Enabled bbCode for use as an alternative to HTML
 
 VERSION 3.0
 - Complete backend rewrite, now uses object-oriented programming

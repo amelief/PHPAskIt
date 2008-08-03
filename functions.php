@@ -11,7 +11,6 @@
 
 
 if (!defined('PAI_IN')) exit('<p>This file cannot be loaded directly.</p>');
-
 //error_reporting(0);
 
 $upone = array('import.php', 'convertwaks.php', 'convertfaqtastic.php', 'convertaa.php');
@@ -24,289 +23,33 @@ if (!file_exists($path . 'config.php')) { ?>
 	<?php
 	exit;
 }
-require_once $path . 'config.php';
-
-class pai {
-	var $table;
-	var $connect;
-	var $mask = 'ewieogth389thwkgnwlkhasdg';
-	var $unanswered = 0;
-	var $answered = 0;
-	var $total = 0;
-
-	function pai($mysqlhost, $mysqluser, $mysqlpass, $mysqldb) {
-		$this->connect = mysql_connect($mysqlhost, $mysqluser, $mysqlpass);
-		if (!$this->connect) exit('<p>Error connecting to MySQL - please verify your connection details in config.php.</p>');
-		mysql_select_db($mysqldb) or exit('<p>Error accessing MySQL database - please verify your connection details in config.php.</p>');
-	}
-	function query($query) {
-		if (!$this->connect) exit('<p>Error: could not connect to MySQL. Your server may be temporarily unavailable; please try again later.</p>');
-		$result = mysql_query($query, $this->connect);
-		if ($result === false) return false;
-		else return $result;
-	}
-	function cleaninput($data) {
-		$data = trim(htmlspecialchars(strip_tags($data)));
-		if (get_magic_quotes_gpc()) $data = stripslashes($data);
-		return mysql_real_escape_string($data, $this->connect);
-	}
-	function getoption($optname) {
-		if ($option = $this->getfromdb('option_value', 'options', "`option_name` = '" . $optname . "'", 1)) return $option;
-		else return false;
-	}
-	function getfromdb($field, $table, $where = '', $limit = '') {
-		if ($table == 'main') $table1 = $this->table;
-		else $table1 = $this->table . '_' . $table;
-		$query = 'SELECT `' . $field . '` FROM `' . $table1 . '`';
-
-		if (!empty($where) && !empty($limit)) $query .= ' WHERE ' . $where . ' LIMIT ' . $limit;
-		elseif (!empty($where) && empty($limit)) $query .= ' WHERE ' . $where;
-		elseif (empty($where) && !empty($limit)) $query .= ' LIMIT ' . $limit;
-
-		$result = $this->query($query);
-
-		if (@mysql_num_rows($result) > 0) {
-			if ($getdbval = mysql_fetch_object($result)) return $getdbval->$field;
-			else return false;
-		}
-		else return false;
-	}
-	function pagination($numofpages, $link) {
-		global $page, $getsearch;
-		echo '<p class="pagination center"><strong>Page ' . $page . ' of ' . $numofpages . '</strong></p>';
-		if ($page > 1 && $page <= $numofpages && $page != 0) {
-			$buildlinkprev = '&laquo; <a href="?';
-			switch($link) {
-				case 'unanswered':
-					$buildlinkprev .= 'sort=unanswered&amp;page=';
-					break;
-				case 'bycat':
-					$buildlinkprev .= 'category=' . $this->cleaninput($_GET['category']) . '&amp;page=';
-					break;
-				case 'search':
-					$buildlinkprev .= 'search=' . stripslashes($getsearch) . '&amp;page=';
-					break;
-				default:
-					if (defined('IS_ADMIN')) $buildlinkprev .= 'page=';
-					else $buildlinkprev .= 'recent&amp;page=';
-			}
-			$buildlinkprev .= ($page - 1) . '" title="Previous page">Previous page</a>';
-		}
-		if ($page < $numofpages && $page != $numofpages && $page >= 1) {
-			$buildlinknext = '<a href="?';
-			switch($link) {
-				case 'unanswered':
-					$buildlinknext .= 'sort=unanswered&amp;page=';
-					break;
-				case 'bycat':
-					$buildlinknext .= 'category=' . $this->cleaninput($_GET['category']) . '&amp;page=';
-					break;
-				case 'search':
-					$buildlinknext .= 'search=' . stripslashes($getsearch) . '&amp;page=';
-					break;
-				default:
-					if (defined('IS_ADMIN')) $buildlinknext .= 'page=';
-					else $buildlinknext .= 'recent&amp;page=';
-			}
-			$buildlinknext .= ($page + 1) . '" title="Next page">Next page</a> &raquo;';
-		}
-		if (isset($buildlinkprev) || isset($buildlinknext)) {
-			echo '<p class="pagination center">';
-			if (isset($buildlinkprev)) echo $buildlinkprev;
-			if (isset($buildlinknext) && isset($buildlinkprev)) echo ' | ';
-			if (isset($buildlinknext)) echo $buildlinknext;
-			echo '</p>';
-		}
-	}
-	function pages() {
-		global $page;
-		if (isset($_GET['page']) && !empty($_GET['page'])) {
-			$page = (int)$this->cleaninput($_GET['page']);
-			if (empty($page)) $page = 1;
-		}
-		else $page = 1;
-	}
-	function check_pages($totalpages) {
-		global $page;
-		if ($page > $totalpages) $page = $totalpages;
-	}
-	function dopagination($query) {
-		global $totalpages, $perpage, $startfrom, $page;
-		$totalpages = mysql_num_rows($this->query($query));
-		if (defined('ADMIN_PERPAGE')) {
-			$perpage = ceil($totalpages / ADMIN_PERPAGE);
-			$this->check_pages($perpage);
-			$startfrom = ($page - 1) * ADMIN_PERPAGE;
-		}
-		else {
-			$perpage = ceil($totalpages / $this->getoption('totalpage_faq'));
-			$this->check_pages($perpage);
-			$startfrom = ($page - 1) * $this->getoption('totalpage_faq');
-		}
-	}
-	function showqs($sql) {
-		if (empty($sql->answer)) $answer = '(Unanswered)';
-		else $answer = $this->convertbb($sql->answer);
-
-		if ($this->getoption('enable_cats') == 'yes') $cat = '<a href="?category=' . $sql->category . '" title="See all questions in the ' . $sql->cat_name . ' category">' . $sql->cat_name . '</a>';
-		else $cat = '';
-
-		$sub = array('[[question]]', '[[answer]]', '[[category]]', '[[permalink]]', '[[date]]');
-		$replace = array($sql->question, $answer, $cat, '?q=' . $sql->q_id, date($this->getoption('date_format'), strtotime($sql->dateasked)));
-
-		echo str_replace($sub, $replace, $this->getoption('q_template'));
-	}
-	function admin_logout() {
-		/* Oh noes, PAI did a funny */
-	}
-	function askform($link) {
-		if ($this->getoption('enable_cats') == 'yes') {
-			$getcats = $this->query('SELECT * FROM `' . $this->table . '_cats` ORDER BY `cat_name` ASC');
-			if (mysql_num_rows($getcats) > 0) {
-				$cat = '<select name="category" id="category">
-				<option value="">CHOOSE ONE:</option>';
-				while($cats = mysql_fetch_object($getcats)) {
-					$cat .= '
-					<option value="' . $cats->cat_id . '">' . $cats->cat_name . '</option>';
-				}
-				$cat .= '</select>';
-			}
-			else $cat = '';
-		}
-		else $cat = '';
-
-		$sub = array('[[question]]', '[[category]]', '[[submit]]');
-		$replace = array('<input type="text" name="question" id="question" />', $cat, '<input type="submit" name="askit" id="askit" value="Ask" />');
-		?>
-
-		<form class="pai-question-form" method="post" action="<?php echo $this->cleaninput($link); ?>">
-			<?php echo str_replace($sub, $replace, $this->getoption('ask_template')); ?>
-		</form>
+if (!file_exists($path . 'class.php')) { ?>
+	<h1>Error</h1>
+	<p><strong><code>class.php</code></strong> could not be found. Without this file, the script cannot operate. Please make sure it is present.</p>
 	<?php
-	}
-	function get_categories($current_cat = '') {
-		$cats = $this->query('SELECT * FROM `' . $this->table . '_cats`');
-		while($cat = mysql_fetch_object($cats)) { ?>
-			<option value="<?php echo $cat->cat_id; ?>"<?php if ($cat->cat_id == $current_cat) echo ' selected="selected"'; ?>><?php echo $cat->cat_name; ?></option>
-			<?php
-		}
-	}
-	function adminqs($sql) {
-		global $token;
-		?>
-		<li class="question-container">
-			<form action="admin.php?edit=category&amp;inline=true" method="post" onsubmit="
-				new Ajax.Request('admin.php?edit=category&amp;inline=true', {
-					asynchronous:true,
-					onComplete:function(request) {
-						Element.show('category_read_<?php echo $sql->q_id; ?>');
-						Element.hide('indicator<?php echo $sql->q_id; ?>');
-						Element.hide('category_edit_<?php echo $sql->q_id; ?>');
-						$('category_read_<?php echo $sql->q_id; ?>').update(request.responseText);
-					},
-					onLoading:function(request) {
-						Element.show('indicator<?php echo $sql->q_id; ?>');
-					},
-					parameters:Form.serialize(this)
-				}); return false;">
-				<h4 class="date"><?php echo date($this->getoption('date_format'), strtotime($sql->dateasked));
-				if ($this->getoption('enable_cats') == 'yes') { ?>
-					<span class="category" id="category_read_<?php echo $sql->q_id; ?>">(<a href="admin.php?category=<?php echo $sql->category; ?>" title="See all questions in the <?php echo $sql->cat_name; ?> category"><?php echo $sql->cat_name; ?></a>)</span>
-					<span id="category_edit_<?php echo $sql->q_id; ?>" class="category" style="display: none;">
-						<input type="hidden" name="id" id="category_id_<?php echo $sql->q_id; ?>" value="<?php echo $sql->q_id; ?>" />
-						<input type="hidden" name="token" id="category_token<?php echo $sql->q_id; ?>" value="<?php echo $token; ?>" />
-						<select name="category" id="category_edit_<?php echo $sql->q_id; ?>_menu">
-							<?php $this->get_categories($sql->category); ?>
-						</select>
-						<input type="submit" value="Save category" name="submit_category" id="submit_category_<?php echo $sql->q_id; ?>" style="font-size: 0.8em;" /> <input type="reset" onclick="Element.hide('category_edit_<?php echo $sql->q_id; ?>'); Element.show('category_read_<?php echo $sql->q_id; ?>'); return false;" name="cancel" id="cancel_category_<?php echo $sql->q_id; ?>" value="Cancel" style="font-size: 0.8em" />
-					</span>
-					<a href="admin.php?edit=category" onclick="Element.hide('category_read_<?php echo $sql->q_id; ?>'); Element.show('category_edit_<?php echo $sql->q_id; ?>'); if ($('category_edit_<?php echo $sql->q_id; ?>_menu')) $('category_edit_<?php echo $sql->q_id; ?>_menu').focus(); return false;" style="font-size: 0.6em;">e</a>
-				<?php
-			} ?> <img src="indicator.gif" alt="Saving..." title="Saving..." id="indicator<?php echo $sql->q_id; ?>" style="display: none;" /></h4>
-			</form>
-			<form action="admin.php?edit=question&amp;inline=true" method="post" onsubmit="
-				new Ajax.Request('admin.php?edit=question&amp;inline=true', {
-					asynchronous:true,
-					onComplete:function(request) {
-						$('question_read_<?php echo $sql->q_id; ?>').style.display = 'block';
-						Element.hide('indicator<?php echo $sql->q_id; ?>');
-						Element.hide('question_edit_<?php echo $sql->q_id; ?>');
-						$('question_read_<?php echo $sql->q_id; ?>').update(request.responseText);
-					},
-					onLoading:function(request) {
-						Element.show('indicator<?php echo $sql->q_id; ?>');
-					},
-					parameters:Form.serialize(this)
-				}); return false;">
-				<p class="question" id="question<?php echo $sql->q_id; ?>" title="Click to edit question">
-					<span id="question_read_<?php echo $sql->q_id; ?>" style="display: block;" onclick="Element.hide('question_read_<?php echo $sql->q_id; ?>'); Element.show('question_edit_<?php echo $sql->q_id; ?>'); if ($('question_edit_<?php echo $sql->q_id; ?>_box')) $('question_edit_<?php echo $sql->q_id; ?>_box').focus(); return false;">
-						<a href="admin.php?q=<?php echo $sql->q_id; ?>" title="Permalink to this question"><?php echo $sql->question; ?></a>
-					</span>
-					<span id="question_edit_<?php echo $sql->q_id; ?>" style="display: none;">
-						<input type="hidden" name="id" id="question_id_<?php echo $sql->q_id; ?>" value="<?php echo $sql->q_id; ?>" />
-						<input type="hidden" name="token" id="question_token<?php echo $sql->q_id; ?>" value="<?php echo $token; ?>" />
-						<input type="text" name="question" id="question_edit_<?php echo $sql->q_id; ?>_box" style="width: 99%;" value="<?php echo $sql->question; ?>" /><br />
-						<input type="submit" value="Save question" name="submit_question" id="submit_question_<?php echo $sql->q_id; ?>" /> <input type="reset" onclick="Element.hide('question_edit_<?php echo $sql->q_id; ?>'); $('question_read_<?php echo $sql->q_id; ?>').style.display = 'block'; return false;" name="cancel" id="cancel_question_<?php echo $sql->q_id; ?>" value="Cancel" />
-					</span>
-				</p>
-			</form>
-			<form action="admin.php?edit=answer&amp;inline=true" method="post" onsubmit="
-				new Ajax.Request('admin.php?edit=answer&amp;inline=true', {
-					asynchronous:true,
-					onComplete:function(request) {
-						if (request.responseText == '(No answer)') $('answer<?php echo $sql->q_id; ?>').className = 'answer unanswered';
-						else $('answer<?php echo $sql->q_id; ?>').className = 'answer';
-						$('answer_read_<?php echo $sql->q_id; ?>').style.display = 'block';
-						Element.hide('indicator<?php echo $sql->q_id; ?>');
-						Element.hide('answer_edit_<?php echo $sql->q_id; ?>');
-						$('answer_read_<?php echo $sql->q_id; ?>').update(request.responseText);
-					},
-					onLoading:function(request) {
-						Element.show('indicator<?php echo $sql->q_id; ?>');
-					},
-					parameters:Form.serialize(this)
-				}); return false;">
-				<p id="answer<?php echo $sql->q_id; ?>" class="answer<?php if (empty($sql->answer)) echo ' unanswered'; ?>" title="<?php if (!empty($sql->answer)) echo 'Click to edit answer'; else echo 'Click to add an answer'; ?>">
-				<span id="answer_read_<?php echo $sql->q_id; ?>" style="display: block;" onclick="Element.hide('answer_read_<?php echo $sql->q_id; ?>'); Element.show('answer_edit_<?php echo $sql->q_id; ?>'); if ($('answer_edit_<?php echo $sql->q_id; ?>_area')) $('answer_edit_<?php echo $sql->q_id; ?>_area').focus(); return false;">
-					<?php if (empty($sql->answer)) echo '(No answer)'; else echo $this->convertbb($sql->answer); ?>
-				</span>
-				<span id="answer_edit_<?php echo $sql->q_id; ?>" style="display: none;">
-					<input type="hidden" name="id" id="answer_id_<?php echo $sql->q_id; ?>" value="<?php echo $sql->q_id; ?>" />
-					<input type="hidden" name="token" id="answer_token<?php echo $sql->q_id; ?>" value="<?php echo $token; ?>" />
-					<textarea id="answer_edit_<?php echo $sql->q_id; ?>_area" name="answer" style="width: 99%;" rows="10" cols="70"><?php echo (empty($sql->answer) ? '' : strip_tags($sql->answer)); ?></textarea><br />
-					<input type="submit" value="Save answer" name="save" id="save_button_<?php echo $sql->q_id; ?>" /> <input type="reset" onclick="Element.hide('answer_edit_<?php echo $sql->q_id; ?>'); $('answer_read_<?php echo $sql->q_id; ?>').style.display = 'block'; return false;" name="cancel" id="cancel_answer_<?php echo $sql->q_id; ?>" value="Cancel" />
-				</span>
-			</p>
-			</form>
-			<p class="ip"><?php echo $sql->ip; ?> <?php if ($this->getoption('ipban_enable') == 'yes') { ?>[<a href="admin.php?manage=ips&amp;action=add&amp;ip=<?php echo $sql->ip; ?>&amp;token=<?php echo $token; ?>" title="Ban this IP from asking more questions">Ban?</a>]<?php } ?></p>
+	exit;
+}
+require_once $path . 'config.php';
+require_once $path . 'class.php';
 
-			<p class="tools center">
-				<a href="admin.php?edit=answer&amp;qu=<?php echo $sql->q_id; ?>&amp;token=<?php echo $token; ?>" title="<?php
-				if (empty($sql->answer)) {
-					?>Answer this question">Answer Question<?php
-				}
-				else {
-					?>Edit your answer to this question">Edit Answer<?php
-				} ?></a> |
-				<a href="admin.php?edit=question&amp;qu=<?php echo $sql->q_id; ?>&amp;token=<?php echo $token; ?>" title="Edit this question">Edit Question</a>
+$display = '<p style="text-align: center;">Powered by <a href="http://not-noticeably.net/scripts/phpaskit/" title="PHPAskIt">PHPAskIt 3.1</a></p>';
 
-				<?php
-				if ($this->getoption('enable_cats') == 'yes') { ?>
-					| <a href="admin.php?edit=category&amp;qu=<?php echo $sql->q_id; ?>&amp;token=<?php echo $token; ?>" title="Change the category of this question">
-					Change Category</a>
-					<?php
-				} ?>
-				| <a href="admin.php?delete=<?php echo $sql->q_id; ?>&amp;token=<?php echo $token; ?>" onclick="return confirm('Are you sure you want to delete this question?')" title="Delete this question">Delete</a>
-			</p>
-		</li>
-		<?php
-	}
-	function adminheader() {
-		?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+function clean_array($data) {
+	if (get_magic_quotes_gpc()) return is_array($data) ? array_map('clean_array', $data) : trim(htmlspecialchars(strip_tags($data)));
+	else return is_array($data) ? array_map('clean_array', $data) : addslashes(trim(htmlspecialchars(strip_tags($data))));
+}
+function cleaninput($data) {
+	global $pai_db;
+	$data = trim(htmlspecialchars(strip_tags($data)));
+	if (get_magic_quotes_gpc()) $data = stripslashes($data);
+	return mysql_real_escape_string($data);
+}
+function adminheader() {
+	?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 	<title>PHPAskIt 3.1: Admin</title>
-	<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 	<style type="text/css">
 		body { color: #222; font: 0.7em/1.2em Verdana, Arial, Helvetica, sans-serif; text-align: center; }
 		a { color: #0080ff; text-decoration: none; }
@@ -353,254 +96,120 @@ class pai {
 </head>
 
 <body>
-		<?php
-	}
-	function summary() {
-		$summary = array('[[total]]', '[[answered]]', '[[unanswered]]', '[[categories]]');
-		$replace = array($this->total, $this->answered, $this->unanswered, $this->cats);
-
-		echo str_replace($summary, $replace, $this->getoption('sum_template'));
-	}
-	function checktoken($post = true, $get = false, $inline = false) {
-		if ($post == true) {
-			if (!isset($_POST['token'])) {
-				if ($inline) $this->kill_token(true);
-				else $this->kill_token();
-			}
-			else $token = $_POST['token'];
-		}
-		elseif ($get == true) {
-			if (!isset($_GET['token'])) {
-				if ($inline) $this->kill_token(true);
-				else $this->kill_token();
-			}
-			else $token = $_GET['token'];
-		}
-		if (!isset($_SESSION['pai_token']) || $token != $_SESSION['pai_token']) {
-			if ($inline == true) $this->kill_token(true);
-			else $this->kill_token();
-		}
-		if (!isset($_SESSION['pai_time']) || ((time() - $_SESSION['pai_time']) > 300)) {
-			if ($inline == true) $this->kill_token(true);
-			else $this->kill_token();
-		}
-	}
-	function kill_token($inline = false) {
-		$_SESSION = array();
-		if (isset($_COOKIE[session_name()])) setcookie(session_name(), '', time()-3600, '/');
-		@session_destroy();
-		if ($inline == true) {
-			ob_end_clean();
-			exit('<strong>Error:</strong> Your session has expired. Please refresh the page to correct this problem.');
-		}
-		else {
-			ob_end_flush();
-			pai_error('Your session has expired. Please refresh the page to correct this problem.');
-		}
-	}
-	function convertbb($text) {
-		$text = preg_replace('/\[code\](.*?)\[\/code\]/is', '<pre>$1</pre>', $text);
-		$text = preg_replace('/\[b\](.*?)\[\/b\]/is', '<strong>$1</strong>', $text);
-		$text = preg_replace('/\[u\](.*?)\[\/u\]/is', '<span style="text-decoration: underline;">$1</span>', $text);
-		$text = preg_replace('/\[i\](.*?)\[\/i\]/is', '<em>$1</em>', $text);
-		$text = preg_replace('/\[q=([0-9]+)\](.*?)\[\/q\]/is', '<a href="?q=$1">$2</a>', $text);
-
-		$patterns[] = "#\[url=([\w]+?://[\w\#$%&~/.\-;:=,?@\[\]+]*?)\]([^?\r\t].*?)\[/url\]#is";
-		$replacements[] = '<a href="$1" title="$2">$2</a>';
-
-		$patterns[] = "#\[url=((www)\.[\w\#$%&~/.\-;:=,?@\[\]+]*?)\]([^?\n\r\t].*?)\[/url\]#is";
-		$replacements[] = '<a href="http://$1" title="$3">$3</a>';
-
-		$text = preg_replace($patterns, $replacements, $text);
-
-		return $text;
-	}
-	function dologin() {
-		global $token;
-		if (isset($_GET['process'])) {
-			switch($_GET['process']) {
-				case 'login':
-					if (isset($_POST['userlogon']) && isset($_POST['userpassword']) && !empty($_POST['userlogon']) && !empty($_POST['userpassword']) && $_SERVER['REQUEST_METHOD'] == 'POST') {
-						ob_start();
-						$this->adminheader();
-						echo '<h1 id="header"><a href="admin.php" title="Back to main admin page">PHPAskIt</a></h1>
-
-						<ul id="navigation" class="center">
-							<li><a href="admin.php" class="active">Login</a></li>
-							<li><a href="admin.php?process=reset" title="Reset password">Lost password</a></li>
-						</ul>
-						<div class="center">';
-
-						if (!isset($_POST['token'])) {
-							ob_end_flush();
-							pai_error('Your session has expired. Please reload the page to correct this issue.');
-						}
-						$this->checktoken($_POST['token']);
-						if ($this->cleaninput($_POST['userlogon']) == $this->getoption('username') && md5($this->cleaninput($_POST['userpassword']) . $this->mask) == $this->getoption('password')) {
-							setcookie($this->table . '_user', $this->getoption('username'), time()+(86400*365), '/');
-							setcookie($this->table . '_pass', 'Loggedin_' . $this->getoption('password'), time()+(86400*365), '/');
-							header('Location: http://' . $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']) . '/admin.php');
-							ob_end_flush();
-							exit;
-						}
-						else {
-							ob_end_clean();
-							$this->display_login('Incorrect username or password. Please try again.');
-						}
-					}
-					break;
-
-				case 'logout':
-					setcookie($this->table . '_user', '', time()-3600, '/');
-					setcookie($this->table . '_pass', '', time()-3600, '/');
-
-					$_SESSION = array();
-					if (isset($_COOKIE[session_name()])) setcookie(session_name(), '', time()-3600, '/');
-					@session_destroy();
-
-					header('Location: http://' . $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']) . '/admin.php');
-					break;
-
-				case 'reset':
-					ob_start();
-					$this->adminheader();
-
-					echo '<h1 id="header"><a href="admin.php" title="Back to main admin page">PHPAskIt</a></h1>
-					<ul id="navigation" class="center">
-						<li><a href="admin.php">Login</a></li>
-						<li><a href="admin.php?process=reset" title="Reset password" class="active">Lost password</a></li>
-					</ul>
-					<div class="center">';
-					if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit']) && isset($_POST['username']) && isset($_POST['email_address']) && isset($_POST['security_word'])) {
-						if (!isset($_POST['token'])) {
-							ob_end_flush();
-							pai_error('Your session has expired. Please reload the page to correct this issue.');
-						}
-						$this->checktoken($_POST['token']);
-						ob_end_flush();
-						$username = $this->cleaninput($_POST['username']);
-						$email = $this->cleaninput($_POST['email_address']);
-						$word = $this->cleaninput($_POST['security_word']);
-						if ($username == $this->getoption('username') && $email == $this->getoption('youraddress') && $word == $this->getoption('security_word')) {
-							$newpassword = substr(md5(substr(md5(microtime()), 5, 7)), 5, 7);
-							if ($this->query('UPDATE `' . $this->table . "_options` SET `option_value` = '" . md5($newpassword . $this->mask) . "' WHERE `option_name` = 'password' LIMIT 1")) {
-								$msg = 'Your password to PHPAskIt has been reset. Your new password is: ' . $newpassword . "\n\nPlease login and change it as soon as possible.";
-								@mail($this->getoption('youraddress'), 'PHPAskIt: Password reset', $msg, 'From: PHPAskIt <' . $this->getoption('youraddress') . '>');
-								echo '<p>Your password has been reset and sent to you by email. Please <a href="admin.php" title="Log in">log in</a> and change it as soon as possible.</p>';
-							}
-							else echo '<p>Your password could not be reset.</p>';
-						}
-						else echo '<p>The username, e-mail address or security word entered does not match the ones in PHPAskIt\'s options. Please go back and try again.</p>';
-					}
-					else { ?>
-						<p>Please enter the username, e-mail address and the security word you provided in the options panel.</p>
-						<form method="post" action="admin.php?process=reset">
-							<p><input type="hidden" name="token" id="token" value="<?php echo $token; ?>" />
-							<label for="username">Username:</label><br />
-							<input type="text" name="username" id="username" /></p>
-
-							<p><label for="email_address">E-mail address</label><br />
-							<input type="text" name="email_address" id="email_address" /></p>
-
-							<p><label for="security_word">Security word</label><br />
-							<input type="text" name="security_word" id="security_word" /></p>
-
-							<p><input type="submit" name="submit" id="submit" value="Submit" /></p>
-						</form>
-						<?php
-					}
-					echo '</div></body></html>';
-					exit;
-					break;
-
-				default:
-					pai_error('Invalid process.');
-			}
-		}
-	}
-	function isloggedin($nodata = false) {
-		if (isset($_COOKIE[$this->table . '_user']) && !empty($_COOKIE[$this->table . '_user'])) {
-			if ($this->getoption('username') == $this->cleaninput($_COOKIE[$this->table . '_user'])) {
-				if (isset($_COOKIE[$this->table . '_pass']) && $_COOKIE[$this->table . '_pass'] == 'Loggedin_' . $this->getoption('password')) return true;
-				elseif ($nodata == false) $this->display_login('Your session has expired. Please login again.');
-			}
-			elseif ($nodata == false) $this->display_login('Your session has expired. Please login again.');
-		}
-		elseif ($nodata == false) $this->display_login();
-	}
-	function display_login($problem = '') {
-		global $token;
-		$this->adminheader();
-		?>
-		<h1 id="header"><a href="admin.php" title="Back to main admin page">PHPAskIt</a></h1>
-
-		<ul id="navigation" class="center">
-			<li><a href="admin.php" class="active">Login</a></li>
-			<li><a href="admin.php?process=reset" title="Reset password">Lost password</a></li>
-		</ul>
-
-		<?php if (!empty($problem)) echo '<p>' . $problem . '</p>'; ?>
-
-		<form method="post" action="admin.php?process=login">
-			<p><input type="hidden" name="token" id="token" value="<?php echo $token; ?>" />
-			<label for="userlogon">Username:</label><br />
-			<input type="text" name="userlogon" id="userlogon" /></p>
-
-			<p><label for="userpassword">Password:</label><br />
-			<input type="password" name="userpassword" id="userpassword" /></p>
-
-			<p><input name="submitlogin" id="submitlogin" type="submit" value="Login" /></p>
-		</form>
-		<p class="center">Powered by <a href="http://not-noticeably.net/scripts/phpaskit/" title="PHPAskIt">PHPAskIt 3.1</a></p>
-		<?php
-		echo '</body></html>';
-		mysql_close($this->connect);
-		unset($this->connect);
-		exit;
-	}
+	<?php
 }
-
-$display = '<p style="text-align: center;">Powered by <a href="http://not-noticeably.net/scripts/phpaskit/" title="PHPAskIt">PHPAskIt 3.1</a></p>';
-
-function clean_array($data) {
-	if (get_magic_quotes_gpc()) return is_array($data) ? array_map('clean_array', $data) : trim(htmlspecialchars(strip_tags($data)));
-	else return is_array($data) ? array_map('clean_array', $data) : addslashes(trim(htmlspecialchars(strip_tags($data))));
-}
-function pai_error($message, $die = true, $header = '') {
+function summary() {
 	global $pai;
-	echo '<h3>';
-	if (!empty($header)) echo $header; else echo 'Error';
-	echo '</h3>
-	<p>' . $message . '</p>';
+	$summary = array('[[total]]', '[[answered]]', '[[unanswered]]', '[[categories]]');
+	$replace = array($pai->get_total(), $pai->get_answered(), $pai->get_unanswered(), $pai->get_cats());
 
-	if ($die == true) {
-		echo '<p style="text-align: center;">Powered by <a href="http://not-noticeably.net/scripts/phpaskit/" title="PHPAskIt">PHPAskIt 3.1</a></p>';
-		if (defined('IS_ADMIN')) {
-			echo '</div></div></body></html>';
+	echo str_replace($summary, $replace, $pai->getoption('sum_template'));
+}
+function pagination($numofpages, $link) {
+	global $page, $getsearch;
+	echo '<p class="pagination center"><strong>Page ' . $page . ' of ' . $numofpages . '</strong></p>';
+	if ($page > 1 && $page <= $numofpages && $page != 0) {
+		$buildlinkprev = '&laquo; <a href="?';
+		switch($link) {
+			case 'unanswered':
+				$buildlinkprev .= 'sort=unanswered&amp;page=';
+				break;
+			case 'bycat':
+				$buildlinkprev .= 'category=' . cleaninput($_GET['category']) . '&amp;page=';
+				break;
+			case 'search':
+				$buildlinkprev .= 'search=' . stripslashes($getsearch) . '&amp;page=';
+				break;
+			default:
+				if (defined('IS_ADMIN')) $buildlinkprev .= 'page=';
+				else $buildlinkprev .= 'recent&amp;page=';
 		}
-		elseif ($pai->getoption('is_wordpress') == 'yes') {
-			if (function_exists('get_sidebar')) get_sidebar();
-			if (function_exists('get_footer')) get_footer();
+		$buildlinkprev .= ($page - 1) . '" title="Previous page">Previous page</a>';
+	}
+	if ($page < $numofpages && $page != $numofpages && $page >= 1) {
+		$buildlinknext = '<a href="?';
+		switch($link) {
+			case 'unanswered':
+				$buildlinknext .= 'sort=unanswered&amp;page=';
+				break;
+			case 'bycat':
+				$buildlinknext .= 'category=' . cleaninput($_GET['category']) . '&amp;page=';
+				break;
+			case 'search':
+				$buildlinknext .= 'search=' . stripslashes($getsearch) . '&amp;page=';
+				break;
+			default:
+				if (defined('IS_ADMIN')) $buildlinknext .= 'page=';
+				else $buildlinknext .= 'recent&amp;page=';
 		}
-		else include $pai->getoption('footerfile');
+		$buildlinknext .= ($page + 1) . '" title="Next page">Next page</a> &raquo;';
+	}
+	if (isset($buildlinkprev) || isset($buildlinknext)) {
+		echo '<p class="pagination center">';
+		if (isset($buildlinkprev)) echo $buildlinkprev;
+		if (isset($buildlinknext) && isset($buildlinkprev)) echo ' | ';
+		if (isset($buildlinknext)) echo $buildlinknext;
+		echo '</p>';
+	}
+}
+function pages() {
+	global $page;
+	if (isset($_GET['page']) && !empty($_GET['page'])) {
+		$page = (int)cleaninput($_GET['page']);
+		if (empty($page)) $page = 1;
+	}
+	else $page = 1;
+}
+function check_pages($totalpages) {
+	global $page;
+	if ($page > $totalpages) $page = $totalpages;
+}
+function dopagination($query) {
+	global $totalpages, $perpage, $startfrom, $page, $pai_db, $pai;
+	$totalpages = mysql_num_rows($pai_db->query($query));
+	if (defined('ADMIN_PERPAGE')) {
+		$perpage = ceil($totalpages / ADMIN_PERPAGE);
+		check_pages($perpage);
+		$startfrom = ($page - 1) * ADMIN_PERPAGE;
+	}
+	else {
+		$perpage = ceil($totalpages / $pai->getoption('totalpage_faq'));
+		check_pages($perpage);
+		$startfrom = ($page - 1) * $pai->getoption('totalpage_faq');
+	}
+}
+function check_stuff() {
+	global $pai;
+	if (!$pai->getoption('username')) { ?>
+		<h1>Error</h1>
+		<p>Please run <strong><a href="install.php" title="install.php"><code>install.php</code></a></strong> before accessing this page.</p>
+		<?php
+		exit;
+	}
+	elseif (file_exists('install.php')) { ?>
+		<h1>Error</h1>
+		<p>Please delete install.php before using the script. You will not need to run it again.</p>
+		<?php
+		exit;
+	}
+
+	if ($pai->getoption('version') != '3.1') { ?>
+		<h1>Error</h1>
+		<p>You need to <a href="upgrade.php" title="Upgrade">upgrade PHPAskIt</a> before you can view this page.</p>
+		<?php
+		exit;
+	}
+
+	if (file_exists('import/import.php') || file_exists('import/convertaa.php') || file_exists('import/convertwaks.php') || file_exists('import/convertfaqtastic.php') || file_exists('upgrade.php')) { ?>
+		<h1>Error</h1>
+		<p>Please delete <code>upgrade.php</code> and the contents of the <code>/import</code> directory if you are not upgrading from a previous version of PHPAskIt or are not planning to import any questions into the script.</p>
+		<?php
 		exit;
 	}
 }
 
-$pai = new pai(PAI_HOST, PAI_USER, PAI_PASS, PAI_DB);
-$pai->table = $pai->cleaninput(PAI_TABLE);
-
-$total = mysql_fetch_object($pai->query('SELECT COUNT(`q_id`) AS `num` FROM `' . $pai->table . '`'));
-$pai->total = $total->num;
-
-$unanswered = mysql_fetch_object($pai->query('SELECT COUNT(`q_id`) AS `num` FROM `' . $pai->table . "` WHERE `answer` = '' OR `answer` IS NULL"));
-$pai->unanswered = $unanswered->num;
-
-$pai->answered = $pai->total - $pai->unanswered;
-
-$cats = mysql_fetch_object($pai->query('SELECT COUNT(DISTINCT `category`) AS `num` FROM `' . $pai->table . '`'));
-$pai->cats = $cats->num;
-
+$pai_db = new pai_db(PAI_HOST, PAI_USER, PAI_PASS, PAI_DB);
+$pai = new pai();
 
 $display = '<p style="text-align: center;">Powered by <a href="http://not-noticeably.net/scripts/phpaskit/" title="PHPAskIt">PHPAskIt 3.1</a></p>';
 

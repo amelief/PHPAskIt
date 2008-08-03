@@ -1,7 +1,7 @@
 <?php
 /*
   ==============================================================================================
-  PHPAskIt 3.0 © 2005-2008 Amelie M.
+  PHPAskIt 3.1 © 2005-2008 Amelie M.
   ==============================================================================================
   																								*/
 
@@ -19,33 +19,7 @@ if (!file_exists('functions.php')) { ?>
 }
 require 'functions.php';
 
-if (!@$pai->getoption('username')) { ?>
-	<h1>Error</h1>
-	<p>Please run <strong><a href="install.php" title="install.php"><code>install.php</code></a></strong> before accessing this page.</p>
-	<?php
-	exit;
-}
-elseif (file_exists('install.php')) { ?>
-	<h1>Error</h1>
-	<p>Please delete install.php before using the script. You will not need to run it again.</p>
-	<?php
-	exit;
-}
-
-if (@$pai->getoption('version') != '3.0') { ?>
-	<h1>Error</h1>
-	<p>You need to <a href="upgrade.php" title="Upgrade">upgrade PHPAskIt</a> before you can view this page.</p>
-	<?php
-	exit;
-}
-
-if (file_exists('import/import.php') || file_exists('import/convertaa.php') || file_exists('import/convertwaks.php') || file_exists('import/convertfaqtastic.php') || file_exists('upgrade.php')) { ?>
-	<h1>Error</h1>
-	<p>Please delete <code>upgrade.php</code> and the contents of the <code>/import</code> directory if you are not upgrading from a previous version of PHPAskIt or are not planning to import any questions into the script.</p>
-	<?php
-	exit;
-}
-
+check_stuff();
 
 if (($pai->getoption('enable_cats') != 'yes' || $pai->getoption('summary_enable') != 'yes') && $_SERVER['REQUEST_METHOD'] != 'POST' && empty($_SERVER['QUERY_STRING'])) {
 	header('Location: http://' . $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']) . '?recent');
@@ -61,42 +35,45 @@ else include $pai->getoption('headerfile');
 
 ################### PROCESS QUESTION ##################
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['question'])) {
-	$question = $pai->cleaninput($_POST['question']);
-	if (empty($question)) pai_error('Please enter a question.');
-
-	if ($pai->getoption('enable_cats') == 'yes' && !empty($_POST['category'])) {
-		if ($pai->getfromdb('cat_id', 'cats', '`cat_id` = ' . (int)$pai->cleaninput($_POST['category']), 1)) $category = (int)$pai->cleaninput($_POST['category']);
-		else $category = 1;
-	}
-	else $category = 1;
+	$question = new question();
+	$question->set_question($_POST['question']);
+	$question->set_category($_POST['category']);
+	$question->set_ip($_SERVER['REMOTE_ADDR']);
+	$question->set_dateasked(time());
+	$the_question = $question->get_question();
 
 	if ($pai->getoption('ipban_enable') == 'yes' && strlen($pai->getoption('ipban_enable')) > 0) {
 		$bannedips = explode(';', $pai->getoption('banned_ips'));
 
 		foreach($bannedips as $ip) {
-			if ($_SERVER['REMOTE_ADDR'] == $ip) pai_error('Sorry, this IP address has been banned from asking questions.');
+			if ($_SERVER['REMOTE_ADDR'] == $ip) {
+				$error = new pai_error('Sorry, this IP address has been banned from asking questions.');
+				$error->display();
+			}
 		}
 	}
 	if ($pai->getoption('antispam_enable') == 'yes' && strlen($pai->getoption('banned_words')) > 0) {
 		$bannedwords = $pai->getoption('banned_words');
 		if (substr($bannedwords, -1, 1) == '|') $bannedwords = substr_replace($bannedwords, '', -1, 1);
 
-		if (preg_match('/(' . $bannedwords . ')/i', strtolower($question))) pai_error('One of the words in your question has been disallowed by the site owner. Please go back and change your question, then try again.');
+		if (preg_match('/(' . $bannedwords . ')/i', strtolower($the_question['question']))) {
+			$error = new pai_error('One of the words in your question has been disallowed by the site owner. Please go back and change your question, then try again.');
+			$error->display();
+		}
 	}
 
-	if ($pai->query('INSERT INTO `' . $pai->table . "` (`question`, `category`, `dateasked`, `ip`) VALUES ('" . $question . "', '" . $category . "', NOW(), '" . $pai->cleaninput($_SERVER['REMOTE_ADDR']) . "')")) {
+	$question->create();
+	echo $pai->getoption('success_msg_template');
 
-		echo $pai->getoption('success_msg_template');
+	if ($pai->getoption('notifybymail') == 'yes') {
+		if (basename($_SERVER['SCRIPT_FILENAME']) == 'index.php' && file_exists('admin.php')) $adminurl = 'http://' . $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']) . '/admin.php';
 
-		if ($pai->getoption('notifybymail') == 'yes') {
-			if (basename($_SERVER['SCRIPT_FILENAME']) == 'index.php' && file_exists('admin.php')) $adminurl = 'http://' . $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']) . '/admin.php';
+		$subject = 'New question has been asked';
 
-			$subject = 'New question has been asked';
+		$question = str_replace('&quot;', '"', $question);
+		$question = str_replace('&amp;', '&', $question);
 
-			$question = str_replace('&quot;', '"', $question);
-			$question = str_replace('&amp;', '&', $question);
-
-			$bodyemail = 'A new question has been asked.
+		$bodyemail = 'A new question has been asked.
 
 The question is:
 ' . stripslashes($question) . '
@@ -104,19 +81,17 @@ The question is:
 This question was asked on ' . date($pai->getoption('date_format')) . ', by IP address ' . $_SERVER['REMOTE_ADDR'] . '
 
 Login to your admin panel ';
-			if (isset($adminurl)) $bodyemail .= 'at ' . $adminurl . ' ';
-			$bodyemail .= 'to answer it.
+		if (isset($adminurl)) $bodyemail .= 'at ' . $adminurl . ' ';
+		$bodyemail .= 'to answer it.
 
 
-Powered by PHPAskIt 3.0.';
+Powered by PHPAskIt 3.1.';
 
-			if (strstr($_SERVER['SERVER_SOFTWARE'], 'Win32')) $extra = 'From: ' . $pai->getoption('youraddress') . "\r\nX-Mailer: PHPAskIt 3.0 PHP/" . phpversion();
-			else $extra = 'From: PHPAskIt <' . $pai->getoption('youraddress') . ">\r\nX-Mailer: PHPAskIt 3.0 PHP/" . phpversion();
+		if (strstr($_SERVER['SERVER_SOFTWARE'], 'Win32')) $extra = 'From: ' . $pai->getoption('youraddress') . "\r\nX-Mailer: PHPAskIt 3.1 PHP/" . phpversion();
+		else $extra = 'From: PHPAskIt <' . $pai->getoption('youraddress') . ">\r\nX-Mailer: PHPAskIt 3.1 PHP/" . phpversion();
 
-			@mail($pai->getoption('youraddress'), $subject, $bodyemail, $extra);
-		}
+		mail($pai->getoption('youraddress'), $subject, $bodyemail, $extra);
 	}
-	else echo '<p>Your question could not be added to the database at this time. Please try again later.</p>';
 }
 #######################################################
 
@@ -129,20 +104,25 @@ else {
 	if (substr($_SERVER['QUERY_STRING'], 0, 6) == 'recent') {
 
 		$pai->askform($_SERVER['PHP_SELF']);
-		$pai->pages();
+		pages();
+		$table = $pai_db->get_table();
+		$query = <<<SQL
+SELECT `{$table}`.*, `{$table}_cats`.`cat_name`
+FROM `{$table}`
+JOIN `{$table}_cats` ON `{$table}`.`category` = `{$table}_cats`.`cat_id`
+SQL;
 
-		if ($pai->getoption('show_unanswered') == 'no') $query = 'SELECT * FROM `' . $pai->table . "` WHERE `answer` != ''";
-		else $query = 'SELECT * FROM `' . $pai->table . '`';
+		if ($pai->getoption('show_unanswered') == 'no') $query .= ' WHERE `' . $pai_db->get_table() . "`.`answer` != '' OR `" . $pai_db->get_table() . '`.`answer` IS NOT NULL';
 
-		$pai->dopagination($query);
-		$query .= ' ORDER BY `dateasked` DESC LIMIT ' . $startfrom . ',' . $pai->getoption('totalpage_faq');
+		dopagination($query);
+		$query .= ' ORDER BY `' . $table . '`.`dateasked` DESC LIMIT ' . $startfrom . ', 10';// . $pai->getoption('totalpage_faq');
 
-		$pai->summary();
+		summary();
 
 		if ($totalpages > 0) {
-			$getqs = $pai->query($query);
+			$getqs = $pai_db->query($query);
 
-			$pai->pagination($perpage, 'date');
+			pagination($perpage, 'date');
 
 			while($qs = mysql_fetch_object($getqs)) {
 				$pai->showqs($qs);
@@ -156,25 +136,33 @@ else {
 	elseif (isset($_GET['category']) && is_numeric($_GET['category'])) {
 		if ($pai->getoption('enable_cats') != 'yes') pai_error('Category sorting is disabled.');
 
-		$category = (int)$pai->cleaninput($_GET['category']);
+		$category = (int)cleaninput($_GET['category']);
 
 		if (empty($category)) pai_error('No category specified.');
-		if (!$cat = $pai->getfromdb('cat_name', 'cats', '`cat_id` = ' . $category, 1)) pai_error('Invalid category.');
+		if (!$cat = $pai_db->get('cat_name', 'cats', '`cat_id` = ' . $category, 1)) pai_error('Invalid category.');
 
 		$pai->askform($_SERVER['PHP_SELF']);
-		$pai->pages();
+		pages();
 
-		if ($pai->getoption('show_unanswered') == 'no') $query = 'SELECT * FROM `' . $pai->table . "` WHERE `category`= '" . $category . "' AND `answer` != ''";
-		else $query = 'SELECT * FROM `' . $pai->table . "` WHERE `category`= '" . $category . "'";
+		$query = <<<SQL
+SELECT `{$pai_db->get_table()}`.*, `{$pai_db->get_table()}_cats`.`cat_name`
+FROM `{$pai_db->get_table()}`
+JOIN `{$pai_db->get_table()}_cats` ON `{$pai_db->get_table()}`.`category` = `{$pai_db->get_table()}_cats`.`cat_id`
+WHERE `{$pai_db->get_table()}`.`category` = 
+SQL;
 
-		$pai->dopagination($query);
+		$query .= (int)cleaninput($_GET['category']);
+
+		if ($pai->getoption('show_unanswered') == 'no') $query .= " AND `answer` != ''";
+
+		dopagination($query);
 		$query .= ' ORDER BY `dateasked` DESC LIMIT ' . $startfrom . ',' . $pai->getoption('totalpage_faq');
 
 		if ($totalpages > 0) {
 			echo '<h3 class="pai-category-title">' . $totalpages . ($totalpages == 1 ? ' question' : ' questions') . ' in the &quot;' . $cat . '&quot; category</h3>';
 
-			$getqs = $pai->query($query);
-			$pai->pagination($perpage, 'bycat');
+			$getqs = $pai_db->query($query);
+			pagination($perpage, 'bycat');
 
 			while($qs = mysql_fetch_object($getqs)) {
 				$pai->showqs($qs);
@@ -186,24 +174,32 @@ else {
 
 ###################### SEARCH #########################
 	elseif (isset($_GET['search'])) {
-		$getsearch = $pai->cleaninput($_GET['search']);
-		if (empty($getsearch)) pai_error('Please enter a valid search term.');
-		if (strlen($getsearch) < 4) pai_error('Please enter more than four characters.');
+		$getsearch = cleaninput($_GET['search']);
+		if (empty($getsearch)) $error = new pai_error('Please enter a valid search term.');
+		if (strlen($getsearch) < 4) $error = new pai_error('Please enter more than four characters.');
+
+		if (isset($error)) $error->display();
 
 		$pai->askform($_SERVER['PHP_SELF']);
-		$pai->pages();
+		pages();
 
-		if ($pai->getoption('show_unanswered') == 'no') $query = 'SELECT * FROM `' . $pai->table . "` WHERE (`question` LIKE '%" . $getsearch . "%' AND `answer` != '') OR `answer` LIKE '%" . $getsearch . "%'";
-		else $query = 'SELECT * FROM `' . $pai->table . "` WHERE `question` LIKE '%" . $getsearch . "%' OR `answer` LIKE '%" . $getsearch . "%'";
-		$pai->dopagination($query);
+		$query = <<<SQL
+SELECT `{$pai_db->get_table()}`.*, `{$pai_db->get_table()}_cats`.`cat_name`
+FROM `{$pai_db->get_table()}`
+JOIN `{$pai_db->get_table()}_cats` ON `{$pai_db->get_table()}`.`category` = `{$pai_db->get_table()}_cats`.`cat_id`
+SQL;
+
+		if ($pai->getoption('show_unanswered') == 'no') $query .= " WHERE (`question` LIKE '%" . $getsearch . "%' AND `answer` != '') OR `answer` LIKE '%" . $getsearch . "%'";
+		else $query .= " WHERE `question` LIKE '%" . $getsearch . "%' OR `answer` LIKE '%" . $getsearch . "%'";
+		dopagination($query);
 
 		$query .= 'ORDER BY `dateasked` DESC LIMIT ' . $startfrom . ',' . $pai->getoption('totalpage_faq');
 
 		if ($totalpages > 0) {
 			echo '<h3 class="pai-search-title">' . $totalpages . ($totalpages == 1 ? ' result' : ' results') . ' found matching &quot;' . stripslashes($getsearch) . '&quot;</h3>';
 
-			$getqs = $pai->query($query);
-			$pai->pagination($perpage, 'search');
+			$getqs = $pai_db->query($query);
+			pagination($perpage, 'search');
 
 			while($qs = mysql_fetch_object($getqs)) {
 				$pai->showqs($qs);
@@ -216,7 +212,14 @@ else {
 ################ QUESTION PERMALINKS ##################
 	elseif (isset($_GET['q']) && !empty($_GET['q']) && is_numeric($_GET['q'])) {
 
-		$getq = $pai->query('SELECT * FROM `' . $pai->table . '` WHERE `q_id`= ' . (int)$pai->cleaninput($_GET['q']) . ' LIMIT 1');
+		$query = <<<SQL
+SELECT `{$pai_db->get_table()}`.*, `{$pai_db->get_table()}_cats`.`cat_name`
+FROM `{$pai_db->get_table()}`
+JOIN `{$pai_db->get_table()}_cats` ON `{$pai_db->get_table()}`.`category` = `{$pai_db->get_table()}_cats`.`cat_id`
+WHERE `{$pai_db->get_table()}`.`q_id` = 
+SQL;
+
+		$getq = $pai_db->query($query . (int)cleaninput($_GET['q']) . ' LIMIT 1');
 		if (mysql_num_rows($getq) < 1) pai_error('No such question.');
 
 		$q = mysql_fetch_object($getq);
@@ -239,11 +242,12 @@ else {
 			<li>By category:
 				<ul>
 		<?php
-		$getcats = $pai->query('SELECT * FROM `' . $pai->table . '_cats` ORDER BY `cat_name` ASC');
+		$getcats = $pai_db->query('SELECT `' . $pai_db->get_table() . '_cats`.*, COUNT(`' . $pai_db->get_table() . '`.`q_id`) AS `num` FROM `' . $pai_db->get_table() . '_cats` LEFT JOIN `' . $pai_db->get_table() . '` ON `' . $pai_db->get_table() . '_cats`.`cat_id` = `' . $pai_db->get_table() . '`.`category` GROUP BY `' . $pai_db->get_table() . '_cats`.`cat_id` ORDER BY `cat_name` ASC');
+
 		while ($cat = mysql_fetch_object($getcats)) {
-			$num = mysql_fetch_object($pai->query('SELECT COUNT(`q_id`) AS `num` FROM `' . $pai->table . "` WHERE `category` = '" . $cat->cat_id . "'"));
+			$num = mysql_fetch_object($pai_db->query('SELECT COUNT(`q_id`) AS `num` FROM `' . $pai_db->get_table() . "` WHERE `category` = '" . $cat->cat_id . "'"));
 			?>
-					<li><a href="?category=<?php echo $cat->cat_id; ?>" title="View questions in this category"><?php echo $cat->cat_name; ?></a> (<?php echo $num->num; ?>)</li>
+					<li><a href="?category=<?php echo $cat->cat_id; ?>" title="View questions in this category"><?php echo $cat->cat_name; ?></a> (<?php echo $cat->num; ?>)</li>
 			<?php
 		}
 		?>
@@ -251,13 +255,13 @@ else {
 			</li>
 		</ul>
 
-		<?php
-		$total = mysql_fetch_object($pai->query('SELECT COUNT(`q_id`) AS `num` FROM `' . $pai->table . '`'));
-		$unanswered = mysql_fetch_object($pai->query('SELECT COUNT(`q_id`) AS `num` FROM `' . $pai->table . "` WHERE `answer` = ''")); ?>
-		<p>Total questions: <strong><?php echo $total->num; ?></strong> (<?php echo $unanswered->num; ?> unanswered)</p>
+		<p>Total questions: <strong><?php echo $pai->total; ?></strong> (<?php echo $pai->unanswered; ?> unanswered)</p>
 		<?php
 	}
-	else pai_error('Invalid query string.');
+	else {
+		$error = new pai_error('Invalid query string.');
+		$error->display();
+	}
 }
 
 #######################################################
@@ -274,7 +278,7 @@ else {
 ################### MISC FUNCTIONS ####################
 
 //CREDIT LINK. DO NOT REMOVE
-$display = '<p style="text-align: center;">Powered by <a href="http://not-noticeably.net/scripts/phpaskit/" title="PHPAskIt">PHPAskIt 3.0</a></p>';
+$display = '<p style="text-align: center;">Powered by <a href="http://not-noticeably.net/scripts/phpaskit/" title="PHPAskIt">PHPAskIt 3.1</a></p>';
 
 //IS USER LOGGED IN? TERMINATE SESSION
 $pai->admin_logout();

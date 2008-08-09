@@ -25,25 +25,7 @@ if (!file_exists('functions.php')) { ?>
 }
 require 'functions.php';
 
-if (!@$pai->getoption('username')) { ?>
-	<h1>Error</h1>
-	<p>Please run <strong><a href="install.php" title="install.php"><code>install.php</code></a></strong> before accessing this page.</p>
-	<?php
-	exit;
-}
-elseif (file_exists('install.php')) { ?>
-	<h1>Error</h1>
-	<p>Please delete install.php before using the script. You will not need to run it again.</p>
-	<?php
-	exit;
-}
-
-if (@$pai->getoption('version') != '3.1') { ?>
-	<h1>Error</h1>
-	<p>You need to <a href="upgrade.php" title="Upgrade">upgrade PHPAskIt</a> before you can view this page.</p>
-	<?php
-	exit;
-}
+check_stuff();
 
 $pai->dologin();
 $pai->isloggedin();
@@ -251,14 +233,23 @@ SQL;
 
 ################### DELETE FUNCTION ###################
 elseif (isset($_GET['delete']) && !empty($_GET['delete']) && is_numeric($_GET['delete'])) {
-	$pai->checktoken(false, true);
-	ob_end_flush();
+	if (isset($_GET['inline'])) $pai->checktoken(true, false, true);
+	else {
+		$pai->checktoken(false, true);
+		ob_end_flush();
+	}
 
 	if (!$pai_db->get('q_id', 'main', '`q_id` = ' . (int)cleaninput($_GET['delete']), 1)) {
-		$error = new pai_error('Invalid question.');
-		$error->display();
+		if (isset($_GET['inline'])) {
+			ob_end_clean();
+			echo '<strong>Error:</strong> Invalid question.';
+		}
+		else {
+			$error = new pai_error('Invalid question.');
+			$error->display();
+		}
 	}
-	if ($pai_db->query('DELETE FROM `' . $pai_db->get_table() . '` WHERE `q_id` = ' . (int)cleaninput($_GET['delete']) . ' LIMIT 1')) echo '<p>Question successfully deleted.</p>';
+	if ($pai_db->query('DELETE FROM `' . $pai_db->get_table() . '` WHERE `q_id` = ' . (int)cleaninput($_GET['delete']) . ' LIMIT 1')) echo (isset($_GET['inline']) ? '' : '<p>Question successfully deleted.</p>');
 }
 #######################################################
 
@@ -582,22 +573,20 @@ elseif (isset($_GET['manage']) && !empty($_GET['manage'])) {
 			if (isset($_POST['submit']) && $_SERVER['REQUEST_METHOD'] == 'POST') {
 				$pai->checktoken();
 
-				if (isset($_POST['currentpass']) && !empty($_POST['currentpass']) && md5($_POST['currentpass'] . $pai->mask) == $pai->getoption('password')) {
+				if (isset($_POST['currentpass']) && !empty($_POST['currentpass']) && md5($_POST['currentpass'] . $pai->get_mask()) == $pai->getoption('password')) {
 					foreach($_POST as $key => $value) {
 						$$key = cleaninput($value);
 					}
 					if (!empty($password)) {
 						if ($confirm_pass != $password) {
+							ob_end_flush();
 							$error = new pai_error('Passwords did not match, try again.');
 							$error->display();
 						}
-						$replace = array('&', '<', '>', '\\', '[', ']', '/', '"', '*', '\$', '(', ')', '%', '^', '{', '}', '|');
-						foreach ($replace as $invalid) {
-							if (strstr($_POST['password'], $invalid)) {
-								ob_end_flush();
-								$error = new pai_error('Password contains invalid characters.');
-								$error->display();
-							}
+						if (!preg_match('/^([_a-z0-9@\.-]+)$/i', $_POST['password'])) {
+							ob_end_flush();
+							$error = new pai_error('Password contains invalid characters.');
+							$error->display();
 						}
 					}
 					if (empty($youraddress) || !eregi('^([_a-z0-9-]+)(\.[_a-z0-9-]+)*@([a-z0-9-]+)(\.[a-z0-9-]+)*(\.[a-z]{2,4})$', $youraddress)) {
@@ -616,10 +605,16 @@ elseif (isset($_GET['manage']) && !empty($_GET['manage'])) {
 						ob_end_flush();
 						$error = new pai_error('Your security word is too obvious or too short. Try a different word.');
 					}
-					elseif (md5(strtolower($word) . $pai->mask) == $pai->getoption('password')) {
+					elseif (md5(strtolower($word) . $pai->get_mask()) == $pai->getoption('password')) {
 						ob_end_flush();
 						$error = new pai_error('Your security word cannot be the same as your password.');
 					}
+
+					if (!empty($password) && (strlen($password) <= 3 || strtolower($password) == strtolower($pai->getoption('username')) || strtolower($password) == $username || strtolower($password) == $pai->getoption('youraddress') || in_array(strtolower($password), $tooeasy))) {
+						ob_end_flush();
+						$error = new pai_error('Your new password is too obvious or too short. Try a different word.');
+					}
+
 					if (isset($error)) $error->display();
 
 					if (empty($totalpage_faq) || $totalpage_faq < 1 || $totalpage_faq > 999 || !is_numeric($totalpage_faq)) $totalpage_faq = 10;
@@ -680,11 +675,20 @@ elseif (isset($_GET['manage']) && !empty($_GET['manage'])) {
 					$update[] = 'UPDATE `' . $pai_db->get_table() . "_options` SET `option_value` = '" . $notifybymail . "' WHERE `option_name` = 'notifybymail' LIMIT 1";
 					$update[] = 'UPDATE `' . $pai_db->get_table() . "_options` SET `option_value` = '" . $youraddress . "' WHERE `option_name` = 'youraddress' LIMIT 1";
 					$update[] = 'UPDATE `' . $pai_db->get_table() . "_options` SET `option_value` = '" . (int)$totalpage_faq . "' WHERE `option_name` = 'totalpage_faq' LIMIT 1";
+
 					if (!empty($username) && $username != $pai->getoption('username')) $update[] = 'UPDATE `' . $pai_db->get_table() . "_options` SET `option_value` = '" . $username . "' WHERE `option_name` = 'username'";
-					if (!empty($password) && md5($password . $pai->mask) != $pai->getoption('password')) $update[] = 'UPDATE `' . $pai_db->get_table() . "_options` SET `option_value` = '" . md5($password . $pai->mask) . "' WHERE `option_name` = 'password'";
+
+					$pai->set_mask($word);
+
+					if (!empty($password) && md5($password . $pai->get_mask()) != $pai->getoption('password')) $newpassword = $password;
+					else $newpassword = $_POST['currentpass'];
+
+					$update[] = 'UPDATE `' . $pai_db->get_table() . "_options` SET `option_value` = '" . md5($newpassword . $pai->get_mask()) . "' WHERE `option_name` = 'password'";
 					foreach($update as $query) {
 						$pai_db->query($query);
 					}
+					$pai->reset_options();
+
 					setcookie($pai_db->get_table() . '_user', $pai->getoption('username'), time()+(86400*365), '/');
 					setcookie($pai_db->get_table() . '_pass', 'Loggedin_' . $pai->getoption('password'), time()+(86400*365), '/');
 					ob_end_flush();
@@ -718,14 +722,14 @@ elseif (isset($_GET['manage']) && !empty($_GET['manage'])) {
 					<input type="password" name="currentpass" id="currentpass" /></p>
 
 					<p><strong><label for="password">New password:</label></strong><br />
-					CASE SENSITIVE - only enter this if you want to change your password. <strong>Do not use these characters: &quot;, &amp;, ', &lt;, &gt; otherwise you will be unable to login.</strong><br />
+					CASE SENSITIVE - only enter this if you want to change your password. <strong>Please only use alphanumeric characters. You may also use these characters: !, @, _, -, . (dot).</strong><br />
 					<input type="password" name="password" id="password" /></p>
 
 					<p><strong><label for="confirm_pass">Re-enter new password:</label></strong><br />CASE SENSITIVE - only enter if you are changing your password.<br />
 					<input type="password" name="confirm_pass" id="confirm_pass"/></p>
 
 					<p><strong><label for="word">Security word:</label></strong><br />
-					In case you forget your password, you will need this to reset it. <strong>This cannot be left blank and should not contain any of the aforementioned symbols.</strong><br />
+					In case you forget your password, you will need this to reset it. <strong>This cannot be left blank.</strong><br />
 					<input type="text" name="word" id="word" value="<?php echo $pai->getoption('security_word'); ?>" /></p>
 
 					<p><strong><label for="headerfile">Header file you wish to use:</label></strong><br />

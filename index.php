@@ -255,7 +255,7 @@ SQL;
 			</li>
 		</ul>
 
-		<p>Total questions: <strong><?php echo $pai->total; ?></strong> (<?php echo $pai->unanswered; ?> unanswered)</p>
+		<p>Total questions: <strong><?php echo $pai->get_total(); ?></strong> (<?php echo $pai->get_unanswered(); ?> unanswered)</p>
 		<?php
 	}
 	else {

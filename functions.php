@@ -9,7 +9,6 @@
 ############################ CORE PHPASKIT FUNCTIONS. DO _NOT_ EDIT. ###########################
 ################################################################################################
 
-
 if (!defined('PAI_IN')) exit('<p>This file cannot be loaded directly.</p>');
 //error_reporting(0);
 
@@ -17,32 +16,33 @@ $upone = array('import.php', 'convertwaks.php', 'convertfaqtastic.php', 'convert
 if (in_array(basename($_SERVER['PHP_SELF']), $upone)) $path = '../';
 else $path = '';
 
-if (!file_exists($path . 'config.php')) { ?>
-	<h1>Error</h1>
-	<p><strong><code>config.php</code></strong> could not be found. Without this file, the script cannot operate. Please make sure it is present.</p>
-	<?php
-	exit;
+$required_files = array(
+	'config.php',
+	'classes/Question.php',
+	'classes/Database.php',
+	'classes/Error.php',
+	'classes/PAI.php'
+);
+foreach($required_files as $file) {
+	if (!file_exists($path . $file)) { ?>
+		<h1>Error</h1>
+		<p><strong><code><?php echo $path . $file; ?></code></strong> could not be found. Without this file, the script cannot operate. Please make sure it is present.</p>
+		<?php
+		exit;
+	}
+	else require_once $path . $file;
 }
-if (!file_exists($path . 'class.php')) { ?>
-	<h1>Error</h1>
-	<p><strong><code>class.php</code></strong> could not be found. Without this file, the script cannot operate. Please make sure it is present.</p>
-	<?php
-	exit;
-}
-require_once $path . 'config.php';
-require_once $path . 'class.php';
 
 $display = '<p style="text-align: center;">Powered by <a href="http://not-noticeably.net/scripts/phpaskit/" title="PHPAskIt">PHPAskIt 3.1</a></p>';
 
-function clean_array($data) {
-	if (get_magic_quotes_gpc()) return is_array($data) ? array_map('clean_array', $data) : trim(htmlspecialchars(strip_tags($data)));
-	else return is_array($data) ? array_map('clean_array', $data) : addslashes(trim(htmlspecialchars(strip_tags($data))));
-}
 function cleaninput($data) {
 	global $pai_db;
-	$data = trim(htmlspecialchars(strip_tags($data)));
+	$data = trim(htmlentities(strip_tags($data)));
 	if (get_magic_quotes_gpc()) $data = stripslashes($data);
-	return mysql_real_escape_string($data);
+	return mysql_real_escape_string($data, $pai_db->getConnection());
+}
+function clean_array($data) {
+	return is_array($data) ? array_map('clean_array', $data) : cleaninput($data);
 }
 function adminheader() {
 	?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
@@ -101,9 +101,9 @@ function adminheader() {
 function summary() {
 	global $pai;
 	$summary = array('[[total]]', '[[answered]]', '[[unanswered]]', '[[categories]]');
-	$replace = array($pai->get_total(), $pai->get_answered(), $pai->get_unanswered(), $pai->get_cats());
+	$replace = array($pai->getTotal(), $pai->getAnswered(), $pai->getUnanswered(), $pai->getCats());
 
-	echo str_replace($summary, $replace, $pai->getoption('sum_template'));
+	echo str_replace($summary, $replace, $pai->getOption('sum_template'));
 }
 function pagination($numofpages, $link) {
 	global $page, $getsearch;
@@ -173,14 +173,14 @@ function dopagination($query) {
 		$startfrom = ($page - 1) * ADMIN_PERPAGE;
 	}
 	else {
-		$perpage = ceil($totalpages / $pai->getoption('totalpage_faq'));
+		$perpage = ceil($totalpages / $pai->getOption('totalpage_faq'));
 		check_pages($perpage);
-		$startfrom = ($page - 1) * $pai->getoption('totalpage_faq');
+		$startfrom = ($page - 1) * $pai->getOption('totalpage_faq');
 	}
 }
 function check_stuff() {
 	global $pai;
-	if (!$pai->getoption('username')) { ?>
+	if (!$pai->getOption('username')) { ?>
 		<h1>Error</h1>
 		<p>Please run <strong><a href="install.php" title="install.php"><code>install.php</code></a></strong> before accessing this page.</p>
 		<?php
@@ -192,14 +192,12 @@ function check_stuff() {
 		<?php
 		exit;
 	}
-
-	if ($pai->getoption('version') != '3.1') { ?>
+	if ($pai->getOption('version') != '3.1') { ?>
 		<h1>Error</h1>
 		<p>You need to <a href="upgrade.php" title="Upgrade">upgrade PHPAskIt</a> before you can view this page.</p>
 		<?php
 		exit;
 	}
-
 	if (file_exists('import/import.php') || file_exists('import/convertaa.php') || file_exists('import/convertwaks.php') || file_exists('import/convertfaqtastic.php') || file_exists('upgrade.php')) { ?>
 		<h1>Error</h1>
 		<p>Please delete <code>upgrade.php</code> and the contents of the <code>/import</code> directory if you are not upgrading from a previous version of PHPAskIt or are not planning to import any questions into the script.</p>
@@ -208,8 +206,8 @@ function check_stuff() {
 	}
 }
 
-$pai_db = new pai_db(PAI_HOST, PAI_USER, PAI_PASS, PAI_DB);
-$pai = new pai();
+$pai_db = new Database(PAI_HOST, PAI_USER, PAI_PASS, PAI_DB);
+$pai = new PAI();
 
 $display = '<p style="text-align: center;">Powered by <a href="http://not-noticeably.net/scripts/phpaskit/" title="PHPAskIt">PHPAskIt 3.1</a></p>';
 

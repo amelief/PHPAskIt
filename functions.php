@@ -1,12 +1,12 @@
 <?php
 /*
   ==============================================================================================
-  PHPAskIt 3.1 © 2005-2008 Amelie M.
+  Askably 3.1 © 2005-2009 Amelie M.
   ==============================================================================================
   																								*/
 
 ################################################################################################
-############################ CORE PHPASKIT FUNCTIONS. DO _NOT_ EDIT. ###########################
+############################ CORE ASKABLY FUNCTIONS. DO _NOT_ EDIT. ###########################
 ################################################################################################
 
 if (!defined('PAI_IN')) exit('<p>This file cannot be loaded directly.</p>');
@@ -33,11 +33,11 @@ foreach($required_files as $file) {
 	else require_once $path . $file;
 }
 
-$display = '<p style="text-align: center;">Powered by <a href="http://not-noticeably.net/scripts/phpaskit/" title="PHPAskIt">PHPAskIt 3.1</a></p>';
+$display = '<p style="text-align: center;">Powered by <a href="http://not-noticeably.net/scripts/askably/" title="Askably">Askably 3.1</a></p>';
 
 function cleaninput($data) {
 	global $pai_db;
-	$data = trim(htmlentities(strip_tags($data)));
+	$data = trim(htmlentities(strip_tags($data), ENT_QUOTES, 'UTF-8'));
 	if (get_magic_quotes_gpc()) $data = stripslashes($data);
 	return mysql_real_escape_string($data, $pai_db->getConnection());
 }
@@ -45,10 +45,11 @@ function clean_array($data) {
 	return is_array($data) ? array_map('clean_array', $data) : cleaninput($data);
 }
 function adminheader() {
+	header('Content-Type: text/html; charset=utf-8');
 	?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
-	<title>PHPAskIt 3.1: Admin</title>
+	<title>Askably 3.1: Admin</title>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 	<style type="text/css">
 		body { color: #222; font: 0.7em/1.2em Verdana, Arial, Helvetica, sans-serif; text-align: center; }
@@ -180,6 +181,12 @@ function dopagination($query) {
 }
 function check_stuff() {
 	global $pai;
+	if (version_compare(PHP_VERSION, '5.0.0', '<')) { ?>
+		<h1>Error</h1>
+		<p>Askably requires PHP 5+ to run - your version is <?php echo PHP_VERSION; ?>. If you cannot upgrade your version, you may wish to use Askably v3.0 which supports PHP 4.</p>
+		<?php
+		exit;
+	}
 	if (!$pai->getOption('username')) { ?>
 		<h1>Error</h1>
 		<p>Please run <strong><a href="install.php" title="install.php"><code>install.php</code></a></strong> before accessing this page.</p>
@@ -194,13 +201,13 @@ function check_stuff() {
 	}
 	if ($pai->getOption('version') != '3.1') { ?>
 		<h1>Error</h1>
-		<p>You need to <a href="upgrade.php" title="Upgrade">upgrade PHPAskIt</a> before you can view this page.</p>
+		<p>You need to <a href="upgrade.php" title="Upgrade">upgrade Askably</a> before you can view this page.</p>
 		<?php
 		exit;
 	}
 	if (file_exists('import/import.php') || file_exists('import/convertaa.php') || file_exists('import/convertwaks.php') || file_exists('import/convertfaqtastic.php') || file_exists('upgrade.php')) { ?>
 		<h1>Error</h1>
-		<p>Please delete <code>upgrade.php</code> and the contents of the <code>/import</code> directory if you are not upgrading from a previous version of PHPAskIt or are not planning to import any questions into the script.</p>
+		<p>Please delete <code>upgrade.php</code> and the contents of the <code>/import</code> directory if you are not upgrading from a previous version of Askably or are not planning to import any questions into the script.</p>
 		<?php
 		exit;
 	}
@@ -209,7 +216,7 @@ function check_stuff() {
 $pai_db = new Database(PAI_HOST, PAI_USER, PAI_PASS, PAI_DB);
 $pai = new PAI();
 
-$display = '<p style="text-align: center;">Powered by <a href="http://not-noticeably.net/scripts/phpaskit/" title="PHPAskIt">PHPAskIt 3.1</a></p>';
+$display = '<p style="text-align: center;">Powered by <a href="http://not-noticeably.net/scripts/askably/" title="Askably">Askably 3.1</a></p>';
 
 foreach($_SERVER as $key => $value) {
 	$_SERVER[$key] = clean_array($value);

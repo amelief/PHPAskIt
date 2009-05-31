@@ -1,7 +1,7 @@
 <?php
 /*
   ==============================================================================================
-  PHPAskIt 3.1 © 2005-2008 Amelie M.
+  Askably 3.1 © 2005-2009 Amelie M.
   ==============================================================================================
   																								*/
 
@@ -42,12 +42,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['question'])) {
 	if ($pai->getOption('ipban_enable') == 'yes' && strlen($pai->getOption('ipban_enable')) > 0) {
 		$bannedips = explode(';', $pai->getOption('banned_ips'));
 
-		foreach($bannedips as $ip) {
-			if ($question->getIp() == $ip) {
-				$error = new Error('Sorry, this IP address has been banned from asking questions.');
-				$error->display();
-			}
-		}
+		// foreach($bannedips as $ip) {
+			// if ($question->getIp() == $ip) {
+				// $error = new Error('Sorry, this IP address has been banned from asking questions.');
+				// $error->display();
+			// }
+		// }
 	}
 	if ($pai->getOption('antispam_enable') == 'yes' && strlen($pai->getOption('banned_words')) > 0) {
 		$bannedwords = $pai->getOption('banned_words');
@@ -79,10 +79,10 @@ Login to your admin panel ';
 		$bodyemail .= 'to answer it.
 
 
-Powered by PHPAskIt 3.1.';
+Powered by Askably 3.1.';
 
-		if (strstr($_SERVER['SERVER_SOFTWARE'], 'Win32')) $extra = 'From: ' . $pai->getOption('youraddress') . "\r\nX-Mailer: PHPAskIt 3.1 PHP/" . phpversion();
-		else $extra = 'From: PHPAskIt <' . $pai->getOption('youraddress') . ">\r\nX-Mailer: PHPAskIt 3.1 PHP/" . phpversion();
+		if (strstr($_SERVER['SERVER_SOFTWARE'], 'Win32')) $extra = 'From: ' . $pai->getOption('youraddress') . "\r\nX-Mailer: Askably 3.1 PHP/" . phpversion();
+		else $extra = 'From: PHPAskIt <' . $pai->getOption('youraddress') . ">\r\nX-Mailer: Askably 3.1 PHP/" . phpversion();
 
 		mail($pai->getOption('youraddress'), $subject, $bodyemail, $extra);
 	}
@@ -283,7 +283,7 @@ SQL;
 ################### MISC FUNCTIONS ####################
 
 //CREDIT LINK. DO NOT REMOVE
-$display = '<p style="text-align: center;">Powered by <a href="http://not-noticeably.net/scripts/phpaskit/" title="PHPAskIt">PHPAskIt 3.1</a></p>';
+$display = '<p style="text-align: center;">Powered by <a href="http://not-noticeably.net/scripts/phpaskit/" title="PHPAskIt">Askably 3.1</a></p>';
 
 //IS USER LOGGED IN? TERMINATE SESSION
 $pai->adminLogout();

@@ -1,7 +1,7 @@
 <?php
 /*
   ==============================================================================================
-  PHPAskIt 3.1 © 2005-2008 Amelie M.
+  Askably 3.1 © 2005-2009 Amelie M.
   ==============================================================================================
   																								*/
 
@@ -48,7 +48,7 @@ else define('ADMIN_PERPAGE', 10);
 adminheader(); ?>
 
 <div id="container">
-	<h1 id="header"><a href="admin.php" title="Back to main admin page">PHPAskIt</a></h1>
+	<h1 id="header"><a href="admin.php" title="Back to main admin page">Askably</a></h1>
 
 	<?php if (isset($_SERVER['QUERY_STRING'])) {
 		if (strstr($_SERVER['QUERY_STRING'], '=unanswered')) $active = 'unans';
@@ -185,7 +185,7 @@ elseif (isset($_GET['search'])) {
 
 		pagination($perpage, 'search');
 		echo '<ul id="question-list">';
-		while ($qs = mysql_fetch_object($getqs)) {
+		while($qs = mysql_fetch_object($getqs)) {
 			$pai->adminQs($qs);
 		}
 		echo '</ul>';
@@ -241,93 +241,9 @@ elseif (isset($_GET['edit'])) {
 
 		##### EDIT QUESTIONS
 		case 'question':
-			if ($_SERVER['REQUEST_METHOD'] == 'POST' && (isset($_POST['id']) && !empty($_POST['id']))) {
-				if (isset($_GET['inline'])) $pai->checkToken(true, false, true);
-				else $pai->checkToken();
-				foreach($_POST as $key => $value) {
-					$$key = cleaninput($value);
-					if (empty($value)) {
-						if (isset($_GET['inline'])) {
-							ob_end_clean();
-							exit('<strong>Error saving question:</strong><br />Missing parameter: ' . $key);
-						}
-						else {
-							ob_end_flush();
-							$error = new Error('Missing parameter: ' . $key);
-							$error->display();
-						}
-					}
-				}
-				$thequestion = new Question();
-				$thequestion->findById((int)$id);
-
-				if (!$thequestion->checkId()) {
-					if (isset($_GET['inline'])) {
-						ob_end_clean();
-						exit('<strong>Error saving question:</strong><br />Invalid question ID.');
-					}
-					else {
-						ob_end_flush();
-						$error = new Error('Invalid question ID.');
-						$error->display();
-					}
-				}
-				$thequestion->setQuestion($question, false);
-				if ($thequestion->save()) {
-					if (isset($_GET['inline'])) {
-						ob_end_clean();
-						echo '<a href="admin.php?q=' . (int)$id . '" title="Permalink to this question">' . stripslashes(strip_tags($question)) . '</a>';
-					}
-					else {
-						ob_end_flush();
-						echo '<p>Question modified.</p>';
-					}
-				}
-				else {
-					if (isset($_GET['inline'])) {
-						ob_end_clean();
-						exit('<strong>Error modifying question:</strong><br />Could not contact database.');
-					}
-					else {
-						ob_end_flush();
-						$error = new Error('Could not modify question.');
-						$error->display();
-					}
-				}
-			}
-			else {
-				if (!isset($_GET['qu']) || (empty($_GET['qu']) || !is_numeric($_GET['qu']))) {
-					ob_end_flush();
-					$error = new Error('Invalid question.');
-					$error->display();
-				}
-				$question = new Question();
-				$question->findById((int)cleaninput($_GET['qu']));
-
-				if (!$question->checkId()) {
-					ob_end_flush();
-					$error = new Error('Invalid question.');
-					$error->display();
-				}
-
-				$pai->checkToken(false, true);
-				ob_end_flush(); ?>
-
-				<h2>Editing question #<?php echo $question->getId(); ?></h2>
-
-				<p>Original question: <strong>&quot;<?php echo $question->getQuestion(); ?>&quot;</strong></p>
-				<p>Asked by <?php echo $question->getIp(); ?> on <?php echo date($pai->getOption('date_format'), $question->getDateAsked()); ?></p>
-
-				<form method="post" action="admin.php?edit=question">
-					<p><input type="hidden" name="id" id="id" value="<?php echo $question->getId(); ?>" />
-					<input type="hidden" name="token" id="token" value="<?php echo $token; ?>" />
-					<label for="question">Question:</label><br />
-					<textarea rows="5" cols="45" name="question" id="question"><?php echo $question->getQuestion(); ?></textarea><br />
-					<input type="submit" name="submit_question" id="submit_question" value="Edit question" /></p>
-				</form>
-
-				<?php
-			}
+			if (isset($_POST['id'])) $question = new Question((int)$_POST['id']);
+			elseif (isset($_GET['qu'])) $question = new Question((int)$_GET['qu']);
+			if (isset($question)) $question->editQuestion();
 			break;
 
 		##### EDIT ANSWERS
@@ -373,7 +289,7 @@ elseif (isset($_GET['edit'])) {
 				if ($question->save()) {
 					if (isset($_GET['inline'])) {
 						ob_end_clean();
-						if (!empty($answer)) echo $pai->convertBB(nl2br($answer));
+						if (!empty($answer)) echo $pai->convertBB(stripslashes(nl2br($answer)));
 						else echo '(No answer)';
 					}
 					else {
@@ -576,7 +492,7 @@ elseif (isset($_GET['manage']) && !empty($_GET['manage'])) {
 						$error->display();
 					}
 
-					$tooeasy = array('phpaskit', 'pai', 'abc123', '123abc', 'q&amp;a', 'question', 'questions', 'questionsandanswers', 'questionandanswer', 'q &amp; a', 'questionsandanswer', 'questionandanswers', 'questions and answer', 'question and answer', 'question and answers', 'questions and answers', 'qanda', 'q and a', 'q & a', 'security word', 'security', 'blah', 'yeah', 'password', 'word', 'test');
+					$tooeasy = array('phpaskit', 'pai', 'abc123', '123abc', 'q&amp;a', 'question', 'questions', 'questionsandanswers', 'questionandanswer', 'q &amp; a', 'questionsandanswer', 'questionandanswers', 'questions and answer', 'question and answer', 'question and answers', 'questions and answers', 'qanda', 'q and a', 'q & a', 'security word', 'security', 'blah', 'yeah', 'password', 'word', 'test', 'askably');
 
 					if (!isset($word) || (isset($word) && empty($word))) {
 						ob_end_flush();
@@ -649,7 +565,7 @@ elseif (isset($_GET['manage']) && !empty($_GET['manage'])) {
 						}
 						elseif (!file_exists($is_wp_blog_header)) {
 							ob_end_flush();
-							$error = new Error('Your path to wp-blog-header.php appears to be incorrect, as PHPAskIt cannot find it. Please go back and try again.');
+							$error = new Error('Your path to wp-blog-header.php appears to be incorrect, as Askably cannot find it. Please go back and try again.');
 						}
 					}
 					if (isset($error)) $error->display();
@@ -704,7 +620,7 @@ elseif (isset($_GET['manage']) && !empty($_GET['manage'])) {
 				?>
 
 				<h2>Options</h2>
-				<p>Edit PHPAskIt's options here. Please note that if you change your password you may need to clear out your browser's cookies in order to be able to login again.</p>
+				<p>Edit Askably's options here. Please note that if you change your password you may need to clear out your browser's cookies in order to be able to login again.</p>
 
 				<form method="post" action="admin.php?manage=options">
 					<p><input type="hidden" name="token" id="token" value="<?php echo $token; ?>" />
@@ -736,7 +652,7 @@ elseif (isset($_GET['manage']) && !empty($_GET['manage'])) {
 					As above. Again, do NOT fill in this part if you are using WordPress Themes.<br />
 					<input type="text" name="footerfile" id="footerfile" value="<?php echo $pai->getOption('footerfile'); ?>" /></p>
 
-					<p><strong><label for="is_wordpress">Are you using WordPress Themes with PHPAskIt?</label></strong> <input type="checkbox" name="is_wordpress" id="is_wordpress" value="yes" <?php if ($pai->getOption('is_wordpress') == 'yes') echo 'checked="checked" '; ?>/><br />If you have themed your site using WordPress (i.e. using get_header() and get_footer()) please check this box.</p>
+					<p><strong><label for="is_wordpress">Are you using WordPress Themes with Askably?</label></strong> <input type="checkbox" name="is_wordpress" id="is_wordpress" value="yes" <?php if ($pai->getOption('is_wordpress') == 'yes') echo 'checked="checked" '; ?>/><br />If you have themed your site using WordPress (i.e. using get_header() and get_footer()) please check this box.</p>
 
 					<p><strong><label for="is_wp_blog_header">Absolute path to wp-blog-header.php:</label></strong><br />
 					If you checked the above option, please enter your FULL ABSOLUTE PATH to wp-blog-header.php here.<br />
@@ -1373,7 +1289,7 @@ elseif (isset($_GET['manage']) && !empty($_GET['manage'])) {
 				$getcats = $pai_db->query('SELECT `' . $pai_db->getTable() . '_cats`.*, COUNT(`' . $pai_db->getTable() . '`.`q_id`) AS `num` FROM `' . $pai_db->getTable() . '_cats` LEFT JOIN `' . $pai_db->getTable() . '` ON `' . $pai_db->getTable() . '_cats`.`cat_id` = `' . $pai_db->getTable() . '`.`category` GROUP BY `' . $pai_db->getTable() . '_cats`.`cat_id` ORDER BY `cat_name` ASC');
 				if (mysql_num_rows($getcats) > 0) {
 					echo '<ul>';
-					while ($cat = mysql_fetch_object($getcats)) {
+					while($cat = mysql_fetch_object($getcats)) {
 						echo '<li><strong>' . $cat->cat_name;
 						if ($cat->cat_id == 1) echo ' (default)';
 						echo '</strong> (' . $cat->num . ') &nbsp; [<a href="admin.php?manage=categories&amp;action=edit&amp;id=' . $cat->cat_id . '&amp;token=' . $token . '" title="Edit the name of this category">Edit</a>]';
@@ -1427,7 +1343,7 @@ SQL;
 
 #################### MISC FUNCTIONS ###################
 //CREDIT LINK. DO NOT REMOVE
-$display = '<p style="text-align: center;">Powered by <a href="http://not-noticeably.net/scripts/phpaskit/" title="PHPAskIt">PHPAskIt 3.1</a></p>';
+$display = '<p style="text-align: center;">Powered by <a href="http://not-noticeably.net/scripts/askably/" title="Askably">Askably 3.1</a></p>';
 
 //TERMINATE SESSION (but not if answering a question!)
 if (!isset($_GET['inline'])) {

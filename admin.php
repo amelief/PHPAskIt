@@ -244,213 +244,31 @@ elseif (isset($_GET['edit'])) {
 			if (isset($_POST['id'])) $question = new Question((int)$_POST['id']);
 			elseif (isset($_GET['qu'])) $question = new Question((int)$_GET['qu']);
 			if (isset($question)) $question->editQuestion();
+			else {
+				$error = new Error('Invalid question');
+				$error->display();
+			}
 			break;
 
 		##### EDIT ANSWERS
 		case 'answer':
-			if ($_SERVER['REQUEST_METHOD'] == 'POST' && (isset($_POST['id']) && !empty($_POST['id']))) {
-				if (isset($_GET['inline'])) $pai->checkToken(true, false, true);
-				else $pai->checkToken();
-
-				foreach($_POST as $key => $value) {
-					$$key = cleaninput($value);
-					if ($key != 'answer' && empty($value)) {
-						if (isset($_GET['inline'])) {
-							ob_end_clean();
-							exit('<strong>Error saving answer:</strong><br />Missing parameter: ' . $key);
-						}
-						else {
-							ob_end_flush();
-							$error = new Error('Missing parameter: ' . $key);
-							$error->display();
-						}
-					}
-				}
-				$question = new Question();
-				$question->findById((int)cleaninput($id));
-
-				if (!$question->checkId()) {
-					if (isset($_GET['inline'])) {
-						ob_end_clean();
-						exit('<strong>Error saving answer:</strong><br />Invalid question ID.');
-					}
-					else {
-						ob_end_flush();
-						$error = Error('Invalid question ID.');
-						$error->display();
-					}
-				}
-
-				$answer = str_replace("\\r", "\r", $answer);
-				$answer = str_replace("\\n", "\n", $answer);
-
-				$question->setAnswer(nl2br($answer), false);
-
-				if ($question->save()) {
-					if (isset($_GET['inline'])) {
-						ob_end_clean();
-						if (!empty($answer)) echo $pai->convertBB(stripslashes(nl2br($answer)));
-						else echo '(No answer)';
-					}
-					else {
-						ob_end_flush();
-						echo '<p>Your answer has been saved.</p>';
-					}
-				}
-				else {
-					if (isset($_GET['inline'])) {
-						ob_end_clean();
-						exit('<strong>Error saving answer:</strong><br />Could not contact database.');
-					}
-					else {
-						ob_end_flush();
-						$error = new Error('Could not save answer.');
-						$error->display();
-					}
-				}
-			}
+			if (isset($_POST['id'])) $question = new Question((int)$_POST['id']);
+			elseif (isset($_GET['qu'])) $question = new Question((int)$_GET['qu']);
+			if (isset($question)) $question->editAnswer();
 			else {
-				if (!isset($_GET['qu']) || (empty($_GET['qu']) || !is_numeric($_GET['qu']))) {
-					ob_end_flush();
-					$error = new Error('Invalid question.');
-					$error->display();
-				}
-				$question = new Question();
-				$question->findById((int)cleaninput($_GET['qu']));
-
-				if (!$question->checkId()) {
-					ob_end_flush();
-					$error = new Error('Invalid question.');
-					$error->display();
-				}
-
-				$pai->checkToken(false, true);
-				ob_end_flush(); ?>
-
-				<h2>Answering question #<?php echo $question->getId(); ?>: &quot;<?php echo $question->getQuestion(); ?>&quot;</h2>
-
-				<p>Asked by <?php echo $question->getIp(); ?> on <?php echo date($pai->getOption('date_format'), $question->getDateAsked()); ?> </p>
-
-				<form method="post" action="admin.php?edit=answer">
-					<p><input type="hidden" name="id" id="id" value="<?php echo $question->getId(); ?>" />
-					<input type="hidden" name="token" id="token" value="<?php echo $token; ?>" />
-					Answer this question:<br />
-					<textarea rows="5" cols="45" name="answer" id="answer"><?php echo strip_tags($question->getAnswer()); ?></textarea><br />
-					<input type="submit" name="submit_answer" id="submit_answer" value="Answer" /></p>
-				</form>
-
-				<?php
+				$error = new Error('Invalid question');
+				$error->display();
 			}
 			break;
 
 		##### EDIT CATEGORIES
 		case 'category':
-			if ($pai->getOption('enable_cats') != 'yes') {
-				if (isset($_GET['inline'])) {
-					ob_end_clean();
-					exit('<strong>Error:</strong> Categories are disabled.');
-				}
-				else {
-					ob_end_flush();
-					$error = new Error('Categories are disabled.');
-					$error->display();
-				}
-			}
-			if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_category'])) {
-				if (isset($_GET['inline'])) $pai->checkToken(true, false, true);
-				else $pai->checkToken();
-
-				foreach($_POST as $key => $value) {
-					$$key = cleaninput($value);
-					if (empty($value)) {
-						if (isset($_GET['inline'])) {
-							ob_end_clean();
-							exit('<strong>Error saving category:</strong> Missing parameter: ' . $key);
-						}
-						else {
-							ob_end_flush();
-							$error = new Error('Missing parameter: ' . $key);
-							$error->display();
-						}
-					}
-				}
-
-				$question = new Question();
-				$question->findById((int)$id);
-
-				if (!$question->checkId()) {
-					if (isset($_GET['inline'])) {
-						ob_end_clean();
-						exit('<strong>Error:</strong> Invalid question');
-					}
-					else {
-						ob_end_flush();
-						$error = new Error('Invalid question.');
-						$error->display();
-					}
-				}
-				if (!$cat = $pai_db->get('cat_name', 'cats', '`cat_id` = ' . (int)$category)) {
-					if (isset($_GET['inline'])) {
-						ob_end_clean();
-						exit('<strong>Error:</strong> Invalid category.');
-					}
-					else {
-						ob_end_flush();
-						$error = new Error('Invalid category.');
-						$error->display();
-					}
-				}
-
-				$question->setCategory($category);
-				if ($question->save()) {
-					if (isset($_GET['inline'])) {
-						ob_end_clean();
-						echo '(<a href="admin.php?category=' . $category . '" title="See all questions in the ' . $cat . ' category">' . $cat . '</a>)';
-					}
-					else {
-						ob_end_flush();
-						echo '<p>The category for this question has been successfully modified.</p>';
-					}
-				}
-				else {
-					if (isset($_GET['inline'])) {
-						ob_end_clean();
-						exit('<strong>Error:</strong> Could not save category.');
-					}
-					else {
-						ob_end_flush();
-						$error = new Error('Could not save category.');
-						$error->display();
-					}
-				}
-			}
+			if (isset($_POST['id'])) $question = new Question((int)$_POST['id']);
+			elseif (isset($_GET['qu'])) $question = new Question((int)$_GET['qu']);
+			if (isset($question)) $question->editCategory();
 			else {
-				if (!isset($_GET['qu']) || (empty($_GET['qu']) || !is_numeric($_GET['qu']))) $error = new Error('Invalid question.');
-				$question = new Question();
-				$question->findById((int)cleaninput($_GET['qu']));
-
-				if (!$question->getId()) {
-					$error = new Error('Invalid question.');
-					$error->display();
-				}
-				$pai->checkToken(false, true); ?>
-
-				<h2>Editing category of question #<?php echo $question->getId(); ?></h2>
-
-				<p><strong>&quot;<?php echo $question->getQuestion(); ?>&quot;</strong></p>
-				<p>Asked by <?php echo $question->getIp(); ?> on <?php echo date($pai->getOption('date_format'), $question->getDateAsked()); ?></p>
-
-				<p>Current category: <?php echo $question->getCategory(true); ?></p>
-
-				<form method="post" action="admin.php?edit=category">
-					<p><input type="hidden" name="id" id="id" value="<?php echo $question->getId(); ?>" />
-					<input type="hidden" name="token" id="token" value="<?php echo $token; ?>" />
-					<select name="category" id="category">
-						<?php $pai->getCategories($question->getCategory()); ?>
-					</select><br />
-					<input type="submit" name="submit_category" id="submit_category" value="Edit question" /></p>
-				</form>
-				<?php
+				$error = new Error('Invalid question');
+				$error->display();
 			}
 			break;
 
@@ -706,7 +524,7 @@ elseif (isset($_GET['manage']) && !empty($_GET['manage'])) {
 				$summary = strip_tags($_POST['summary'], '<a> <div> <p> <img> <span> <b> <i> <u> <em> <strong> <table> <tr> <td> <th> <br> <br /> <acronym> <abbr> <hr> <hr /> <big> <small> <blockquote> <center> <cite> <fieldset> <ul> <li> <ol> <font> <h1> <h2> <h3> <h4> <h5> <h6> <h7> <q> <thead> <tfoot> <sub> <tt> <tbody> <sup> <kbd> <del> <ins>');
 				$success_msg = strip_tags($_POST['success_msg'], '<a> <div> <p> <img> <span> <b> <i> <u> <em> <strong> <table> <tr> <td> <th> <br> <br /> <acronym> <abbr> <hr> <hr /> <big> <small> <blockquote> <center> <cite> <fieldset> <ul> <li> <ol> <font> <h1> <h2> <h3> <h4> <h5> <h6> <h7> <q> <thead> <tfoot> <sub> <tt> <tbody> <sup> <kbd> <del> <ins>');
 
-				$no = '/(onclick|ondblclick|onload|onfocus|onblur|onmouse|onkey|javascript|alert)/i';
+				$no = '/(onclick|ondblclick|onload|onfocus|onblur|onmouse|onkey=|javascript|alert)/i';
 				if (preg_match($no, $form) || preg_match($no, $q) || preg_match($no, $summary) || preg_match($no, $success_msg)) {
 					$error = new Error('Please don\'t use JavaScript in your templates.');
 					$error->display();

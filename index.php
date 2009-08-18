@@ -36,18 +36,20 @@ else include $pai->getOption('headerfile');
 ################### PROCESS QUESTION ##################
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['question'])) {
 	if (!isset($_POST['category'])) $_POST['category'] = 1;
-	$question = new Question($_POST['question'], $_POST['category'], $_SERVER['REMOTE_ADDR']);
+	$question = new Question();
 	$question->setQuestion($_POST['question']);
+	$question->setCategory($_POST['category']);
+	$question->setIp($_SERVER['REMOTE_ADDR']);
 
 	if ($pai->getOption('ipban_enable') == 'yes' && strlen($pai->getOption('ipban_enable')) > 0) {
 		$bannedips = explode(';', $pai->getOption('banned_ips'));
 
-		// foreach($bannedips as $ip) {
-			// if ($question->getIp() == $ip) {
-				// $error = new Error('Sorry, this IP address has been banned from asking questions.');
-				// $error->display();
-			// }
-		// }
+		foreach($bannedips as $ip) {
+			if ($question->getIp() == $ip) {
+				$error = new Error('Sorry, this IP address has been banned from asking questions.');
+				$error->display();
+			}
+		}
 	}
 	if ($pai->getOption('antispam_enable') == 'yes' && strlen($pai->getOption('banned_words')) > 0) {
 		$bannedwords = $pai->getOption('banned_words');
@@ -106,10 +108,10 @@ FROM `{$table}`
 JOIN `{$table}_cats` ON `{$table}`.`category` = `{$table}_cats`.`cat_id`
 SQL;
 
-		if ($pai->getOption('show_unanswered') == 'no') $query .= ' WHERE `' . $pai_db->getTable() . "`.`answer` != '' OR `" . $pai_db->getTable() . '`.`answer` IS NOT NULL';
+		if ($pai->getOption('show_unanswered') == 'no') $query .= ' WHERE `' . $pai_db->getTable() . '`.`answer` IS NOT NULL AND `' . $pai_db->getTable() . "`.`answer` != ''";
 
 		dopagination($query);
-		$query .= ' ORDER BY `' . $table . '`.`dateasked` DESC LIMIT ' . $startfrom . ', 10';// . $pai->getOption('totalpage_faq');
+		$query .= ' ORDER BY `' . $table . '`.`dateasked` DESC LIMIT ' . $startfrom . ', ' . $pai->getOption('totalpage_faq');
 
 		summary();
 

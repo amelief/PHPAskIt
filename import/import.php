@@ -1,9 +1,9 @@
 <?php
 /*
   ==============================================================================================
-  PHPAskIt 3.0 © 2005-2008 Amelie M.
+  Askably 3.1 Â© 2005-2009 Amelie M.
   ==============================================================================================
-  																								*/
+																																*/
 
 ############################## IMPORT QUESTIONS INTO THE DATABASE ##############################
 
@@ -45,12 +45,12 @@ Questions will also have today's date and your IP address, however this is not e
 //------- DO _NOT_ EDIT THIS PART ------------------------------------------------------------//
 define('PAI_IN', true);
 
-error_reporting(0);
+//error_reporting(0);
 
 if (file_exists('../functions.php')) include '../functions.php';
 else exit('<p><strong>Error: <code>functions.php</code></strong> could not be found. Without this file, the script cannot operate. Please make sure it is present and try again.</p>');
 
-if (!@$pai->getoption('username')) { ?>
+if (!$pai->getOption('username')) { ?>
 	<h1>Error</h1>
 	<p>Please run <strong><a href="../install.php" title="install.php"><code>install.php</code></a></strong> before accessing this page.</p>
 	<?php
@@ -76,13 +76,13 @@ $question[] = "QUESTION || ANSWER";
 
 //------- STOP EDITING NOW -------------------------------------------------------------------//
 
-$sql = 'INSERT INTO `' . $pai->table . '` VALUES ';
+$sql = 'INSERT INTO `' . $pai_db->getTable() . '` VALUES ';
 foreach($question as $q) {
 	$qa = explode('||', $q);
-	$sql .= "('', '" . $pai->cleaninput($qa[0]) . "', '" . $pai->cleaninput($qa[1]) . "', 1, NOW(), '" . $pai->cleaninput($_SERVER['REMOTE_ADDR']) . "'),";
+	$sql .= "('', '" . cleaninput($qa[0]) . "', '" . cleaninput($qa[1]) . "', 1, NOW(), '" . cleaninput($_SERVER['REMOTE_ADDR']) . "'),";
 }
 if (substr($sql, -1, 1) == ',') $sql = substr_replace($sql, '', -1, 1);
 
-if ($pai->query($sql)) echo '<p>Your questions were successfully imported into the database. You should now delete this file.</p>';
+if ($pai_db->query($sql)) echo '<p>Your questions were successfully imported into the database. You should now delete this file.</p>';
 else echo '<p>An error occurred while importing your questions. Please check your database settings and try again.</p>';
 ?>

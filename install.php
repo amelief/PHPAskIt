@@ -1,9 +1,10 @@
 <?php
+//TODO: Fix!
 /*
   ==============================================================================================
-  PHPAskIt 3.0 © 2005-2008 Amelie M.
+  Askably 3.1 Â© 2005-2009 Amelie M.
   ==============================================================================================
-  																								*/
+																																*/
 
 ######################## INSTALLATION FILE - BUILDS TABLES FOR SCRIPT USAGE ####################
 
@@ -28,7 +29,7 @@ if ($pai->getoption('username')) { ?>
 $header = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
-	<title>PHPAskIt 3.0: Install PHPAskIt</title>
+	<title>Askably 3.1: Install Askably</title>
 	<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
 	<style type="text/css">
 		body { color: #222; font: 0.7em/1.2em Verdana, Arial, Helvetica, sans-serif; text-align: center; }
@@ -55,7 +56,7 @@ $header = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.
 
 <body>
 
-	<h1 id="header"><a href="install.php" title="PHPAskIt">PHPAskIt</a></h1>
+	<h1 id="header"><a href="install.php" title="Askably">Askably</a></h1>
 	<ul id="navigation" class="center">
 		<li><a href="install.php" title="Setup" class="active">Setup</a></li>
 	</ul>
@@ -76,9 +77,9 @@ if (isset($_POST['submit']) && $_SERVER['REQUEST_METHOD'] == 'POST') {
 		}
 	}
 	else exit('ERROR: Please enter a password.');
-	if (empty($youraddress) || !eregi('^([_a-z0-9-]+)(\.[_a-z0-9-]+)*@([a-z0-9-]+)(\.[a-z0-9-]+)*(\.[a-z]{2,4})$', $youraddress)) exit('ERROR: Invalid email address. You must enter a valid address in order to install PHPAskIt.');
+	if (empty($youraddress) || !eregi('^([_a-z0-9-]+)(\.[_a-z0-9-]+)*@([a-z0-9-]+)(\.[a-z0-9-]+)*(\.[a-z]{2,4})$', $youraddress)) exit('ERROR: Invalid email address. You must enter a valid address in order to install Askably.');
 
-	$tooeasy = array('phpaskit', 'pai', 'abc123', '123abc', 'q&amp;a', 'question', 'questions', 'questionsandanswers', 'questionandanswer', 'q &amp; a', 'questionsandanswer', 'questionandanswers', 'questions and answer', 'question and answer', 'question and answers', 'questions and answers', 'qanda', 'q and a', 'q & a', 'security word', 'security', 'blah', 'yeah', 'password', 'word', 'test');
+	$tooeasy = array('phpaskit', 'pai', 'abc123', '123abc', 'q&amp;a', 'question', 'questions', 'questionsandanswers', 'questionandanswer', 'q &amp; a', 'questionsandanswer', 'questionandanswers', 'questions and answer', 'question and answer', 'question and answers', 'questions and answers', 'qanda', 'q and a', 'q & a', 'security word', 'security', 'blah', 'yeah', 'password', 'word', 'test', 'askably');
 
 	if (!isset($word) || (isset($word) && empty($word))) exit('ERROR: Enter a security word.');
 	elseif (strlen($word) <= 3 || strtolower($word) == $username || strtolower($word) == $youraddress || in_array(strtolower($word), $tooeasy)) exit('ERROR: Your security word is too obvious or too short. Try a different word.');
@@ -107,7 +108,7 @@ if (isset($_POST['submit']) && $_SERVER['REQUEST_METHOD'] == 'POST') {
 	if ($is_wordpress == 'yes') {
 		if (empty($is_wp_blog_header)) exit('ERROR: Please enter your absolute path to wp-blog-header.php if you wish to use WordPress Themes. If not, please uncheck the appropriate option.');
 		elseif (strstr($is_wp_blog_header, 'http://')) exit('ERROR: Please enter an absolute path to wp-blog-header.php, NOT a URL.');
-		elseif (!file_exists($is_wp_blog_header)) exit('ERROR: Your path to wp-blog-header.php appears to be incorrect, as PHPAskIt cannot find it. Please go back and try again.');
+		elseif (!file_exists($is_wp_blog_header)) exit('ERROR: Your path to wp-blog-header.php appears to be incorrect, as Askably cannot find it. Please go back and try again.');
 	}
 
 	$pai->query('CREATE TABLE IF NOT EXISTS `' . $pai->table . "`
@@ -190,14 +191,14 @@ if (isset($_POST['submit']) && $_SERVER['REQUEST_METHOD'] == 'POST') {
 	('q_template', '" . $q_template . "'),
 	('sum_template', '" . $sum_template . "'),
 	('success_msg_template', '" . $success_msg . "'),
-	('version', '3.0');") or exit('<p>Sorry, an error occurred when inserting data into the settings table. Please check your database settings and try again.</p>');
+	('version', '3.1');") or exit('<p>Sorry, an error occurred when inserting data into the settings table. Please check your database settings and try again.</p>');
 
 	echo $header . '<p>Installation successful - please now delete this file.</p>';
 }
 else {
 	echo $header;
 	?>
-	<h3 class="center">Fill in the form below to install PHPAskIt 3.0.</h3>
+	<h3 class="center">Fill in the form below to install Askably 3.1.</h3>
 	<p class="center">The * character denotes a required field. Any other fields you do not fill in will use the default settings. You will be able to change all of these options in your admin panel once you have installed the script.</p>
 
 	<form method="post" action="install.php">
@@ -225,7 +226,7 @@ else {
 		As above. Again, do NOT fill in this part if you are using WordPress Themes.<br />
 		<input type="text" name="footerfile" id="footerfile" value="" /></p>
 
-		<p><strong><label for="is_wordpress">Are you using WordPress Themes with PHPAskIt?</label></strong> <input type="checkbox" name="is_wordpress" id="is_wordpress" value="yes" /><br />If you have themed your site using WordPress (i.e. using get_header() and get_footer()) and would like to apply the same themes to your questions page, please check this box.</p>
+		<p><strong><label for="is_wordpress">Are you using WordPress Themes with Askably?</label></strong> <input type="checkbox" name="is_wordpress" id="is_wordpress" value="yes" /><br />If you have themed your site using WordPress (i.e. using get_header() and get_footer()) and would like to apply the same themes to your questions page, please check this box.</p>
 
 		<p><strong><label for="is_wp_blog_header">Absolute path to wp-blog-header.php:</label></strong><br />
 		If you checked the above option, please enter your FULL ABSOLUTE PATH to wp-blog-header.php here.<br />

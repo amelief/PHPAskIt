@@ -1,12 +1,12 @@
 <?php
 /*
   ==============================================================================================
-  Askably 3.1 © 2005-2009 Amelie M.
+  Askably 3.1 Â© 2005-2009 Amelie M.
   ==============================================================================================
-  																								*/
+																																*/
 
 ################################################################################################
-############################ CORE ASKABLY FUNCTIONS. DO _NOT_ EDIT. ###########################
+############################ CORE ASKABLY FUNCTIONS. DO _NOT_ EDIT. ############################
 ################################################################################################
 
 if (!defined('PAI_IN')) exit('<p>This file cannot be loaded directly.</p>');
@@ -205,11 +205,13 @@ function check_stuff() {
 		<?php
 		exit;
 	}
-	if (file_exists('import/import.php') || file_exists('import/convertaa.php') || file_exists('import/convertwaks.php') || file_exists('import/convertfaqtastic.php') || file_exists('upgrade.php')) { ?>
-		<h1>Error</h1>
-		<p>Please delete <code>upgrade.php</code> and the contents of the <code>/import</code> directory if you are not upgrading from a previous version of Askably or are not planning to import any questions into the script.</p>
-		<?php
-		exit;
+	if (basename($_SERVER['PHP_SELF'] != 'admin.php')) {
+		if (file_exists('import/import.php') || file_exists('import/convertaa.php') || file_exists('import/convertwaks.php') || file_exists('import/convertfaqtastic.php') || file_exists('upgrade.php')) { ?>
+	 		<h1>Error</h1>
+	 		<p>Please delete <code>upgrade.php</code> and the contents of the <code>/import</code> directory if you are not upgrading from a previous version of Askably or are not planning to import any questions into the script.</p>
+	 		<?php
+	 		exit;
+		}
 	}
 }
 

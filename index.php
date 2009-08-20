@@ -1,9 +1,9 @@
 <?php
 /*
   ==============================================================================================
-  Askably 3.1 © 2005-2009 Amelie M.
+  Askably 3.1 Â© 2005-2009 Amelie M.
   ==============================================================================================
-  																								*/
+*/
 
 ############################# QUESTIONS PAGE. END-USER INTERFACE :) ############################
 
@@ -84,7 +84,7 @@ Login to your admin panel ';
 Powered by Askably 3.1.';
 
 		if (strstr($_SERVER['SERVER_SOFTWARE'], 'Win32')) $extra = 'From: ' . $pai->getOption('youraddress') . "\r\nX-Mailer: Askably 3.1 PHP/" . phpversion();
-		else $extra = 'From: PHPAskIt <' . $pai->getOption('youraddress') . ">\r\nX-Mailer: Askably 3.1 PHP/" . phpversion();
+		else $extra = 'From: Askably <' . $pai->getOption('youraddress') . ">\r\nX-Mailer: Askably 3.1 PHP/" . phpversion();
 
 		mail($pai->getOption('youraddress'), $subject, $bodyemail, $extra);
 	}
@@ -285,7 +285,7 @@ SQL;
 ################### MISC FUNCTIONS ####################
 
 //CREDIT LINK. DO NOT REMOVE
-$display = '<p style="text-align: center;">Powered by <a href="http://not-noticeably.net/scripts/phpaskit/" title="PHPAskIt">Askably 3.1</a></p>';
+$display = '<p style="text-align: center;">Powered by <a href="http://not-noticeably.net/scripts/askably/" title="Askably">Askably 3.1</a></p>';
 
 //IS USER LOGGED IN? TERMINATE SESSION
 $pai->adminLogout();

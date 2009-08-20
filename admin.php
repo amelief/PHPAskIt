@@ -1,9 +1,9 @@
 <?php
 /*
   ==============================================================================================
-  Askably 3.1 © 2005-2009 Amelie M.
+  Askably 3.1 Â© 2005-2009 Amelie M.
   ==============================================================================================
-  																								*/
+*/
 
 #################################### ADMINISTRATION PANEL ######################################
 
@@ -594,6 +594,7 @@ elseif (isset($_GET['manage']) && !empty($_GET['manage'])) {
 
 				<form method="post" action="admin.php?manage=templates">
 					<fieldset>
+						<legend></legend>
 						<input type="hidden" name="token" id="token" value="<?php echo $token; ?>" />
 						<h4><a name="qf_template" id="qf_template"></a><label for="question_form">Question form</label></h4>
 						<p>This is the form used to ask questions.</p>
@@ -605,6 +606,7 @@ elseif (isset($_GET['manage']) && !empty($_GET['manage'])) {
 					</fieldset>
 
 					<fieldset>
+						<legend></legend>
 						<h4><a name="q_template" id="q_template"></a><label for="questions">Questions and answers</label></h4>
 						<p>How your questions and answers will appear on your site.</p>
 						<p>Key:</p>
@@ -617,6 +619,7 @@ elseif (isset($_GET['manage']) && !empty($_GET['manage'])) {
 					</fieldset>
 
 					<fieldset>
+						<legend></legend>
 						<h4><a name="s_template" id="s_template"></a><label for="summary">Question summary</label></h4>
 						<p>This is the list of answered/unanswered questions at the top of your recent questions page.</p>
 						<p>Key:</p>
@@ -628,6 +631,7 @@ elseif (isset($_GET['manage']) && !empty($_GET['manage'])) {
 					</fieldset>
 
 					<fieldset>
+						<legend></legend>
 						<h4><a name="sm_template" id="sm_template"></a><label for="success_msg">Success message</label></h4>
 						<p>This is the message that will appear to users when their question has been successfully added to the database.</p>
 						<p><textarea name="success_msg" id="success_msg" cols="30" rows="5" class="template"><?php echo htmlentities($pai->getOption('success_msg_template')); ?></textarea></p>

@@ -77,7 +77,7 @@ if (isset($_POST['submit']) && $_SERVER['REQUEST_METHOD'] == 'POST') {
 		}
 	}
 	else exit('ERROR: Please enter a password.');
-	if (empty($youraddress) || !eregi('^([_a-z0-9-]+)(\.[_a-z0-9-]+)*@([a-z0-9-]+)(\.[a-z0-9-]+)*(\.[a-z]{2,4})$', $youraddress)) exit('ERROR: Invalid email address. You must enter a valid address in order to install Askably.');
+	if (empty($youraddress) || !preg_match('/^([_a-z0-9-]+)(\.[_a-z0-9-]+)*@([a-z0-9-]+)(\.[a-z0-9-]+)*(\.[a-z]{2,4})$/i', $youraddress)) exit('ERROR: Invalid email address. You must enter a valid address in order to install Askably.');
 
 	$tooeasy = array('phpaskit', 'pai', 'abc123', '123abc', 'q&amp;a', 'question', 'questions', 'questionsandanswers', 'questionandanswer', 'q &amp; a', 'questionsandanswer', 'questionandanswers', 'questions and answer', 'question and answer', 'question and answers', 'questions and answers', 'qanda', 'q and a', 'q & a', 'security word', 'security', 'blah', 'yeah', 'password', 'word', 'test', 'askably');
 
@@ -126,7 +126,9 @@ if (isset($_POST['submit']) && $_SERVER['REQUEST_METHOD'] == 'POST') {
 	$pai->query('CREATE TABLE IF NOT EXISTS `' . $pai->table . "_cats`
 	(`cat_id` int(6) UNSIGNED NOT NULL auto_increment,
 	`cat_name` tinytext NOT NULL,
-	PRIMARY KEY (`cat_id`))") or exit('<p>Sorry, an error occurred when creating the category table. Please check your database settings and try again.</p>');
+	`isDefault` tinyint NOT NULL DEFAULT 0,
+	PRIMARY KEY (`cat_id`),
+	KEY (`isDefault`))") or exit('<p>Sorry, an error occurred when creating the category table. Please check your database settings and try again.</p>');
 
 	if (mysql_num_rows($pai->query('SELECT `cat_id` FROM `' . $pai->table . '_cats` LIMIT 1')) == 0) {
 		$pai->query('INSERT INTO `' . $pai->table . "_cats` (`cat_name`) VALUES

@@ -16,13 +16,9 @@ $upone = array('import.php', 'convertwaks.php', 'convertfaqtastic.php', 'convert
 if (in_array(basename($_SERVER['PHP_SELF']), $upone)) $path = '../';
 else $path = '';
 
-$required_files = array(
-	'config.php',
-	'classes/Question.php',
-	'classes/Database.php',
-	'classes/Error.php',
-	'classes/PAI.php'
-);
+$required_files = glob('classes/*.php');
+$required_files[] = 'config.php';
+
 foreach($required_files as $file) {
 	if (!file_exists($path . $file)) { ?>
 		<h1>Error</h1>

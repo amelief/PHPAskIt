@@ -395,31 +395,19 @@ class PAI {
 	 * @param boolean $get Is this a get request?
 	 * @param boolean $inline Is this an AJAX request?
 	 */
-	public function checkToken($post = true, $get = false, $inline = false) {
-		 //TODO: Use request method instead of static
-		if ($post == true) {
-			if (!array_key_exists('token', $_POST)) {
-				if ($inline) $this->killToken(true);
-				else $this->killToken();
-			}
+	public function checkToken() {
+		if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+			if (!array_key_exists('token', $_POST)) $this->killToken();
 			else $token = $_POST['token'];
 		}
-		elseif ($get == true) {
-			if (!array_key_exists('token', $_GET)) {
-				if ($inline) $this->killToken(true);
-				else $this->killToken();
-			}
+		elseif ($_SERVER['REQUEST_METHOD'] == 'GET') {
+			if (!array_key_exists('token', $_GET)) $this->killToken();
 			else $token = $_GET['token'];
 		}
-		if (!array_key_exists('pai_token', $_SESSION) || $token != $_SESSION['pai_token']) {
-			if ($inline == true) $this->killToken(true);
-			else $this->killToken();
-		}
+		if (!array_key_exists('pai_token', $_SESSION) || $token != $_SESSION['pai_token']) $this->killToken();
+
 		// TODO: Redo this - doesn't work
-		if (!array_key_exists('pai_time', $_SESSION) || ((time() - $_SESSION['pai_time']) > 300)) {
-			if ($inline == true) $this->killToken(true);
-			else $this->killToken();
-		}
+		if (!array_key_exists('pai_time', $_SESSION) || ((time() - $_SESSION['pai_time']) > 300)) $this->killToken();
 	}
 
 	/**
@@ -427,11 +415,11 @@ class PAI {
 	 *
 	 * @param boolean $inline Is this an AJAX request?
 	 */
-	protected function killToken($inline = false) {
+	protected function killToken() {
 		$_SESSION = array();
 		if (array_key_exists(session_name(), $_COOKIE)) setcookie(session_name(), '', time()-3600, '/');
 		@session_destroy();
-		if ($inline == true) {
+		if (array_key_exists('inline', $_GET)) {
 			ob_end_clean();
 			exit('<strong>Error:</strong> Your session has expired. Please refresh the page to correct this problem.');
 		}
@@ -493,7 +481,7 @@ class PAI {
 							$error = new Error('Your session has expired. Please reload the page to correct this issue.');
 							$error->display();
 						}
-						$this->checkToken($_POST['token']);
+						$this->checkToken();
 						if (cleaninput($_POST['userlogon']) == $this->getOption('username') && md5(cleaninput($_POST['userpassword']) . $this->getMask()) == $this->getOption('password')) {
 							setcookie($pai_db->getTable() . '_user', $this->getOption('username'), time()+(86400*365), '/');
 							// TODO: Change this. Not secure.
@@ -536,7 +524,7 @@ class PAI {
 							$error = new Error('Your session has expired. Please reload the page to correct this issue.');
 							$error->display();
 						}
-						$this->checkToken($_POST['token']);
+						$this->checkToken();
 						ob_end_flush();
 						$username = cleaninput($_POST['username']);
 						$email = cleaninput($_POST['email_address']);

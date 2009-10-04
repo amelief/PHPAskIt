@@ -14,14 +14,14 @@ if (!defined('PAI_IN')) exit('<p>This file cannot be loaded directly.</p>');
 /**
  * Error class.
  */
-class Error {
+class Error extends Exception {
 
 	/**
 	 * The message to show.
 	 *
 	 * @var string The message to show.
 	 */
-	private $message;
+	protected $message;
 
 	/**
 	 * Whether to exit on this error.
@@ -57,15 +57,6 @@ class Error {
 		$this->kill = $die;
 		$this->header = $header;
 		$this->heading = $heading;
-	}
-
-	/**
-	 * Getter for message.
-	 *
-	 * @return string The message.
-	 */
-	public function getMessage() {
-		return $this->message;
 	}
 
 	/**
@@ -108,7 +99,7 @@ class Error {
 			echo '</h3>
 			<ul>';
 		}
-		echo '<li><p>' . $this->message . '</p></li>';
+		echo '<li><p>' . parent::getMessage() . '</p></li>';
 
 		if ($this->kill == true) {
 			echo '</ul><p style="text-align: center;">Powered by <a href="http://not-noticeably.net/scripts/askably/" title="Askably">Askably 3.1</a></p>';

@@ -213,13 +213,10 @@ elseif (isset($_GET['q']) && !empty($_GET['q']) && is_numeric($_GET['q'])) {
 
 ################### DELETE FUNCTION ###################
 elseif (isset($_GET['delete']) && !empty($_GET['delete']) && is_numeric($_GET['delete'])) {
-	if (isset($_GET['inline'])) $pai->checkToken(true, false, true);
-	else {
-		$pai->checkToken(false, true);
-		ob_end_flush();
-	}
-	$question = new Question();
-	$question->findById((int)cleaninput($_GET['delete']));
+	$pai->checkToken();
+	if (!isset($_GET['inline'])) ob_end_flush();
+
+	$question = new Question((int)$_GET['delete']);
 
 	if (!$question->checkId()) {
 		if (isset($_GET['inline'])) {
@@ -231,18 +228,18 @@ elseif (isset($_GET['delete']) && !empty($_GET['delete']) && is_numeric($_GET['d
 			$error->display();
 		}
 	}
-	if ($question->delete()) echo (isset($_GET['inline']) ? '' : '<p>Question successfully deleted.</p>');
+	if ($question->delete()) echo (array_key_exists('inline', $_GET) ? '' /* TODO: Do some AJAX here */ : '<p>Question successfully deleted.</p>');
 }
 #######################################################
 
 ################### EDIT FUNCTIONS ####################
-elseif (isset($_GET['edit'])) {
+elseif (array_key_exists('edit', $_GET)) {
 	switch($_GET['edit']) {
 
 		##### EDIT QUESTIONS
 		case 'question':
-			if (isset($_POST['id'])) $question = new Question((int)$_POST['id']);
-			elseif (isset($_GET['qu'])) $question = new Question((int)$_GET['qu']);
+			if (array_key_exists('id', $_POST)) $question = new Question((int)$_POST['id']);
+			elseif (array_key_exists('qu', $_GET)) $question = new Question((int)$_GET['qu']);
 			if (isset($question)) $question->editQuestion();
 			else {
 				$error = new Error('Invalid question');
@@ -252,8 +249,8 @@ elseif (isset($_GET['edit'])) {
 
 		##### EDIT ANSWERS
 		case 'answer':
-			if (isset($_POST['id'])) $question = new Question((int)$_POST['id']);
-			elseif (isset($_GET['qu'])) $question = new Question((int)$_GET['qu']);
+			if (array_key_exists('id', $_POST)) $question = new Question((int)$_POST['id']);
+			elseif (array_key_exists('qu', $_GET)) $question = new Question((int)$_GET['qu']);
 			if (isset($question)) $question->editAnswer();
 			else {
 				$error = new Error('Invalid question');
@@ -263,8 +260,8 @@ elseif (isset($_GET['edit'])) {
 
 		##### EDIT CATEGORIES
 		case 'category':
-			if (isset($_POST['id'])) $question = new Question((int)$_POST['id']);
-			elseif (isset($_GET['qu'])) $question = new Question((int)$_GET['qu']);
+			if (array_key_exists('id', $_POST)) $question = new Question((int)$_POST['id']);
+			elseif (array_key_exists('qu', $_GET)) $question = new Question((int)$_GET['qu']);
 			if (isset($question)) $question->editCategory();
 			else {
 				$error = new Error('Invalid question');
@@ -280,7 +277,7 @@ elseif (isset($_GET['edit'])) {
 #######################################################
 
 ############### MANAGEMENT AND OPTIONS ################
-elseif (isset($_GET['manage']) && !empty($_GET['manage'])) {
+elseif (array_key_exists('manage', $_GET) && !empty($_GET['manage'])) {
 	switch($_GET['manage']) {
 
 		##### OPTIONS
@@ -304,7 +301,7 @@ elseif (isset($_GET['manage']) && !empty($_GET['manage'])) {
 							$error->display();
 						}
 					}
-					if (empty($youraddress) || !eregi('^([_a-z0-9-]+)(\.[_a-z0-9-]+)*@([a-z0-9-]+)(\.[a-z0-9-]+)*(\.[a-z]{2,4})$', $youraddress)) {
+					if (empty($youraddress) || !preg_match('/^([_a-z0-9-]+)(\.[_a-z0-9-]+)*@([a-z0-9-]+)(\.[a-z0-9-]+)*(\.[a-z]{2,4})$/i', $youraddress)) {
 						ob_end_flush();
 						$error = new Error('Please enter a valid email address.');
 						$error->display();
@@ -659,7 +656,7 @@ elseif (isset($_GET['manage']) && !empty($_GET['manage'])) {
 								$newip = cleaninput($_POST['newip']);
 							}
 							elseif (isset($_GET['ip'])) {
-								$pai->checkToken(false, true);
+								$pai->checkToken();
 								$newip = cleaninput($_GET['ip']);
 							}
 							else $pai->killToken();
@@ -729,7 +726,7 @@ elseif (isset($_GET['manage']) && !empty($_GET['manage'])) {
 							}
 						}
 						else {
-							$pai->checkToken(false, true);
+							$pai->checkToken();
 							ob_end_flush();
 
 							$iplist = explode(';', $pai->getOption('banned_ips'));
@@ -755,7 +752,7 @@ elseif (isset($_GET['manage']) && !empty($_GET['manage'])) {
 							$error = new Error('Invalid IP.');
 							$error->display();
 						}
-						$pai->checkToken(false, true);
+						$pai->checkToken();
 						ob_end_flush();
 
 						$ip = (int)cleaninput($_GET['ip']);
@@ -901,7 +898,7 @@ elseif (isset($_GET['manage']) && !empty($_GET['manage'])) {
 							}
 						}
 						else {
-							$pai->checkToken(false, true);
+							$pai->checkToken();
 							ob_end_flush();
 
 							$wordlist = explode('|', $pai->getOption('banned_words'));
@@ -929,7 +926,7 @@ elseif (isset($_GET['manage']) && !empty($_GET['manage'])) {
 							$error = new Error('No word submitted.');
 							$error->display();
 						}
-						$pai->checkToken(false, true);
+						$pai->checkToken();
 						ob_end_flush();
 
 						$word = (int)cleaninput($_GET['word']);
@@ -994,80 +991,17 @@ elseif (isset($_GET['manage']) && !empty($_GET['manage'])) {
 				switch($_GET['action']) {
 
 					case 'add':
-						if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['newcat'])) {
-							$pai->checkToken();
-							ob_end_flush();
-
-							$_POST['newcat'] = cleaninput($_POST['newcat']);
-							if (empty($_POST['newcat'])) {
-								$error = Error('No category submitted.');
-								$error->display();
-							}
-							if ($pai_db->get('cat_name', 'cats', "`cat_name` = '" . $_POST['newcat'] . "'")) {
-								$error = new Error('You already have a category of that name.');
-								$error->display();
-							}
-							if ($pai_db->query('INSERT INTO `' . $pai_db->getTable() . "_cats` (`cat_name`) VALUES ('" . $_POST['newcat'] . "')")) echo '<p>The category has been added successfully.</p>';
-						}
-						else { ?>
-							<h2>Add a new category</h2>
-
-							<form method="post" action="admin.php?manage=categories&amp;action=add">
-								<p><input type="hidden" name="token" id="token" value="<?php echo $token; ?>" />
-								<label for="newcat">Category name:</label>
-								<input type="text" name="newcat" id="newcat" maxlength="100" />
-								<input type="submit" name="addcat" id="addcat" value="Add" /></p>
-							</form>
-
-							<?php
-						}
+						$cat = new Category();
+						$cat->add();
 						break;
 
 					case 'edit':
-						if (isset($_POST['catname']) && $_SERVER['REQUEST_METHOD'] == 'POST') {
-							$pai->checkToken();
-							ob_end_flush();
-
-							foreach($_POST as $key => $value) {
-								$$key = cleaninput($value);
-								if (empty($$key)) {
-									$error = new Error('Missing parameter: ' . $key);
-									$error->display();
-								}
-							}
-							if (!$pai_db->get('cat_id', 'cats', '`cat_id` = ' . (int)$id)) $error = new Error('Invalid category.');
-							if ($pai_db->get('cat_name', 'cats', "`cat_name` = '" . strtolower($catname) . "'")) $error = new Error('You already have a category with that name.');
-							if (isset($error)) $error->display();
-							if ($pai_db->query('UPDATE `' . $pai_db->getTable() . "_cats` SET `cat_name` = '" . $catname . "' WHERE `cat_id` = " . (int)$id . ' LIMIT 1')) echo '<p>Category updated successfully.</p>';
-						}
+						if (array_key_exists('id', $_POST)) $cat = new Category((int)$_POST['id']);
+						elseif (array_key_exists('id', $_GET)) $cat = new Category((int)$_GET['id']);
+						if (isset($cat)) $cat->edit();
 						else {
-							if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
-								$error = new Error('Invalid category.');
-								$error->display();
-							}
-							$pai->checkToken(false, true);
-							ob_end_flush();
-
-							$_GET['id'] = (int)cleaninput($_GET['id']);
-							if (empty($_GET['id'])) $error = new Error('Invalid category.');
-
-							if (!$pai_db->get('cat_id', 'cats', '`cat_id` = ' . $_GET['id'])) $error = new Error('Invalid category.');
-							if (isset($error)) $error->display(); ?>
-
-							<h2>Edit your categories</h2>
-							<p>Type the new category name below:</p>
-
-							<?php
-							$getcats = $pai_db->query('SELECT * FROM `' . $pai_db->getTable() . '_cats` WHERE `cat_id` = ' . $_GET['id'] . ' LIMIT 1');
-							$cat = mysql_fetch_object($getcats); ?>
-
-							<form id="categoryedit" method="post" action="admin.php?manage=categories&amp;action=edit">
-								<p><input type="hidden" name="id" id="id" value="<?php echo $cat->cat_id; ?>" />
-								<input type="hidden" name="token" id="token" value="<?php echo $token; ?>" />
-								<input type="text" name="catname" id="catname" value="<?php echo $cat->cat_name; ?>" />
-								<input type="submit" name="submitedit" id="submitedit" value="Edit" /></p>
-							</form>
-							<?php
+							$error = new Error('Invalid category.');
+							$error->display();
 						}
 						break;
 
@@ -1076,7 +1010,7 @@ elseif (isset($_GET['manage']) && !empty($_GET['manage'])) {
 							$error = new Error('Invalid category.');
 							$error->display();
 						}
-						$pai->checkToken(false, true);
+						$pai->checkToken();
 						ob_end_flush();
 
 						$id = (int)cleaninput($_GET['id']);
@@ -1113,7 +1047,7 @@ elseif (isset($_GET['manage']) && !empty($_GET['manage'])) {
 					echo '<ul>';
 					while($cat = mysql_fetch_object($getcats)) {
 						echo '<li><strong>' . $cat->cat_name;
-						if ($cat->cat_id == 1) echo ' (default)';
+						if ($cat->isDefault == 1) echo ' (default)';
 						echo '</strong> (' . $cat->num . ') &nbsp; [<a href="admin.php?manage=categories&amp;action=edit&amp;id=' . $cat->cat_id . '&amp;token=' . $token . '" title="Edit the name of this category">Edit</a>]';
 						if ($cat->cat_id != 1) echo ' [<a href="admin.php?manage=categories&amp;action=delete&amp;id=' . $cat->cat_id . '&amp;token=' . $token . '" title="Delete this category" onclick="return confirm(\'Are you sure you want to delete this category?\')">Delete</a>]';
 						echo '</li>';

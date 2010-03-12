@@ -3,10 +3,9 @@
   ==============================================================================================
   Askably 3.1 © 2005-2009 Amelie M.
   ==============================================================================================
-																																*/
+*/
 
 ################################ UPGRADE AND CONVERSION SCRIPT #################################
-
 
 define('PAI_IN', true);
 
@@ -66,16 +65,35 @@ $header = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.
 		<li><a href="upgrade1.php" title="Upgrade" class="active">Upgrade</a></li>
 	</ul>';
 
+function upgradeFrom3() {
+	$pai_db->query('UPDATE `' . $pai_db->getTable() . "_options` SET `option_value` = '3.1' WHERE `option_name` = 'version' LIMIT 1");
+	$pai_db->query('ALTER TABLE `' . $pai_db->getTable() . "_cats` ADD `default` TINYINT NOT NULL DEFAULT 0, ADD INDEX (`default`)");
+
+	// Clean up data types, set all to UTF8
+	$pai_db->query('ALTER TABLE `' . $pai_db->getTable() . '` CHANGE `q_id` `q_id` INT UNSIGNED NOT NULL AUTO_INCREMENT');
+	$pai_db->query('ALTER TABLE `' . $pai_db->getTable() . '` CHANGE `category` `category` INT UNSIGNED NOT NULL');
+	$pai_db->query('ALTER TABLE `' . $pai_db->getTable() . '` CHANGE `question` `question` TEXT CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL');
+	$pai_db->query('ALTER TABLE `' . $pai_db->getTable() . '` CHANGE `answer` `answer` TEXT CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL');
+	$pai_db->query('ALTER TABLE `' . $pai_db->getTable() . '` CHANGE `ip` `ip` VARCHAR(20) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL');
+	$pai_db->query('ALTER TABLE `' . $pai_db->getTable() . '` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci');
+	$pai_db->query('ALTER TABLE `' . $pai_db->getTable() . '_cats` CHANGE `cat_id` `cat_id` INT UNSIGNED NOT NULL AUTO_INCREMENT');
+	$pai_db->query('ALTER TABLE `' . $pai_db->getTable() . '_cats` CHANGE `cat_name` `cat_name` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL');
+	$pai_db->query('ALTER TABLE `' . $pai_db->getTable() . '_cats` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci');
+	$pai_db->query('ALTER TABLE `' . $pai_db->getTable() . '_options` CHANGE `opt_id` `opt_id` INT UNSIGNED NOT NULL AUTO_INCREMENT');
+	$pai_db->query('ALTER TABLE `' . $pai_db->getTable() . '_options` CHANGE `option_name` `option_name` VARCHAR(100) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL');
+	$pai_db->query('ALTER TABLE `' . $pai_db->getTable() . '_options` CHANGE `option_value` `option_value` TEXT CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL');
+	$pai_db->query('ALTER TABLE `' . $pai_db->getTable() . '_options` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci');
+}
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['upgrade'])) {
+
+	// Determine which version we are on
 	if ($pai->getOption('version') && ($pai->getOption('version') == '3.0' || $pai->getOption('version') == '3.1')) $version = 3;
 	elseif ($pai->getOption('is_wordpress')) $version = 2;
 	else $version = 1;
-	// TODO: cases
-	if ($version == 3) {
-		 $pai_db->query('UPDATE `' . $pai_db->getTable() . "_options` SET `option_value` = '3.1' WHERE `option_name` = 'version' LIMIT 1");
-		 $pai_db->query('ALTER TABLE `' . $pai_db->getTable() . "_cats` ADD `isDefault` TINYINT NOT NULL DEFAULT 0, ADD INDEX (`isDefault`)");
-	}
-	else {
+
+	// Upgrade v1.x and v2.x to v3.0 - we can go to 3.1 from there
+	if ($version < 3) {
 		if ($version == 1) {
 			$dates = $pai_db->query('SELECT `id`, `dateasked` FROM `' . $pai_db->getTable() . '`');
 
@@ -168,6 +186,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['upgrade'])) {
 
 		$pai_db->query('OPTIMIZE TABLE `' . $pai_db->getTable() . '`, `' . $pai_db->getTable() . '_cats`, `' . $pai_db->getTable() . '_options`');
 	}
+
+	// Now go from 3.0 to 3.1
+	upgradeFrom3();
+
 	$newpass = substr(md5(substr(md5(microtime()), 5, 7)), 5, 7);
 	$pai_db->query('UPDATE `' . $pai_db->getTable() . "_options` SET `option_value` = '" . md5($newpass . $pai->getMask()) . "' WHERE `option_name` = 'password' LIMIT 1");
 

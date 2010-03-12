@@ -7,7 +7,6 @@
 
 #################################### ADMINISTRATION PANEL ######################################
 
-
 ##################### DIAGNOSTICS #####################
 define('PAI_IN', true);
 
@@ -324,7 +323,7 @@ elseif (array_key_exists('manage', $_GET) && !empty($_GET['manage'])) {
 
 					if (!empty($password) && (strlen($password) <= 3 || strtolower($password) == strtolower($pai->getOption('username')) || strtolower($password) == $username || strtolower($password) == $pai->getOption('youraddress') || in_array(strtolower($password), $tooeasy))) {
 						ob_end_flush();
-						$error[] = new Error('Your new password is too obvious or too short. Try a different word.');
+						$error[] = new Error('Your new password is too obvious or too short. Please choose another.');
 					}
 
 					if (isset($error)) {
@@ -663,7 +662,11 @@ elseif (array_key_exists('manage', $_GET) && !empty($_GET['manage'])) {
 							ob_end_flush();
 
 							if (!isset($newip) || empty($newip)) $error = new Error('Please enter an IP address.');
-							if (!preg_match("^((\d|[1-9]\d|2[0-4]\d|25[0-5]|1\d\d)(?:\.(\d|[1-9]\d|2[0-4]\d|25[0-5]|1\d\d)){3})$^", $newip)) Error('Invalid IP address.');
+							// Match IPv4 and IPv6
+							if (!preg_match("^((\d|[1-9]\d|2[0-4]\d|25[0-5]|1\d\d)(?:\.(\d|[1-9]\d|2[0-4]\d|25[0-5]|1\d\d)){3})$^", $newip) && !preg_match("/^\s*((([0-9A-Fa-f]{1,4}:){7}(([0-9A-Fa-f]{1,4})|:))|(([0-9A-Fa-f]{1,4}:){6}(:|((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})|(:[0-9A-Fa-f]{1,4})))|(([0-9A-Fa-f]{1,4}:){5}((:((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})?)|((:[0-9A-Fa-f]{1,4}){1,2})))|(([0-9A-Fa-f]{1,4}:){4}(:[0-9A-Fa-f]{1,4}){0,1}((:((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})?)|((:[0-9A-Fa-f]{1,4}){1,2})))|(([0-9A-Fa-f]{1,4}:){3}(:[0-9A-Fa-f]{1,4}){0,2}((:((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})?)|((:[0-9A-Fa-f]{1,4}){1,2})))|(([0-9A-Fa-f]{1,4}:){2}(:[0-9A-Fa-f]{1,4}){0,3}((:((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})?)|((:[0-9A-Fa-f]{1,4}){1,2})))|(([0-9A-Fa-f]{1,4}:)(:[0-9A-Fa-f]{1,4}){0,4}((:((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})?)|((:[0-9A-Fa-f]{1,4}){1,2})))|(:(:[0-9A-Fa-f]{1,4}){0,5}((:((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})?)|((:[0-9A-Fa-f]{1,4}){1,2})))|(((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})))(%.+)?\s*$/", $newip)) {
+								$error = new Error('Invalid IP address.');
+								$error->display();
+							}
 
 							$existingips = explode(';', $pai->getOption('banned_ips'));
 
@@ -1006,26 +1009,11 @@ elseif (array_key_exists('manage', $_GET) && !empty($_GET['manage'])) {
 						break;
 
 					case 'delete':
-						if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
+						if (array_key_exists('id', $_GET)) $cat = new Category((int)$_GET['id']);
+						if (isset($cat)) $cat->delete();
+						else {
 							$error = new Error('Invalid category.');
 							$error->display();
-						}
-						$pai->checkToken();
-						ob_end_flush();
-
-						$id = (int)cleaninput($_GET['id']);
-						if (empty($id)) {
-							$error = new Error('Invalid category.');
-							$error->display();
-						}
-
-						if ($id == 1) $error = new Error('You cannot delete the default category.');
-						if (!$pai_db->get('cat_id', 'cats', '`cat_id` = ' . $id)) $error = new Error('Invalid category.');
-						if (isset($error)) $error->display();
-
-						if ($pai_db->query('DELETE FROM `' . $pai_db->getTable() . '_cats` WHERE `cat_id` = ' . $id . ' LIMIT 1')) {
-							if ($pai_db->get('q_id', 'main', '`category` = ' . $id)) $pai_db->query('UPDATE `' . $pai_db->getTable() . '` SET `category` = 1 WHERE `category` = ' . $id);
-							echo '<p>The category was successfully deleted.</p>';
 						}
 						break;
 
@@ -1042,14 +1030,15 @@ elseif (array_key_exists('manage', $_GET) && !empty($_GET['manage'])) {
 				<p>Below are the categories of questions you would like to be asked. Here you can edit, add to or delete them. Deleting a category will not delete the questions in it, but those questions will then be reset to the default category. (You cannot delete the default category)</p>
 
 				<?php
-				$getcats = $pai_db->query('SELECT `' . $pai_db->getTable() . '_cats`.*, COUNT(`' . $pai_db->getTable() . '`.`q_id`) AS `num` FROM `' . $pai_db->getTable() . '_cats` LEFT JOIN `' . $pai_db->getTable() . '` ON `' . $pai_db->getTable() . '_cats`.`cat_id` = `' . $pai_db->getTable() . '`.`category` GROUP BY `' . $pai_db->getTable() . '_cats`.`cat_id` ORDER BY `cat_name` ASC');
+				$getcats = $pai_db->query('SELECT `' . $pai_db->getTable() . '_cats`.cat_id, COUNT(`' . $pai_db->getTable() . '`.`q_id`) AS `num` FROM `' . $pai_db->getTable() . '_cats` LEFT JOIN `' . $pai_db->getTable() . '` ON `' . $pai_db->getTable() . '_cats`.`cat_id` = `' . $pai_db->getTable() . '`.`category` GROUP BY `' . $pai_db->getTable() . '_cats`.`cat_id` ORDER BY `cat_name` ASC');
 				if (mysql_num_rows($getcats) > 0) {
 					echo '<ul>';
 					while($cat = mysql_fetch_object($getcats)) {
-						echo '<li><strong>' . $cat->cat_name;
-						if ($cat->isDefault == 1) echo ' (default)';
-						echo '</strong> (' . $cat->num . ') &nbsp; [<a href="admin.php?manage=categories&amp;action=edit&amp;id=' . $cat->cat_id . '&amp;token=' . $token . '" title="Edit the name of this category">Edit</a>]';
-						if ($cat->cat_id != 1) echo ' [<a href="admin.php?manage=categories&amp;action=delete&amp;id=' . $cat->cat_id . '&amp;token=' . $token . '" title="Delete this category" onclick="return confirm(\'Are you sure you want to delete this category?\')">Delete</a>]';
+						$the_cat = new Category($cat->cat_id);
+						echo '<li><strong>' . $the_cat->getName();
+						if ($the_cat->isDefault()) echo ' (default)';
+						echo '</strong> (' . $cat->num . ') &nbsp; [<a href="admin.php?manage=categories&amp;action=edit&amp;id=' . $the_cat->getId() . '&amp;token=' . $token . '" title="Edit the name of this category">Edit</a>]';
+						if (!$the_cat->isDefault()) echo ' [<a href="admin.php?manage=categories&amp;action=delete&amp;id=' . $the_cat->getId() . '&amp;token=' . $token . '" title="Delete this category" onclick="return confirm(\'Are you sure you want to delete this category?\')">Delete</a>]';
 						echo '</li>';
 					}
 					echo '</ul>';
@@ -1103,9 +1092,9 @@ $display = '<p style="text-align: center;">Powered by <a href="http://not-notice
 
 //TERMINATE SESSION (but not if answering a question!)
 if (!isset($_GET['inline'])) {
-	$pai->adminLogout();
-
-	eval(base64_decode('aWYgKGlzc2V0KCRkaXNwbGF5KSAmJiBzdHJzdHIoJGRpc3BsYXksICdQSFBBc2tJdCcpKSB7IGVjaG8gJGRpc3BsYXk7IH0gZWxzZSB7IGVjaG8gJzxwIHN0eWxlPSJ0ZXh0LWFsaWduOiBjZW50ZXI7Ij5Qb3dlcmVkIGJ5IDxhIGhyZWY9Imh0dHA6Ly9ub3Qtbm90aWNlYWJseS5uZXQvc2NyaXB0cy9waHBhc2tpdC8iIHRpdGxlPSJQSFBBc2tJdCI+UEhQQXNrSXQgMy4wPC9hPjwvcD4nOyB9'));
+//	$pai->adminLogout();
+	echo $display;
+//	eval(base64_decode('aWYgKGlzc2V0KCRkaXNwbGF5KSAmJiBzdHJzdHIoJGRpc3BsYXksICdQSFBBc2tJdCcpKSB7IGVjaG8gJGRpc3BsYXk7IH0gZWxzZSB7IGVjaG8gJzxwIHN0eWxlPSJ0ZXh0LWFsaWduOiBjZW50ZXI7Ij5Qb3dlcmVkIGJ5IDxhIGhyZWY9Imh0dHA6Ly9ub3Qtbm90aWNlYWJseS5uZXQvc2NyaXB0cy9waHBhc2tpdC8iIHRpdGxlPSJQSFBBc2tJdCI+UEhQQXNrSXQgMy4wPC9hPjwvcD4nOyB9'));
 //---------------------------
 
 //FOOTER

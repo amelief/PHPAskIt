@@ -1,13 +1,11 @@
 <?php
-//TODO: Fix!
 /*
   ==============================================================================================
   Askably 3.1 © 2005-2009 Amelie M.
   ==============================================================================================
-																																*/
+*/
 
 ######################## INSTALLATION FILE - BUILDS TABLES FOR SCRIPT USAGE ####################
-
 
 define('PAI_IN', true);
 
@@ -26,11 +24,12 @@ if ($pai->getoption('username')) { ?>
 	exit;
 }
 
-$header = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+$header = <<<HTML
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 	<title>Askably 3.1: Install Askably</title>
-	<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+	<meta http-equiv="Content-Type" content="text/html; charset=utf8" />
 	<style type="text/css">
 		body { color: #222; font: 0.7em/1.2em Verdana, Arial, Helvetica, sans-serif; text-align: center; }
 		a { color: #0080ff; text-decoration: none; }
@@ -62,19 +61,18 @@ $header = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.
 	</ul>
 
 	<div id="container">
-	<h2>Setup</h2>';
+		<h2>Setup</h2>
+HTML;
 
 if (isset($_POST['submit']) && $_SERVER['REQUEST_METHOD'] == 'POST') {
 	foreach($_POST as $key => $value) {
-		$$key = $pai->cleaninput($value);
+		$$key = cleaninput($value);
 	}
 	if (empty($username)) exit('ERROR: Please enter a username.');
 	if (!empty($password)) {
 		if ($confirm_pass != $password) exit('ERROR: Passwords did not match, try again.');
-		$replace = array('&', '<', '>', '\\', '[', ']', '/', '"', '*', '\$', '(', ')', '%', '^', '{', '}', '|');
-		foreach ($replace as $invalid) {
-			if (strstr($_POST['password'], $invalid)) exit('ERROR: Password contains invalid characters.');
-		}
+		// Do this on raw password as the chars might have been escaped otherwise
+		if (!preg_match('/^([_a-z0-9@\.-]+)$/i', $_POST['password'])) exit('ERROR: Password contains invalid characters.');
 	}
 	else exit('ERROR: Please enter a password.');
 	if (empty($youraddress) || !preg_match('/^([_a-z0-9-]+)(\.[_a-z0-9-]+)*@([a-z0-9-]+)(\.[a-z0-9-]+)*(\.[a-z]{2,4})$/i', $youraddress)) exit('ERROR: Invalid email address. You must enter a valid address in order to install Askably.');
@@ -84,6 +82,8 @@ if (isset($_POST['submit']) && $_SERVER['REQUEST_METHOD'] == 'POST') {
 	if (!isset($word) || (isset($word) && empty($word))) exit('ERROR: Enter a security word.');
 	elseif (strlen($word) <= 3 || strtolower($word) == $username || strtolower($word) == $youraddress || in_array(strtolower($word), $tooeasy)) exit('ERROR: Your security word is too obvious or too short. Try a different word.');
 	elseif (strtolower($word) == strtolower($password)) exit('ERROR: Your security word cannot be the same as your password.');
+
+	if (strlen($password) <= 6 || strtolower($password) == $username || strtolower($password) == $youraddress || in_array(strtolower($password), $tooeasy)) exit('ERROR: Your password is too obvious or too short. Please choose another.');
 
 	if (empty($totalpage_faq) || $totalpage_faq < 1 || $totalpage_faq > 999 || !is_numeric($totalpage_faq)) $totalpage_faq = 10;
 	if (empty($titleofpage)) $titleofpage = 'Q&amp;A';
@@ -108,42 +108,56 @@ if (isset($_POST['submit']) && $_SERVER['REQUEST_METHOD'] == 'POST') {
 	if ($is_wordpress == 'yes') {
 		if (empty($is_wp_blog_header)) exit('ERROR: Please enter your absolute path to wp-blog-header.php if you wish to use WordPress Themes. If not, please uncheck the appropriate option.');
 		elseif (strstr($is_wp_blog_header, 'http://')) exit('ERROR: Please enter an absolute path to wp-blog-header.php, NOT a URL.');
-		elseif (!file_exists($is_wp_blog_header)) exit('ERROR: Your path to wp-blog-header.php appears to be incorrect, as Askably cannot find it. Please go back and try again.');
+		if (substr($is_wp_blog_header, -1, 18) != 'wp-blog-header.php') $is_wp_blog_header += 'wp-blog-header.php';
+		elseif (!file_exists($is_wp_blog_header) && !file_exists($is_wp_blog_header . 'wp_blog_header.php')) exit('ERROR: Your path to wp-blog-header.php appears to be incorrect, as Askably cannot find it. Please go back and try again.');
 	}
 
-	$pai->query('CREATE TABLE IF NOT EXISTS `' . $pai->table . "`
-	(`q_id` int(6) UNSIGNED NOT NULL auto_increment,
-	`question` text NOT NULL,
-	`answer` text NOT NULL,
-	`category` tinyint(4) UNSIGNED NOT NULL DEFAULT 1,
-	`dateasked` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-	`ip` varchar(20) NOT NULL DEFAULT '',
+	$makeTable = <<<SQL
+CREATE TABLE IF NOT EXISTS `{$pai_db->getTable()}` (
+	`q_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+	`question` TEXT CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
+	`answer` TEXT CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
+	`category` INT UNSIGNED NOT NULL DEFAULT 1,
+	`dateasked` DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
+	`ip` VARCHAR(20) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '',
 	PRIMARY KEY (`q_id`),
 	KEY (`answer`(10)),
 	KEY (`category`),
-	KEY (`dateasked`))") or exit('<p>Sorry, an error occurred when creating the main questions table. Please check your database settings and try again.</p>');
+	KEY (`dateasked`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8
+SQL;
 
-	$pai->query('CREATE TABLE IF NOT EXISTS `' . $pai->table . "_cats`
-	(`cat_id` int(6) UNSIGNED NOT NULL auto_increment,
-	`cat_name` tinytext NOT NULL,
-	`isDefault` tinyint NOT NULL DEFAULT 0,
+	$makeCats = <<<SQL
+CREATE TABLE IF NOT EXISTS `{$pai_db->getTable()}_cats` (
+	`cat_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+	`cat_name` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
+	`default` TINYINT(1) NOT NULL DEFAULT 0,
 	PRIMARY KEY (`cat_id`),
-	KEY (`isDefault`))") or exit('<p>Sorry, an error occurred when creating the category table. Please check your database settings and try again.</p>');
+	KEY (`default`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8
+SQL;
 
-	if (mysql_num_rows($pai->query('SELECT `cat_id` FROM `' . $pai->table . '_cats` LIMIT 1')) == 0) {
-		$pai->query('INSERT INTO `' . $pai->table . "_cats` (`cat_name`) VALUES
-		('Random'),
-		('About me'),
-		('About the site');") or exit('<p>Sorry, an error occurred when inserting data into the category table. Please check your database settings and try again.</p>');
-	}
-
-	$pai->query('CREATE TABLE `' . $pai->table . "_options`
-	(`opt_id` int(6) UNSIGNED NOT NULL auto_increment,
-	`option_name` varchar(100) NOT NULL DEFAULT '',
-	`option_value` text NOT NULL,
+	$makeOpts = <<<SQL
+CREATE TABLE IF NOT EXISTS `{$pai_db->getTable()}_options` (
+	`opt_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+	`option_name` VARCHAR(100) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '',
+	`option_value` TEXT CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
 	PRIMARY KEY (`opt_id`),
 	KEY (`option_name`),
-	KEY (`option_value`(10)))") or exit('<p>Sorry, an error occurred when creating the settings table. Please check your database settings and try again.</p>');
+	KEY (`option_value`(10)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8
+SQL;
+
+	$pai_db->query($makeTable) or exit('<p>Sorry, an error occurred when creating the main questions table. Please check your database settings and try again.</p>');
+	$pai_db->query($makeCats) or exit('<p>Sorry, an error occurred when creating the category table. Please check your database settings and try again.</p>');
+	$pai_db->query($makeOpts) or exit('<p>Sorry, an error occurred when creating the settings table. Please check your database settings and try again.</p>');
+
+	if (mysql_num_rows($pai_db->query('SELECT `cat_id` FROM `' . $pai_db->getTable() . '_cats` LIMIT 1')) == 0) {
+		$pai_db->query('INSERT INTO `' . $pai_db->getTable() . "_cats` (`cat_name`, `default`) VALUES
+		('Random', 1),
+		('About me', 0),
+		('About the site', 0);") or exit('<p>Sorry, an error occurred when inserting data into the category table. Please check your database settings and try again.</p>');
+	}
 
 	$ask_template = '<p>[[question]] ';
 	$q_template = '<div class="question-container">
@@ -169,9 +183,9 @@ if (isset($_POST['submit']) && $_SERVER['REQUEST_METHOD'] == 'POST') {
 
 	$success_msg = '<p>Thank you, your question has been successfully added to the database. Look out for an answer soon!</p>';
 
-	$pai->query('INSERT INTO `' . $pai->table . "_options` (`option_name`, `option_value`) VALUES
+	$pai_db->query('INSERT INTO `' . $pai_db->getTable() . "_options` (`option_name`, `option_value`) VALUES
 	('username', '" . $username . "'),
-	('password', '" . md5($password . $pai->mask) . "'),
+	('password', '" . md5($password . $word) . "'),
 	('security_word', '" . $word . "'),
 	('headerfile', '" . $headerfile . "'),
 	('footerfile', '" . $footerfile . "'),

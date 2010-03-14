@@ -62,20 +62,20 @@ adminheader(); ?>
 	<ul id="navigation" class="center">
 		<li><a href="admin.php" title="Main admin page"<?php if ($active == 'home') echo ' class="active"'; ?>>Admin home</a></li>
 		<li><a href="admin.php?sort=unanswered" title="View unanswered questions"<?php if ($active == 'unans') echo ' class="active"'; ?>>Unanswered (<?php echo $pai->getUnanswered(); ?>)</a></li>
-	<?php if ($pai->getOption('enable_cats') == 'yes') { ?>
+	<?php if ($pai->getOption('enable_cats')) { ?>
 		<li><a href="admin.php?manage=categories" title="Manage categories"<?php if ($active == 'cats') echo ' class="active"'; ?>>Categories</a></li>
 	<?php }
-	if ($pai->getOption('ipban_enable') == 'yes') { ?>
+	if ($pai->getOption('ipban_enable')) { ?>
 		<li><a href="admin.php?manage=ips" title="Manage blocked IP addresses"<?php if ($active == 'ips') echo ' class="active"'; ?>>Blocked IPs</a></li>
 	<?php }
-	if ($pai->getOption('antispam_enable') == 'yes') { ?>
+	if ($pai->getOption('antispam_enable')) { ?>
 		<li><a href="admin.php?manage=antispam" title="Manage blocked words"<?php if ($active == 'spam') echo ' class="active"'; ?>>Blocked words</a></li>
 	<?php } ?>
 		<li><a href="admin.php?manage=options" title="Edit options"<?php if ($active == 'opt') echo ' class="active"'; ?>>Options</a></li>
 		<li><a href="admin.php?manage=templates" title="Edit templates"<?php if ($active == 'temp') echo ' class="active"'; ?>>Templates</a></li>
 		<li><a href="index.php?recent" title="Questions page">Recent</a></li>
 
-	<?php if ($pai->getOption('enable_cats') == 'yes' && $pai->getOption('summary_enable') == 'yes') { ?>
+	<?php if ($pai->getOption('enable_cats') && $pai->getOption('summary_enable')) { ?>
 		<li><a href="index.php" title="Summary page">Summary</a></li>
 	<?php } ?>
 	</ul>
@@ -88,7 +88,7 @@ adminheader(); ?>
 		<ul>
 			<li>Total questions: <strong><?php echo $pai->getTotal(); ?></strong></li>
 			<li>Unanswered questions: <strong><?php echo $pai->getUnanswered(); ?></strong></li>
-		<?php if ($pai->getOption('enable_cats') == 'yes') { ?>
+		<?php if ($pai->getOption('enable_cats')) { ?>
 			<li>Questions in <strong><?php echo $pai->getCats() . ($pai->getCats() == 1 ? ' category' : ' categories'); ?></strong></li>
 		<?php } ?>
 		</ul>
@@ -112,7 +112,7 @@ if (isset($_GET['sort']) && $_GET['sort'] == 'unanswered') {
 	pages();
 
 	$query = <<<SQL
-SELECT * FROM `{$pai_db->getTable()}` WHERE (`answer` = '' OR `answer` IS NULL)
+SELECT `q_id` FROM `{$pai_db->getTable()}` WHERE (`answer` = '' OR `answer` IS NULL)
 SQL;
 	dopagination($query);
 	$query .= ' ORDER BY `dateasked` DESC LIMIT ' . $startfrom . ', ' . ADMIN_PERPAGE;
@@ -124,7 +124,8 @@ SQL;
 		pagination($perpage, 'unanswered');
 		echo '<ul id="question-list">';
 		while($qs = mysql_fetch_object($getqs)) {
-			$pai->adminQs($qs);
+			$q = new Question($qs->q_id);
+			$q->show();
 		}
 		echo '</ul>';
 	}
@@ -141,7 +142,7 @@ elseif (isset($_GET['category']) && !empty($_GET['category']) && is_numeric($_GE
 
 	pages();
 
-	$query = 'SELECT * FROM `' . $pai_db->getTable() . '` WHERE `category` = ' . (int)cleaninput($_GET['category']);
+	$query = 'SELECT `q_id` FROM `' . $pai_db->getTable() . '` WHERE `category` = ' . (int)cleaninput($_GET['category']);
 	dopagination($query);
 	$query .= ' ORDER BY `q_id` DESC LIMIT ' . $startfrom . ', ' . ADMIN_PERPAGE;
 
@@ -153,7 +154,8 @@ elseif (isset($_GET['category']) && !empty($_GET['category']) && is_numeric($_GE
 		pagination($perpage, 'bycat');
 		echo '<ul id="question-list">';
 		while($qs = mysql_fetch_object($getqs)) {
-			$pai->adminQs($qs);
+			$q = new Question($qs->q_id);
+			$q->show();
 		}
 		echo '</ul>';
 	}
@@ -173,7 +175,7 @@ elseif (isset($_GET['search'])) {
 
 	pages();
 
-	$query = 'SELECT * FROM `' . $pai_db->getTable() . "` WHERE `question` LIKE '%" . $getsearch . "%' OR `answer` LIKE '%" . $getsearch . "%' OR `ip` LIKE '%" . $getsearch . "%'";
+	$query = 'SELECT `q_id` FROM `' . $pai_db->getTable() . "` WHERE `question` LIKE '%" . $getsearch . "%' OR `answer` LIKE '%" . $getsearch . "%' OR `ip` LIKE '%" . $getsearch . "%'";
 	dopagination($query);
 	$query .= ' ORDER BY `q_id` DESC LIMIT ' . $startfrom . ', ' . ADMIN_PERPAGE;
 
@@ -185,7 +187,8 @@ elseif (isset($_GET['search'])) {
 		pagination($perpage, 'search');
 		echo '<ul id="question-list">';
 		while($qs = mysql_fetch_object($getqs)) {
-			$pai->adminQs($qs);
+			$q = new Question($qs->q_id);
+			$q->show();
 		}
 		echo '</ul>';
 	}
@@ -196,16 +199,15 @@ elseif (isset($_GET['search'])) {
 ################# QUESTION PERMALINKS #################
 elseif (isset($_GET['q']) && !empty($_GET['q']) && is_numeric($_GET['q'])) {
 	ob_end_flush();
-
-	if (!$pai_db->get('q_id', 'main', '`q_id` = ' . (int)cleaninput($_GET['q']))) {
+	
+	$q = new Question((int)$_GET['q']);
+	if (!isset($q)) {
 		$error = new Error('Invalid question.');
 		$error->display();
 	}
 
-	$q = mysql_fetch_object($pai_db->query('SELECT * FROM `' . $pai_db->getTable() . '` WHERE `q_id` = ' . (int)cleaninput($_GET['q']) . ' LIMIT 1'));
-
 	echo '<ul id="question-list">';
-	$pai->adminQs($q);
+	$q->show();
 	echo '</ul>';
 }
 #######################################################
@@ -466,7 +468,7 @@ elseif (array_key_exists('manage', $_GET) && !empty($_GET['manage'])) {
 					As above. Again, do NOT fill in this part if you are using WordPress Themes.<br />
 					<input type="text" name="footerfile" id="footerfile" value="<?php echo $pai->getOption('footerfile'); ?>" /></p>
 
-					<p><strong><label for="is_wordpress">Are you using WordPress Themes with Askably?</label></strong> <input type="checkbox" name="is_wordpress" id="is_wordpress" value="yes" <?php if ($pai->getOption('is_wordpress') == 'yes') echo 'checked="checked" '; ?>/><br />If you have themed your site using WordPress (i.e. using get_header() and get_footer()) please check this box.</p>
+					<p><strong><label for="is_wordpress">Are you using WordPress Themes with Askably?</label></strong> <input type="checkbox" name="is_wordpress" id="is_wordpress" value="yes" <?php if ($pai->getOption('is_wordpress')) echo 'checked="checked" '; ?>/><br />If you have themed your site using WordPress (i.e. using get_header() and get_footer()) please check this box.</p>
 
 					<p><strong><label for="is_wp_blog_header">Absolute path to wp-blog-header.php:</label></strong><br />
 					If you checked the above option, please enter your FULL ABSOLUTE PATH to wp-blog-header.php here.<br />
@@ -477,22 +479,22 @@ elseif (array_key_exists('manage', $_GET) && !empty($_GET['manage'])) {
 					(See <a href="http://www.php.net/date" title="PHP Manual for Date options">http://www.php.net/date</a> for more information)<br />
 					<input type="text" name="date_format" id="date_format" value="<?php echo $pai->getOption('date_format'); ?>" /></p>
 
-					<p><strong><label for="enable_cats">Enable categories?</label></strong> <input type="checkbox" name="enable_cats" id="enable_cats" value="yes" <?php if ($pai->getOption('enable_cats') == 'yes') echo 'checked="checked" '; ?>/></p>
+					<p><strong><label for="enable_cats">Enable categories?</label></strong> <input type="checkbox" name="enable_cats" id="enable_cats" value="yes" <?php if ($pai->getOption('enable_cats')) echo 'checked="checked" '; ?>/></p>
 
-					<p><strong><label for="ipban_enable">Enable <acronym title="Internet Protocol">IP</acronym> address blocking?</label></strong> <input type="checkbox" name="ipban_enable" id="ipban_enable" value="yes" <?php if ($pai->getOption('ipban_enable') == 'yes') echo 'checked="checked" '; ?>/></p>
+					<p><strong><label for="ipban_enable">Enable <acronym title="Internet Protocol">IP</acronym> address blocking?</label></strong> <input type="checkbox" name="ipban_enable" id="ipban_enable" value="yes" <?php if ($pai->getOption('ipban_enable')) echo 'checked="checked" '; ?>/></p>
 
-					<p><strong><label for="antispam_enable">Enable anti-spam (word blocking)?</label></strong> <input type="checkbox" name="antispam_enable" id="antispam_enable" value="yes" <?php if ($pai->getOption('antispam_enable') == 'yes') echo 'checked="checked" '; ?>/></p>
+					<p><strong><label for="antispam_enable">Enable anti-spam (word blocking)?</label></strong> <input type="checkbox" name="antispam_enable" id="antispam_enable" value="yes" <?php if ($pai->getOption('antispam_enable')) echo 'checked="checked" '; ?>/></p>
 
-					<p><strong><label for="show_unanswered">Show unanswered questions on the front page?</label></strong> <input type="checkbox" name="show_unanswered" id="show_unanswered" value="yes" <?php if ($pai->getOption('show_unanswered') == 'yes') echo 'checked="checked" '; ?>/></p>
+					<p><strong><label for="show_unanswered">Show unanswered questions on the front page?</label></strong> <input type="checkbox" name="show_unanswered" id="show_unanswered" value="yes" <?php if ($pai->getOption('show_unanswered')) echo 'checked="checked" '; ?>/></p>
 
-					<p><strong><label for="summary_enable">Enable summary?</label></strong> <input type="checkbox" name="summary_enable" id="summary_enable" value="yes" <?php if ($pai->getOption('summary_enable') == 'yes') echo 'checked="checked" '; ?>/><br />
+					<p><strong><label for="summary_enable">Enable summary?</label></strong> <input type="checkbox" name="summary_enable" id="summary_enable" value="yes" <?php if ($pai->getOption('summary_enable')) echo 'checked="checked" '; ?>/><br />
 					Do you want to show a summary of questions by category on the front page?</p>
 
 					<p><strong><label for="titleofpage">Front page title:</label></strong><br />
 					This is the title users see at the top of the questions page.<br />
 					<input type="text" name="titleofpage" id="titleofpage" value="<?php echo $pai->getOption('titleofpage'); ?>" /></p>
 
-					<p><strong><label for="notifybymail">Notify by e-mail when a new question is asked?</label></strong>  <input type="checkbox" name="notifybymail" id="notifybymail" value="yes" <?php if ($pai->getOption('notifybymail') == 'yes') echo 'checked="checked" '; ?>/><br />Requires a valid e-mail address to be entered below.</p>
+					<p><strong><label for="notifybymail">Notify by e-mail when a new question is asked?</label></strong>  <input type="checkbox" name="notifybymail" id="notifybymail" value="yes" <?php if ($pai->getOption('notifybymail')) echo 'checked="checked" '; ?>/><br />Requires a valid e-mail address to be entered below.</p>
 
 					<p><strong><label for="youraddress">Your e-mail address:</label></strong><br />
 					You should set this (regardless of whether you want to be notified of new questions) as it is used to reset your password in case you forget it.<br />
@@ -528,13 +530,13 @@ elseif (array_key_exists('manage', $_GET) && !empty($_GET['manage'])) {
 
 				if (empty($form)) {
 					$form = '<p>[[question]] ';
-					if ($pai->getOption('enable_cats') == 'yes') $form .= '&nbsp;[[category]] ';
+					if ($pai->getOption('enable_cats')) $form .= '&nbsp;[[category]] ';
 					$form .= '&nbsp; [[submit]]</p>';
 				}
 				if (empty($q)) {
 					$q = '<div class="question-container">
 <p class="date">[[date]] ';
-					if ($pai->getOption('enable_cats') == 'yes') $q .= '<span class="category">([[category]])</span>';
+					if ($pai->getOption('enable_cats')) $q .= '<span class="category">([[category]])</span>';
 					$q .= '
 </p>
 <p class="question"><a href="[[permalink]]" title="Permalink to this question"><strong>[[question]]</strong></a></p>
@@ -544,18 +546,18 @@ elseif (array_key_exists('manage', $_GET) && !empty($_GET['manage'])) {
 				if (empty($summary)) {
 					$summary = '<h2>Latest questions</h2>
 <h4>[[total]] total, of which [[unanswered]] unanswered';
-					if ($pai->getOption('enable_cats') == 'yes') $summary .= ' in [[categories]] categories';
+					if ($pai->getOption('enable_cats')) $summary .= ' in [[categories]] categories';
 					$summary .= '</h4>';
 				}
 				if (empty($success_msg)) $success_msg = '<p>Thank you, your question has been successfully added to the database. Look out for an answer soon!</p>';
 
 				if (!strstr(strtolower($form), '[[question]]')) $error[] = new Error('You must have the [[question]] variable in your question form template. Please go back and add it.');
 				if (!strstr(strtolower($form), '[[submit]]')) $error[] = new Error('You must have [[submit]] variable in your question form template. Please go back and add it.');
-				if (!strstr(strtolower($form), '[[category]]') && $pai->getOption('enable_cats') == 'yes') $error[] = new Error('You must have the [[category]] variable in your question form template. Please go back and add it. If you do not wish to use categories, please disable them on the options page.');
+				if (!strstr(strtolower($form), '[[category]]') && $pai->getOption('enable_cats')) $error[] = new Error('You must have the [[category]] variable in your question form template. Please go back and add it. If you do not wish to use categories, please disable them on the options page.');
 
 				if (!strstr(strtolower($q), '[[question]]')) $error[] = new Error('You must have the [[question]] variable in your question/answer template. Please go back and add it.');
 				if (!strstr(strtolower($q), '[[answer]]')) $error[] = new Error('You must have the [[answer]] variable in your question/answer template. Please go back and add it.');
-				if (!strstr(strtolower($q), '[[category]]') && $pai->getOption('enable_cats') == 'yes') $error[] = new Error('You must have the [[category]] variable in your question/answer template. Please go back and add it. If you do not wish to use categories, please disable them on the options page.');
+				if (!strstr(strtolower($q), '[[category]]') && $pai->getOption('enable_cats')) $error[] = new Error('You must have the [[category]] variable in your question/answer template. Please go back and add it. If you do not wish to use categories, please disable them on the options page.');
 
 				if (isset($error)) {
 					$num = count($error);
@@ -1078,7 +1080,8 @@ SQL;
 		pagination($perpage, 'date');
 		echo '<ul id="question-list">';
 		while($qs = mysql_fetch_object($getqs)) {
-			$pai->adminQs($qs);
+			$q = new Question($qs->q_id);
+			$q->show();
 		}
 		echo '</ul>';
 	}

@@ -26,7 +26,7 @@ if (($pai->getOption('enable_cats') != 'yes' || $pai->getOption('summary_enable'
 	exit;
 }
 
-if ($pai->getOption('is_wordpress') == 'yes') {
+if ($pai->getOption('is_wordpress')) {
 	include $pai->getOption('is_wp_blog_header');
 	if (function_exists('get_header')) get_header();
 }
@@ -41,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['question'])) {
 	$question->setCategory($_POST['category']);
 	$question->setIp($_SERVER['REMOTE_ADDR']);
 
-	if ($pai->getOption('ipban_enable') == 'yes' && strlen($pai->getOption('ipban_enable')) > 0) {
+	if ($pai->getOption('ipban_enable') && strlen($pai->getOption('ipban_enable')) > 0) {
 		$bannedips = explode(';', $pai->getOption('banned_ips'));
 
 		foreach($bannedips as $ip) {
@@ -51,7 +51,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['question'])) {
 			}
 		}
 	}
-	if ($pai->getOption('antispam_enable') == 'yes' && strlen($pai->getOption('banned_words')) > 0) {
+
+	if ($pai->getOption('antispam_enable') && strlen($pai->getOption('banned_words')) > 0) {
 		$bannedwords = $pai->getOption('banned_words');
 		if (substr($bannedwords, -1, 1) == '|') $bannedwords = substr_replace($bannedwords, '', -1, 1);
 
@@ -64,7 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['question'])) {
 	$question->create();
 	echo $pai->getOption('success_msg_template');
 
-	if ($pai->getOption('notifybymail') == 'yes') {
+	if ($pai->getOption('notifybymail')) {
 		if (basename($_SERVER['SCRIPT_FILENAME']) == 'index.php' && file_exists('admin.php')) $adminurl = 'http://' . $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']) . '/admin.php';
 
 		$subject = 'New question has been asked';
@@ -101,17 +102,12 @@ else {
 
 		$pai->askForm($_SERVER['PHP_SELF']);
 		pages();
-		$table = $pai_db->getTable();
-		$query = <<<SQL
-SELECT `{$table}`.*, `{$table}_cats`.`cat_name`
-FROM `{$table}`
-JOIN `{$table}_cats` ON `{$table}`.`category` = `{$table}_cats`.`cat_id`
-SQL;
+		$query = "SELECT `q_id` FROM `{$pai_db->getTable()}`";
 
-		if ($pai->getOption('show_unanswered') == 'no') $query .= ' WHERE `' . $pai_db->getTable() . '`.`answer` IS NOT NULL AND `' . $pai_db->getTable() . "`.`answer` != ''";
+		if (!$pai->getOption('show_unanswered')) $query .= " WHERE `answer` IS NOT NULL AND `answer` != ''";
 
 		dopagination($query);
-		$query .= ' ORDER BY `' . $table . '`.`dateasked` DESC LIMIT ' . $startfrom . ', ' . $pai->getOption('totalpage_faq');
+		$query .= ' ORDER BY `dateasked` DESC LIMIT ' . $startfrom . ', ' . $pai->getOption('totalpage_faq');
 
 		summary();
 
@@ -121,7 +117,8 @@ SQL;
 			pagination($perpage, 'date');
 
 			while($qs = mysql_fetch_object($getqs)) {
-				$pai->showQs($qs);
+				$q = new Question($qs->q_id);
+				$q->show();
 			}
 		}
 		else echo '<p>No questions found.</p>';
@@ -130,43 +127,36 @@ SQL;
 
 ####### ALL QUESTIONS FROM A PARTICULAR CATEGORY ######
 	elseif (isset($_GET['category']) && is_numeric($_GET['category'])) {
-		if ($pai->getOption('enable_cats') != 'yes') {
+		if (!$pai->getOption('enable_cats')) {
 			$error = new Error('Category sorting is disabled.');
 			$error->display();
 		}
 
-		$category = (int)cleaninput($_GET['category']);
-
-		if (empty($category)) $error = new Error('No category specified.');
-		if (!$cat = $pai_db->get('cat_name', 'cats', '`cat_id` = ' . $category)) $error = new Error('Invalid category.');
-
-		if (isset($error)) $error->display();
+		$cat = new Category((int)$_GET['category']);
+		if (!isset($cat)) {
+			$error = new Error('Invalid category.');
+			$error->display();
+		}
 
 		$pai->askForm($_SERVER['PHP_SELF']);
 		pages();
 
-		$query = <<<SQL
-SELECT `{$pai_db->getTable()}`.*, `{$pai_db->getTable()}_cats`.`cat_name`
-FROM `{$pai_db->getTable()}`
-JOIN `{$pai_db->getTable()}_cats` ON `{$pai_db->getTable()}`.`category` = `{$pai_db->getTable()}_cats`.`cat_id`
-WHERE `{$pai_db->getTable()}`.`category` = 
-SQL;
+		$query = 'SELECT `q_id`, `category` FROM `' . $pai_db->getTable() . '` WHERE `category` = ' . (int)$_GET['category'];
 
-		$query .= (int)cleaninput($_GET['category']);
-
-		if ($pai->getOption('show_unanswered') == 'no') $query .= " AND `answer` != ''";
+		if (!$pai->getOption('show_unanswered')) $query .= " AND `answer` != '' AND `answer` IS NOT NULL";
 
 		dopagination($query);
 		$query .= ' ORDER BY `dateasked` DESC LIMIT ' . $startfrom . ',' . $pai->getOption('totalpage_faq');
 
 		if ($totalpages > 0) {
-			echo '<h3 class="pai-category-title">' . $totalpages . ($totalpages == 1 ? ' question' : ' questions') . ' in the &quot;' . $cat . '&quot; category</h3>';
+			echo '<h3 class="pai-category-title">' . $totalpages . ($totalpages == 1 ? ' question' : ' questions') . ' in the &quot;' . $cat->getName() . '&quot; category</h3>';
 
 			$getqs = $pai_db->query($query);
 			pagination($perpage, 'bycat');
 
 			while($qs = mysql_fetch_object($getqs)) {
-				$pai->showQs($qs);
+				$q = new Question($qs->q_id);
+				$q->show();
 			}
 		}
 		else echo '<h3 class="pai-category-title">No questions in this category</h3>';
@@ -177,20 +167,16 @@ SQL;
 	elseif (isset($_GET['search'])) {
 		$getsearch = cleaninput($_GET['search']);
 		if (empty($getsearch)) $error = new Error('Please enter a valid search term.');
-		if (strlen($getsearch) < 4) $error = new Error('Please enter more than four characters.');
+		if (strlen($getsearch) < 4) $error = new Error('Please enter more than four characters.'); // Overrides last
 
 		if (isset($error)) $error->display();
 
 		$pai->askForm($_SERVER['PHP_SELF']);
 		pages();
 
-		$query = <<<SQL
-SELECT `{$pai_db->getTable()}`.*, `{$pai_db->getTable()}_cats`.`cat_name`
-FROM `{$pai_db->getTable()}`
-JOIN `{$pai_db->getTable()}_cats` ON `{$pai_db->getTable()}`.`category` = `{$pai_db->getTable()}_cats`.`cat_id`
-SQL;
+		$query = "SELECT `q_id` FROM `{$pai_db->getTable()}`";
 
-		if ($pai->getOption('show_unanswered') == 'no') $query .= " WHERE (`question` LIKE '%" . $getsearch . "%' AND `answer` != '') OR `answer` LIKE '%" . $getsearch . "%'";
+		if (!$pai->getOption('show_unanswered')) $query .= " WHERE (`question` LIKE '%" . $getsearch . "%' AND `answer` != '' AND `answer` IS NOT NULL) OR `answer` LIKE '%" . $getsearch . "%'";
 		else $query .= " WHERE `question` LIKE '%" . $getsearch . "%' OR `answer` LIKE '%" . $getsearch . "%'";
 		dopagination($query);
 
@@ -203,7 +189,8 @@ SQL;
 			pagination($perpage, 'search');
 
 			while($qs = mysql_fetch_object($getqs)) {
-				$pai->showQs($qs);
+				$q = new Question($qs->q_id);
+				$q->show();
 			}
 		}
 		else echo '<p>No results found.</p>';
@@ -213,57 +200,21 @@ SQL;
 ################ QUESTION PERMALINKS ##################
 	elseif (isset($_GET['q']) && !empty($_GET['q']) && is_numeric($_GET['q'])) {
 
-		$query = <<<SQL
-SELECT `{$pai_db->getTable()}`.*, `{$pai_db->getTable()}_cats`.`cat_name`
-FROM `{$pai_db->getTable()}`
-JOIN `{$pai_db->getTable()}_cats` ON `{$pai_db->getTable()}`.`category` = `{$pai_db->getTable()}_cats`.`cat_id`
-WHERE `{$pai_db->getTable()}`.`q_id` = 
-SQL;
+		$q = new Question((int)$_GET['q']);
 
-		$getq = $pai_db->query($query . (int)cleaninput($_GET['q']) . ' LIMIT 1');
-		if (mysql_num_rows($getq) < 1) {
-			$error = new Error('No such question.');
+		if (!isset($q) || (($q->getAnswer() == '' || $q->getAnswer() == null) && !$pai->getOption('show_unanswered'))) {
+			$error = new Error('Invalid question.');
 			$error->display();
 		}
-
-		$q = mysql_fetch_object($getq);
-
-		if (empty($q->answer) && $pai->getOption('show_unanswered') == 'no') {
-			$error = new Error('You cannot view this question until it has been answered.');
-			$error->display();
-		}
-		else $pai->showQs($q);
+		else $q->show();
 
 	}
 #######################################################
 
 ################## CATEGORY SUMMARY ###################
-	elseif (empty($_GET) || empty($_SERVER['QUERY_STRING']) && $pai->getOption('summary_enable') == 'yes'){
-		$pai->askForm($_SERVER['PHP_SELF']); ?>
-		<ul class="pai-summary">
-			<li>View questions:
-				<ul>
-					<li><a href="?recent" title="Most recent">Most recent</a></li>
-				</ul>
-			</li>
-			<li>By category:
-				<ul>
-		<?php
-		$getcats = $pai_db->query('SELECT `' . $pai_db->getTable() . '_cats`.*, COUNT(`' . $pai_db->getTable() . '`.`q_id`) AS `num` FROM `' . $pai_db->getTable() . '_cats` LEFT JOIN `' . $pai_db->getTable() . '` ON `' . $pai_db->getTable() . '_cats`.`cat_id` = `' . $pai_db->getTable() . '`.`category` GROUP BY `' . $pai_db->getTable() . '_cats`.`cat_id` ORDER BY `cat_name` ASC');
-
-		while ($cat = mysql_fetch_object($getcats)) {
-			$num = mysql_fetch_object($pai_db->query('SELECT COUNT(`q_id`) AS `num` FROM `' . $pai_db->getTable() . "` WHERE `category` = '" . $cat->cat_id . "'"));
-			?>
-					<li><a href="?category=<?php echo $cat->cat_id; ?>" title="View questions in this category"><?php echo $cat->cat_name; ?></a> (<?php echo $cat->num; ?>)</li>
-			<?php
-		}
-		?>
-				</ul>
-			</li>
-		</ul>
-
-		<p>Total questions: <strong><?php echo $pai->getTotal(); ?></strong> (<?php echo $pai->getUnanswered(); ?> unanswered)</p>
-		<?php
+	elseif (empty($_GET) || empty($_SERVER['QUERY_STRING']) && $pai->getOption('summary_enable')){
+		$pai->askForm($_SERVER['PHP_SELF']);
+		$pai->showSummary();
 	}
 	else {
 		$error = new Error('Invalid query string.');
@@ -294,7 +245,7 @@ echo $display;
 //eval(base64_decode('aWYgKGlzc2V0KCRkaXNwbGF5KSAmJiBzdHJzdHIoJGRpc3BsYXksICdQSFBBc2tJdCcpKSB7IGVjaG8gJGRpc3BsYXk7IH0gZWxzZSB7IGVjaG8gJzxwIHN0eWxlPSJ0ZXh0LWFsaWduOiBjZW50ZXI7Ij5Qb3dlcmVkIGJ5IDxhIGhyZWY9Imh0dHA6Ly9ub3Qtbm90aWNlYWJseS5uZXQvc2NyaXB0cy9waHBhc2tpdC8iIHRpdGxlPSJQSFBBc2tJdCI+UEhQQXNrSXQgMy4wPC9hPjwvcD4nOyB9'));
 
 //FOOTER INCLUDE
-if ($pai->getOption('is_wordpress') == 'yes') {
+if ($pai->getOption('is_wordpress')) {
 	if (function_exists('get_sidebar')) get_sidebar();
 	if (function_exists('get_footer')) get_footer();
 }

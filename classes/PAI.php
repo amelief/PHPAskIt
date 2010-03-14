@@ -75,6 +75,7 @@ class PAI {
 
 		$this->answered = $this->total - $this->unanswered;
 
+		// TODO: Errr... Do we really want to be showing only categories where questions are asked? Why not just count all categories?
 		$cats = mysql_fetch_object($pai_db->query('SELECT COUNT(DISTINCT `category`) AS `num` FROM `' . $pai_db->getTable() . '`'));
 		$this->cats = $cats->num;
 
@@ -124,7 +125,12 @@ class PAI {
 	 * @return mixed The option value or false if it is null.
 	 */
 	public function getOption($option) {
-		return (array_key_exists($option, $this->options) ? $this->options[$option] : false);
+		if (array_key_exists($option, $this->options)) {
+			if ($this->options[$option] == 'yes') return true;
+			elseif ($this->options[$option] == 'no') return false;
+			return $this->options[$option];
+		}
+		return false;
 	}
 
 	/**
@@ -200,24 +206,6 @@ class PAI {
 	}
 
 	/**
-	 * Show questions.
-	 *
-	 * @param object $sql The query object.
-	 */
-	public function showQs($sql) {
-		if (empty($sql->answer)) $answer = '(Unanswered)';
-		else $answer = $this->convertBB($sql->answer);
-
-		if ($this->getOption('enable_cats') == 'yes') $cat = '<a href="?category=' . $sql->category . '" title="See all questions in the ' . $sql->cat_name . ' category">' . $sql->cat_name . '</a>';
-		else $cat = '';
-
-		$sub = array('[[question]]', '[[answer]]', '[[category]]', '[[permalink]]', '[[date]]');
-		$replace = array($sql->question, $answer, $cat, '?q=' . $sql->q_id, date($this->getOption('date_format'), strtotime($sql->dateasked)));
-
-		echo str_replace($sub, $replace, $this->getOption('q_template'));
-	}
-
-	/**
 	 * Magic happens here.
 	 */
 	public function adminLogout() {
@@ -255,6 +243,41 @@ class PAI {
 	}
 
 	/**
+	 * Show the summary of questions.
+	 *
+	 * @global Database $pai_db The database object.
+	 */
+	public function showSummary() {
+		global $pai_db;
+		$summary = <<<HTML
+<ul class="pai-summary">
+	<li>View questions:
+		<ul>
+			<li><a href="?recent" title="Most recent">Most recent</a></li>
+		</ul>
+	</li>
+	<li>By category:
+		<ul>
+HTML;
+		$getcats = $pai_db->query('SELECT `' . $pai_db->getTable() . '_cats`.cat_id, COUNT(`' . $pai_db->getTable() . '`.`q_id`) AS `num` FROM `' . $pai_db->getTable() . '_cats` LEFT JOIN `' . $pai_db->getTable() . '` ON `' . $pai_db->getTable() . '_cats`.`cat_id` = `' . $pai_db->getTable() . '`.`category` GROUP BY `' . $pai_db->getTable() . '_cats`.`cat_id` ORDER BY `cat_name` ASC');
+
+		while ($cat = mysql_fetch_object($getcats)) {
+			$c = new Category($cat->cat_id);
+			$summary .= <<<HTML
+			<li><a href="?category={$c->getId()}" title="View questions in this category">{$c->getName()}</a> ({$cat->num})</li>
+HTML;
+		}
+		$summary .= <<<HTML
+		</ul>
+	</li>
+</ul>
+
+<p>Total questions: <strong>{$this->getTotal()}</strong> ({$this->getUnanswered()} unanswered)</p>
+HTML;
+		echo $summary;
+	}
+
+	/**
 	 * Get a selectable list of categories.
 	 *
 	 * @global Database $pai_db The database object.
@@ -267,125 +290,6 @@ class PAI {
 			<option value="<?php echo $cat->cat_id; ?>"<?php if ($cat->cat_id == $current_cat) echo ' selected="selected"'; ?>><?php echo $cat->cat_name; ?></option>
 			<?php
 		}
-	}
-
-	/**
-	 * Display questions in formatted for admin.
-	 *
-	 * @global string $token The session token.
-	 * @param object $sql The query object.
-	 */
-	public function adminQs($sql) {
-		global $token;
-		$question = new Question();
-		$question->setAll($sql);
-		?>
-		<li class="question-container">
-			<form action="admin.php?edit=category&amp;inline=true" method="post" onsubmit="
-				new Ajax.Request('admin.php?edit=category&amp;inline=true', {
-					asynchronous:true,
-					onComplete:function(request) {
-						Element.show('category_read_<?php echo $question->getId(); ?>');
-						Element.hide('indicator<?php echo $question->getId(); ?>');
-						Element.hide('category_edit_<?php echo $question->getId(); ?>');
-						$('category_read_<?php echo $question->getId(); ?>').update(request.responseText);
-					},
-					onLoading:function(request) {
-						Element.show('indicator<?php echo $question->getId(); ?>');
-					},
-					parameters:Form.serialize(this)
-				}); return false;">
-				<h4 class="date"><?php echo $question->getDateAskedFormatted();
-				if ($this->getOption('enable_cats') == 'yes') { ?>
-					<span class="category" id="category_read_<?php echo $question->getId(); ?>">(<a href="admin.php?category=<?php echo $question->getCategory(); ?>" title="See all questions in the <?php echo $question->getCategory(true); ?> category"><?php echo $question->getCategory(true); ?></a>)</span>
-					<span id="category_edit_<?php echo $question->getId(); ?>" class="category" style="display: none;">
-						<input type="hidden" name="id" id="category_id_<?php echo $question->getId(); ?>" value="<?php echo $question->getId(); ?>" />
-						<input type="hidden" name="token" id="category_token<?php echo $question->getId(); ?>" value="<?php echo $token; ?>" />
-						<select name="category" id="category_edit_<?php echo $question->getId(); ?>_menu">
-							<?php $this->getCategories($question->getCategory()); ?>
-						</select>
-						<input type="submit" value="Save category" name="submit_category" id="submit_category_<?php echo $question->getId(); ?>" style="font-size: 0.8em;" /> <input type="reset" onclick="Element.hide('category_edit_<?php echo $question->getId(); ?>'); Element.show('category_read_<?php echo $question->getId(); ?>'); return false;" name="cancel" id="cancel_category_<?php echo $question->getId(); ?>" value="Cancel" style="font-size: 0.8em" />
-					</span>
-					<a href="admin.php?edit=category" onclick="Element.hide('category_read_<?php echo $question->getId(); ?>'); Element.show('category_edit_<?php echo $question->getId(); ?>'); if ($('category_edit_<?php echo $question->getId(); ?>_menu')) $('category_edit_<?php echo $question->getId(); ?>_menu').focus(); return false;" style="font-size: 0.6em;">e</a>
-				<?php
-			} ?> <img src="indicator.gif" alt="Saving..." title="Saving..." id="indicator<?php echo $question->getId(); ?>" style="display: none;" /></h4>
-			</form>
-			<form action="admin.php?edit=question&amp;inline=true" method="post" onsubmit="
-				new Ajax.Request('admin.php?edit=question&amp;inline=true', {
-					asynchronous:true,
-					onComplete:function(request) {
-						$('question_read_<?php echo $question->getId(); ?>').style.display = 'block';
-						Element.hide('indicator<?php echo $question->getId(); ?>');
-						Element.hide('question_edit_<?php echo $question->getId(); ?>');
-						$('question_read_<?php echo $question->getId(); ?>').update(request.responseText);
-					},
-					onLoading:function(request) {
-						Element.show('indicator<?php echo $question->getId(); ?>');
-					},
-					parameters:Form.serialize(this)
-				}); return false;">
-				<p class="question" id="question<?php echo $question->getId(); ?>" title="Click to edit question">
-					<span id="question_read_<?php echo $question->getId(); ?>" style="display: block;" onclick="Element.hide('question_read_<?php echo $question->getId(); ?>'); Element.show('question_edit_<?php echo $question->getId(); ?>'); if ($('question_edit_<?php echo $question->getId(); ?>_box')) $('question_edit_<?php echo $question->getId(); ?>_box').focus(); return false;">
-						<a href="admin.php?q=<?php echo $question->getId(); ?>" title="Permalink to this question"><?php echo $question->getQuestion(); ?></a>
-					</span>
-					<span id="question_edit_<?php echo $question->getId(); ?>" style="display: none;">
-						<input type="hidden" name="id" id="question_id_<?php echo $question->getId(); ?>" value="<?php echo $question->getId(); ?>" />
-						<input type="hidden" name="token" id="question_token<?php echo $question->getId(); ?>" value="<?php echo $token; ?>" />
-						<input type="text" name="question" id="question_edit_<?php echo $question->getId(); ?>_box" style="width: 99%;" value="<?php echo $question->getQuestion(); ?>" /><br />
-						<input type="submit" value="Save question" name="submit_question" id="submit_question_<?php echo $question->getId(); ?>" /> <input type="reset" onclick="Element.hide('question_edit_<?php echo $question->getId(); ?>'); $('question_read_<?php echo $question->getId(); ?>').style.display = 'block'; return false;" name="cancel" id="cancel_question_<?php echo $question->getId(); ?>" value="Cancel" />
-					</span>
-				</p>
-			</form>
-			<form action="admin.php?edit=answer&amp;inline=true" method="post" onsubmit="
-				new Ajax.Request('admin.php?edit=answer&amp;inline=true', {
-					asynchronous:true,
-					onComplete:function(request) {
-						if (request.responseText == '(No answer)') $('answer<?php echo $question->getId(); ?>').className = 'answer unanswered';
-						else $('answer<?php echo $question->getId(); ?>').className = 'answer';
-						$('answer_read_<?php echo $question->getId(); ?>').style.display = 'block';
-						Element.hide('indicator<?php echo $question->getId(); ?>');
-						Element.hide('answer_edit_<?php echo $question->getId(); ?>');
-						$('answer_read_<?php echo $question->getId(); ?>').update(request.responseText);
-					},
-					onLoading:function(request) {
-						Element.show('indicator<?php echo $question->getId(); ?>');
-					},
-					parameters:Form.serialize(this)
-				}); return false;">
-				<p id="answer<?php echo $question->getId(); ?>" class="answer<?php if ($question->getAnswer() == '') echo ' unanswered'; ?>" title="<?php if ($question->getAnswer() == '') echo 'Click to add an answer'; else echo 'Click to edit answer'; ?>">
-				<span id="answer_read_<?php echo $question->getId(); ?>" style="display: block;" onclick="Element.hide('answer_read_<?php echo $question->getId(); ?>'); Element.show('answer_edit_<?php echo $question->getId(); ?>'); if ($('answer_edit_<?php echo $question->getId(); ?>_area')) $('answer_edit_<?php echo $question->getId(); ?>_area').focus(); return false;">
-					<?php if ($question->getAnswer() == '') echo '(No answer)'; else echo $this->convertBB($question->getAnswer()); ?>
-				</span>
-				<span id="answer_edit_<?php echo $question->getId(); ?>" style="display: none;">
-					<input type="hidden" name="id" id="answer_id_<?php echo $question->getId(); ?>" value="<?php echo $question->getId(); ?>" />
-					<input type="hidden" name="token" id="answer_token<?php echo $question->getId(); ?>" value="<?php echo $token; ?>" />
-					<textarea id="answer_edit_<?php echo $question->getId(); ?>_area" name="answer" style="width: 99%;" rows="10" cols="70"><?php echo ($question->getAnswer() == '' ? '' : strip_tags($question->getAnswer())); ?></textarea><br />
-					<input type="submit" value="Save answer" name="save" id="save_button_<?php echo $question->getId(); ?>" /> <input type="reset" onclick="Element.hide('answer_edit_<?php echo $question->getId(); ?>'); $('answer_read_<?php echo $question->getId(); ?>').style.display = 'block'; return false;" name="cancel" id="cancel_answer_<?php echo $question->getId(); ?>" value="Cancel" />
-				</span>
-			</p>
-			</form>
-			<p class="ip"><?php echo $question->getIp(); ?> <?php if ($this->getOption('ipban_enable') == 'yes') { ?>[<a href="admin.php?manage=ips&amp;action=add&amp;ip=<?php echo $question->getIp(); ?>&amp;token=<?php echo $token; ?>" title="Ban this IP from asking more questions">Ban?</a>]<?php } ?></p>
-
-			<p class="tools center">
-				<a href="admin.php?edit=answer&amp;qu=<?php echo $question->getId(); ?>&amp;token=<?php echo $token; ?>" title="<?php
-				if ($question->getAnswer() == '') {
-					?>Answer this question">Answer Question<?php
-				}
-				else {
-					?>Edit your answer to this question">Edit Answer<?php
-				} ?></a> |
-				<a href="admin.php?edit=question&amp;qu=<?php echo $question->getId(); ?>&amp;token=<?php echo $token; ?>" title="Edit this question">Edit Question</a>
-
-				<?php
-				if ($this->getOption('enable_cats') == 'yes') { ?>
-					| <a href="admin.php?edit=category&amp;qu=<?php echo $question->getId(); ?>&amp;token=<?php echo $token; ?>" title="Change the category of this question">
-					Change Category</a>
-					<?php
-				} ?>
-				| <a href="admin.php?delete=<?php echo $question->getId(); ?>&amp;token=<?php echo $token; ?>" onclick="return confirm('Are you sure you want to delete this question?')" title="Delete this question">Delete</a>
-			</p>
-		</li>
-		<?php
 	}
 
 	/**

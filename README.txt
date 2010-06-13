@@ -1,14 +1,14 @@
 ~~~~~~~~~~~~~~~~~~
 ##
 ## Askably 3.1 ##
-                ##
+               ##
 ~~~~~~~~~~~~~~~~~~
 
 
 PLEASE BE SURE TO READ ALL OF THIS FILE BEFORE USING Askably.
 
 ===================================================================
-Askably (formerly PHPAskIt): Copyright © 2005-2009 Amelie M.
+Askably (formerly PHPAskIt): Copyright © 2005-2010 Amelie M.
 
 You may:
 - Use and edit/modify Askably however you like, AS LONG AS THE CREDIT LINE STAYS INTACT AND UNEDITED
@@ -20,15 +20,13 @@ You may not:
 - Claim ownership of this script, however much you have modified it
 - Earn money by installing, customising, modifying or troubleshooting this script for other people
 - Hold Askably's creator responsible for anything that arises from its use
-- Remove, modify, hide or use any other method to eliminate or render invisible the "Powered by Askably 3.1" line at the bottom of the index.php and admin.php files
-
-Amelie, Not-Noticeably.net
+- Remove, modify, hide or use any other method to eliminate or render invisible the "Powered by Askably" line at the bottom of the index.php and admin.php files
 ===================================================================
 
 
 CONTENTS OF THIS FILE:
     - Introduction
-    - Change log
+    - Changelog
     - Requirements
     - Files
     - Installation
@@ -54,10 +52,11 @@ CHANGE LOG
 ----------------------------------------
 
 VERSION 3.1
-- Optimised queries, code and general performance - now supports PHP5+ only
-- Enabled bbCode for use as an alternative to HTML
+- Another complete backend rewrite; optimised queries, code and general performance - now supports PHP5+ only
+- Enabled limited bbCode for better formatting of answers
 - Changed to Prototype JavaScript framework for more advanced AJAX integration
-- Renamed to Askably
+- Renamed to Askably after request from PHP team
+- Removed import scripts - now built-in
 
 VERSION 3.0
 - Complete backend rewrite, now uses object-oriented programming
@@ -177,7 +176,7 @@ install.php will take you through the rest of the setup process.
 You do not have to use the header and footer files supplied in the zip file. If you want to use your own header and footer files for your question page, enter the ABSOLUTE PATH to your files where specified in install.php. An absolute path usually looks like this: /home/username/public_html/folder/file.html, where "username" is replaced with the name you use to login to your FTP and control panel (your absolute path depends on your host - it may not look anything like this example). If you do not know your absolute path, ask your host about it. If you have header and footer files in the same directory as your Askably files, you can enter a relative path. A relative path normally looks like this: filename.html - basically just the name of the file you want to use. Please be aware that these header and footer files will only be used on the questions page, not the admin panel.
 Do NOT fill in these sections if you want to use your WordPress theme with Askably. Instead, fill in the absolute path to wp-blog-header.php (this file is in your WordPress folder).
 
-5. After you have finished entering all your settings, click submit. Did you get a success message? Yes? Good! The script has been installed successfully. Log back into your FTP and delete the install.php, import and upgrade.php files (if you don't do this, you won't be able to use the script).
+5. After you have finished entering all your settings, click submit. Did you get a success message? Yes? Good! The script has been installed successfully. Log back into your FTP and delete the install.php and upgrade.php files (if you don't do this, you won't be able to use the script).
 
 Didn't get a success message? The most likely problem is that you haven't entered your database details correctly. Have another look at config.php, making absolutely sure that all the information is correct. If you aren't sure what your database details are, please ask your host.
 
@@ -204,9 +203,9 @@ The table name should be different to your WordPress ones, however. Make sure yo
 
 8. To upgrade from a previous version of Askably (it doesn't matter which version), you should delete ALL your old files first, INCLUDING config.php and the header/footer.html files. You should then upload all of the new files - EXCEPT install.php - in their place. You should also back up your database.
 
-8.1. Fill in the database variables in config.php, as in step 2 above. This should contain the same database information (including the table name) as your old config.php.
+8.1. Fill in the database variables in config.php, as in step 2 above. This should contain the same database information (including the table name) as your old config.php. Please note that the default table name has changed as a result of Askably's renaming. Make sure that you put in the correct details for the database table you were using previously.
 
-8.2. Run upgrade.php, which will take you through the rest of the upgrade process.
+8.2. If the script does not redirect you to the upgrade page, go to upgrade.php, which will take you through the rest of the upgrade process.
 
 Note: Do NOT attempt to run install.php on an old version of Askably, even if the script instructs you to do so. This will corrupt your data.
 
@@ -215,14 +214,12 @@ Note: Do NOT attempt to run install.php on an old version of Askably, even if th
 IMPORTING QUESTIONS
 ----------------------------------------
 
-Askably comes with four files to assist you in importing questions into the script. Currently, Askably supports the following scripts:
-- Ask&Answer (formerly from posed.org): use convertaa.php
-- Wak's Ask&Answer (formerly from luved.org): use convertwaks.php
-- FAQtastic (formerly from scripts.inexistent.org): use convertfaqtastic.php
+Askably comes with the ability to import questions from 3 previously popular scripts as well as the ability to add your own questions from a manual FAQ or other script. Currently, Askably supports the following scripts:
+- Ask&Answer (formerly from posed.org)
+- Wak's Ask&Answer (formerly from luved.org)
+- FAQtastic (from scripts.inexistent.org)
 
-A separate file, import.php, is included to import questions from any other script or from manual FAQ pages.
-
-Full instructions are provided in each file. Make sure you import questions before you let people ask you questions - otherwise they will be met with an error message instructing you to delete the import folder.
+To import questions, simpy head to the Import section in your admin panel and you will be guided through the rest.
 
 
 
@@ -296,7 +293,7 @@ TROUBLESHOOTING
 
 Having problems? Spotted a bug? Something not working?
 
-You may contact me personally at amelie@not-noticeably.net but please be warned that I have limited time available to answer personal requests. I am active at the CodeGrrl forums (http://codegrrl.com/forums/) and will be able to answer any queries there. This is a better option than contacting me personally since questions asked and answered on the forums will be available for future reference, which may help others having similar problems. Your query may also be answered more quickly by other members 
+You may contact me personally at amelie@not-noticeably.net but please be warned that I have limited time available to answer personal requests. I am active at the CodeGrrl forums (http://codegrrl.com/forums/) and will be able to answer any queries there. This is a better option than contacting me personally since questions asked and answered on the forums will be available for future reference, which may help others having similar problems. Your query may also be answered more quickly by other members.
 
 
 
@@ -308,8 +305,6 @@ Askably would not have been possible without the help of the following wonderful
 Amanda (http://punkified.net), Vixx (http://furious-angel.com), Jem (http://www.jemjabella.co.uk), Valerie (http://spoken-for.org), Katy, Rachael (http://www.calmbanana.co.uk/) and Melissa (http://melly.me/).
 
 The spinner/loading graphic is provided by http://www.ajaxload.info. Visit to get your own loading graphics!
-
-I would also like to thank CodeGrrl for hosting Askably/PHPAskIt for the past two years. It is time to part ways, however.
 
 
 
@@ -324,4 +319,4 @@ If you are in any doubt as to whether what you wish to do with the script compli
 
 Please be aware that I DO NOT accept any responsibility for anything that may happen to your site, server or computer as a result of you using this script. I do my best to fully test my scripts, but I cannot guarantee their safety and security. By using this script, you do so AT YOUR OWN RISK.
 
-Askably is Copyright © 2005-2009 Amelie M. All rights reserved.
+Askably is Copyright © 2005-2010 Amelie M. All rights reserved.

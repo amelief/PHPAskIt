@@ -1,7 +1,7 @@
 <?php
 /*
   ==============================================================================================
-  Askably 3.1 © 2005-2009 Amelie M.
+  Askably 3.1 © 2005-2010 Amelie M.
   ==============================================================================================
 */
 
@@ -24,7 +24,7 @@ if (!file_exists('functions.php')) { ?>
 }
 require 'functions.php';
 
-check_stuff();
+//check_stuff();
 
 $pai->doLogin();
 $pai->isLoggedIn();
@@ -56,23 +56,25 @@ adminheader(); ?>
 		elseif (strstr($_SERVER['QUERY_STRING'], '=antispam')) $active = 'spam';
 		elseif (strstr($_SERVER['QUERY_STRING'], '=options')) $active = 'opt';
 		elseif (strstr($_SERVER['QUERY_STRING'], '=templates')) $active = 'temp';
+		elseif (strstr($_SERVER['QUERY_STRING'], '=import')) $active = 'import';
 		else $active = 'home';
 	}
 	else $active = 'home'; ?>
 	<ul id="navigation" class="center">
 		<li><a href="admin.php" title="Main admin page"<?php if ($active == 'home') echo ' class="active"'; ?>>Admin home</a></li>
-		<li><a href="admin.php?sort=unanswered" title="View unanswered questions"<?php if ($active == 'unans') echo ' class="active"'; ?>>Unanswered (<?php echo $pai->getUnanswered(); ?>)</a></li>
+		<li><a href="?sort=unanswered" title="View unanswered questions"<?php if ($active == 'unans') echo ' class="active"'; ?>>Unanswered (<?php echo $pai->getUnanswered(); ?>)</a></li>
 	<?php if ($pai->getOption('enable_cats')) { ?>
-		<li><a href="admin.php?manage=categories" title="Manage categories"<?php if ($active == 'cats') echo ' class="active"'; ?>>Categories</a></li>
+		<li><a href="?manage=categories" title="Manage categories"<?php if ($active == 'cats') echo ' class="active"'; ?>>Categories</a></li>
 	<?php }
 	if ($pai->getOption('ipban_enable')) { ?>
-		<li><a href="admin.php?manage=ips" title="Manage blocked IP addresses"<?php if ($active == 'ips') echo ' class="active"'; ?>>Blocked IPs</a></li>
+		<li><a href="?manage=ips" title="Manage blocked IP addresses"<?php if ($active == 'ips') echo ' class="active"'; ?>>Blocked IPs</a></li>
 	<?php }
 	if ($pai->getOption('antispam_enable')) { ?>
-		<li><a href="admin.php?manage=antispam" title="Manage blocked words"<?php if ($active == 'spam') echo ' class="active"'; ?>>Blocked words</a></li>
+		<li><a href="?manage=antispam" title="Manage blocked words"<?php if ($active == 'spam') echo ' class="active"'; ?>>Blocked words</a></li>
 	<?php } ?>
-		<li><a href="admin.php?manage=options" title="Edit options"<?php if ($active == 'opt') echo ' class="active"'; ?>>Options</a></li>
-		<li><a href="admin.php?manage=templates" title="Edit templates"<?php if ($active == 'temp') echo ' class="active"'; ?>>Templates</a></li>
+		<li><a href="?manage=options" title="Edit options"<?php if ($active == 'opt') echo ' class="active"'; ?>>Options</a></li>
+		<li><a href="?manage=templates" title="Edit templates"<?php if ($active == 'temp') echo ' class="active"'; ?>>Templates</a></li>
+		<li><a href="?manage=import" title="Import questions"<?php if ($active == 'import') echo ' class="active"'; ?>>Import</a></li>
 		<li><a href="index.php?recent" title="Questions page">Recent</a></li>
 
 	<?php if ($pai->getOption('enable_cats') && $pai->getOption('summary_enable')) { ?>
@@ -83,7 +85,7 @@ adminheader(); ?>
 	<div id="side">
 		<h3>Summary</h3>
 
-		<p>You are logged in as <strong><?php echo $pai->getOption('username'); ?></strong>. (<a href="admin.php?process=logout" title="Logout">Logout?</a>)</p>
+		<p>You are logged in as <strong><?php echo $pai->getOption('username'); ?></strong>. (<a href="?process=logout" title="Logout">Logout?</a>)</p>
 		<p><strong>Quick stats</strong></p>
 		<ul>
 			<li>Total questions: <strong><?php echo $pai->getTotal(); ?></strong></li>
@@ -136,7 +138,7 @@ SQL;
 ####### ALL QUESTIONS FROM A PARTICULAR CATEGORY ######
 elseif (isset($_GET['category']) && !empty($_GET['category']) && is_numeric($_GET['category'])) {
 	ob_end_flush();
-	if ($pai->getOption('enable_cats') != 'yes') $error = new Error('Categories are disabled. To enable them, go to the <a href="admin.php?manage=options" title="Options page">options panel</a> and check &quot;enable categories&quot;.');
+	if ($pai->getOption('enable_cats') != 'yes') $error = new Error('Categories are disabled. To enable them, go to the <a href="?manage=options" title="Options page">options panel</a> and check &quot;enable categories&quot;.');
 	if (!$cat = $pai_db->get('cat_name', 'cats', '`cat_id` = ' . (int)cleaninput($_GET['category']))) $error = new Error('Invalid category.');
 	if (isset($error)) $error->display();
 
@@ -641,6 +643,64 @@ elseif (array_key_exists('manage', $_GET) && !empty($_GET['manage'])) {
 			}
 			break;
 
+		##### IMPORT
+		case 'import':
+			if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+				if (array_key_exists('import_from', $_POST)) {
+					if (array_key_exists('abspath', $_POST)) {
+						foreach($_POST['abspath'] as $a) {
+							if (!empty($a)) $abspath = $a;
+						}
+					}
+					else $abspath = '';
+					$imp = new Importer($_POST['import_from'], $abspath);
+				}
+				else {
+					$error = new Error('Oops! Looks like you forgot to select an option. Please go back and try again.');
+					$error->display();
+				}
+			}
+			else { ?>
+				<h2>Import questions</h2>
+				<p>Please choose the script you would like to import questions from. Please note that all questions will be imported into the default category.</p>
+
+				<form action="admin.php?manage=import" method="post">
+					<p>I am importing from:</p>
+					<ul class="nolist">
+						<li><input type="radio" name="import_from" id="import_from_aa" value="aa" /> <label for="import_from_aa">Ask&amp;Answer (posed.org version)</label></li>
+						<li><input type="radio" name="import_from" id="import_from_waks" value="waks" /> <label for="import_from_waks">Wak's Ask&amp;Answer (luved.org version)</label></li>
+						<li><input type="radio" name="import_from" id="import_from_faqtastic" value="faq" /> <label for="import_from_faqtastic">Faqtastic (v2 or v3)</label></li>
+						<li><input type="radio" name="import_from" id="import_from_other" value="none" /> <label for="import_from_other">None of the above</label></li>
+					</ul>
+					
+					<div id="showabspathaa" style="display: none;">
+						<p><strong>Please note:</strong> Imported questions will show as coming from <strong>your</strong> IP address and as being asked on today's date.</p>
+						<p><label for="abspathaa">Please enter your Ask&amp;Answer installation path:</label><br />
+						<input type="text" name="abspath[]" id="abspathaa" /></p>
+					</div>
+					<div id="showabspathwaks" style="display: none;">
+						<p><strong>Please note:</strong> Only <strong>answered</strong> questions will be imported from Wak's Ask&amp;Answer.</p>
+						<p><label for="abspathwaks">Please enter your Wak's Ask&amp;Answer installation path:</label><br />
+						<input type="text" name="abspath[]" id="abspathwaks" /></p>
+					</div>
+					<div id="showabspathfaq" style="display: none;">
+						<p><strong>Please note:</strong> ALL questions will be imported, whether they have been approved or not. No names or email addresses of question askers will be retained; the same goes for any settings and templates. Questions will appear as having been asked on today's date.</p>
+						<p><label for="abspathfaq">Please enter your Faqtastic installation path:</label><br />
+						<input type="text" name="abspath[]" id="abspathfaq" /></p>
+					</div>
+					<noscript>
+						<p>
+							<label for="abspath">Please enter your script's installation path:</label><br />
+							<input type="text" name="abspath" id="abspath" />
+						</p>
+					</noscript>
+
+					<p><input type="submit" id="step1" value="Import questions" /></p>
+				</form>
+				<?php
+			}
+			break;
+
 		##### BLOCKED IPS
 		case 'ips':
 			if ($pai->getOption('ipban_enable') != 'yes') {
@@ -794,20 +854,20 @@ elseif (array_key_exists('manage', $_GET) && !empty($_GET['manage'])) {
 					$numofips = (count($bannedips) - 1); ?>
 
 					<p>Currently <?php echo $numofips . ' IP ' . ($numofips > 1 ? 'addresses are' : 'address is'); ?> banned from asking you questions.</p>
-					<p>[<a href="admin.php?manage=ips&amp;action=add" title="Block an IP address">Add a new IP address to the block list</a>]</p>
+					<p>[<a href="?manage=ips&amp;action=add" title="Block an IP address">Add a new IP address to the block list</a>]</p>
 
 					<ul>
 					<?php
 					for($ipcount = 0; $ipcount < $numofips; $ipcount++) {
 						if(!empty($bannedips[$ipcount])) { ?>
-							<li><strong><?php echo $bannedips[$ipcount]; ?></strong> &nbsp; [<a href="admin.php?manage=ips&amp;action=edit&amp;ip=<?php echo $ipcount; ?>&amp;token=<?php echo $token; ?>" title="Edit this IP address">Edit</a>] [<a href="admin.php?manage=ips&amp;action=delete&amp;ip=<?php echo $ipcount; ?>&amp;token=<?php echo $token; ?>" title="Unblock this IP address">Unblock</a>]</li>
+							<li><strong><?php echo $bannedips[$ipcount]; ?></strong> &nbsp; [<a href="?manage=ips&amp;action=edit&amp;ip=<?php echo $ipcount; ?>&amp;token=<?php echo $token; ?>" title="Edit this IP address">Edit</a>] [<a href="?manage=ips&amp;action=delete&amp;ip=<?php echo $ipcount; ?>&amp;token=<?php echo $token; ?>" title="Unblock this IP address">Unblock</a>]</li>
 							<?php
 						}
 					}
 				echo '</ul>';
 				}
 				else echo '<p>No IP addresses are currently banned from asking you questions.</p>
-				<p>[<a href="admin.php?manage=ips&amp;action=add" title="Block an IP address">Add a new IP address to the block list</a>]</p>';
+				<p>[<a href="?manage=ips&amp;action=add" title="Block an IP address">Add a new IP address to the block list</a>]</p>';
 			}
 			break;
 
@@ -969,20 +1029,20 @@ elseif (array_key_exists('manage', $_GET) && !empty($_GET['manage'])) {
 					$numofwords = (count($bannedwords) - 1);
 					?>
 					<p>Currently <?php echo $numofwords . ' word' . ($numofwords == 1 ? ' is ' : 's are '); ?>blocked.</p>
-					<p>[<a href="admin.php?manage=antispam&amp;action=add" title="Add a new word to the block list">Add a new word to the block list</a>]</p>
+					<p>[<a href="?manage=antispam&amp;action=add" title="Add a new word to the block list">Add a new word to the block list</a>]</p>
 
 					<ul>
 					<?php
 					for($wordcount = 0; $wordcount < $numofwords; $wordcount++) {
 						if(!empty($bannedwords[$wordcount])) { ?>
-							<li><strong><?php echo $bannedwords[$wordcount]; ?></strong> &nbsp; [<a href="admin.php?manage=antispam&amp;action=edit&amp;word=<?php echo $wordcount; ?>&amp;token=<?php echo $token; ?>" title="Edit this word">Edit</a>] [<a href="admin.php?manage=antispam&amp;action=delete&amp;word=<?php echo $wordcount; ?>&amp;token=<?php echo $token; ?>" title="Unblock this word">Delete</a>]</li>
+							<li><strong><?php echo $bannedwords[$wordcount]; ?></strong> &nbsp; [<a href="?manage=antispam&amp;action=edit&amp;word=<?php echo $wordcount; ?>&amp;token=<?php echo $token; ?>" title="Edit this word">Edit</a>] [<a href="?manage=antispam&amp;action=delete&amp;word=<?php echo $wordcount; ?>&amp;token=<?php echo $token; ?>" title="Unblock this word">Delete</a>]</li>
 								<?php
 							}
 						}
 					echo '</ul>';
 				}
 				else echo '<p>No words are currently blocked.</p>
-				<p>[<a href="admin.php?manage=antispam&amp;action=add" title="Add a new word to the block list">Add a new word to the block list</a>]</p>';
+				<p>[<a href="?manage=antispam&amp;action=add" title="Add a new word to the block list">Add a new word to the block list</a>]</p>';
 			}
 			break;
 
@@ -1039,14 +1099,14 @@ elseif (array_key_exists('manage', $_GET) && !empty($_GET['manage'])) {
 						$the_cat = new Category($cat->cat_id);
 						echo '<li><strong>' . $the_cat->getName();
 						if ($the_cat->isDefault()) echo ' (default)';
-						echo '</strong> (' . $cat->num . ') &nbsp; [<a href="admin.php?manage=categories&amp;action=edit&amp;id=' . $the_cat->getId() . '&amp;token=' . $token . '" title="Edit the name of this category">Edit</a>]';
-						if (!$the_cat->isDefault()) echo ' [<a href="admin.php?manage=categories&amp;action=delete&amp;id=' . $the_cat->getId() . '&amp;token=' . $token . '" title="Delete this category" onclick="return confirm(\'Are you sure you want to delete this category?\')">Delete</a>]';
+						echo '</strong> (' . $cat->num . ') &nbsp; [<a href="?manage=categories&amp;action=edit&amp;id=' . $the_cat->getId() . '&amp;token=' . $token . '" title="Edit the name of this category">Edit</a>]';
+						if (!$the_cat->isDefault()) echo ' [<a href="?manage=categories&amp;action=delete&amp;id=' . $the_cat->getId() . '&amp;token=' . $token . '" title="Delete this category" onclick="return confirm(\'Are you sure you want to delete this category?\')">Delete</a>]';
 						echo '</li>';
 					}
 					echo '</ul>';
 				}
 				else echo '<p>There are no categories.</p>';
-				echo '<p>[<a href="admin.php?manage=categories&amp;action=add" title="Add a new category">Add new category</a>]</p>';
+				echo '<p>[<a href="?manage=categories&amp;action=add" title="Add a new category">Add new category</a>]</p>';
 			}
 			break;
 

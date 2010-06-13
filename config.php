@@ -2,7 +2,7 @@
 
 /*
 ===============================================================================================
-Askably 3.1 © 2005-2009 Amelie M.
+Askably 3.1 © 2005-2010 Amelie M.
 
 You may:
 - Use and edit/modify Askably however you like

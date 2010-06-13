@@ -1,9 +1,9 @@
 <?php
 /*
   ==============================================================================================
-  Askably 3.1 © 2005-2009 Amelie M.
+  Askably 3.1 © 2005-2010 Amelie M.
   ==============================================================================================
-																																*/
+*/
 
 ################################################################################################
 ############################ CORE ASKABLY FUNCTIONS. DO _NOT_ EDIT. ############################
@@ -12,21 +12,17 @@
 if (!defined('PAI_IN')) exit('<p>This file cannot be loaded directly.</p>');
 //error_reporting(0);
 
-$upone = array('import.php', 'convertwaks.php', 'convertfaqtastic.php', 'convertaa.php');
-if (in_array(basename($_SERVER['PHP_SELF']), $upone)) $path = '../';
-else $path = '';
-
 $required_files = glob('classes/*.php');
 $required_files[] = 'config.php';
 
 foreach($required_files as $file) {
-	if (!file_exists($path . $file)) { ?>
+	if (!file_exists($file)) { ?>
 		<h1>Error</h1>
-		<p><strong><code><?php echo $path . $file; ?></code></strong> could not be found. Without this file, the script cannot operate. Please make sure it is present.</p>
+		<p><strong><code><?php echo $file; ?></code></strong> could not be found. Without this file, the script cannot operate. Please make sure it is present.</p>
 		<?php
 		exit;
 	}
-	else require_once $path . $file;
+	else require_once $file;
 }
 
 $display = '<p style="text-align: center;">Powered by <a href="http://not-noticeably.net/scripts/askably/" title="Askably">Askably 3.1</a></p>';
@@ -35,7 +31,7 @@ function cleaninput($data) {
 	global $pai_db;
 	$data = trim(htmlentities(strip_tags($data), ENT_QUOTES, 'UTF-8'));
 	if (get_magic_quotes_gpc()) $data = stripslashes($data);
-	return mysql_real_escape_string($data, $pai_db->getConnection());
+	return @mysql_real_escape_string($data, $pai_db->getConnection());
 }
 function clean_array($data) {
 	return is_array($data) ? array_map('clean_array', $data) : cleaninput($data);
@@ -81,6 +77,7 @@ function adminheader() {
 		.date { color: #32cd32; font-size: 1.5em; font-weight: bold; line-height: 1.6em; letter-spacing: -0.1em; margin-top: 0.5em; }
 		.edit { color: #000; font-size: 0.8em; font-weight: normal; letter-spacing: normal; }
 		.ip { color: green; font-size: 0.9em; text-align: right; }
+		.nolist { list-style: none; }
 		.question { font-size: 1.2em; font-weight: bold; margin-left: 1.5em; padding: 0.5em; width: 85% }
 		.question:hover { background: #fff; }
 		.question-container { background: #e9fbe9; border-left: 2px dotted #32cd32; margin-bottom: 3em; padding: 0.5em 0.5em 0.2em 2em; }
@@ -90,6 +87,71 @@ function adminheader() {
 		.unanswered { color: #c0c0c0; letter-spacing: 0.1em; }
 	</style>
 	<script type="text/javascript" src="prototype.js"></script>
+	<script type="text/javascript" src="jquery.js"></script>
+	<script type="text/javascript">
+		//<![CDATA[
+		var $j = jQuery.noConflict();
+		//]]>
+		
+		$j(function() {
+			$j('input#import_from_aa').click(function() {
+				if (!$j('#showabspathaa').hasClass('open')) {
+					$j('#showabspathaa').slideDown("fast");
+					$j('#showabspathaa').addClass("open");
+				}
+				if ($j('#showabspathwaks').hasClass('open')) {
+					$j('#showabspathwaks').slideUp('fast');
+					$j('#showabspathwaks').removeClass('open');
+				}
+				if ($j('#showabspathfaq').hasClass('open')) {
+					$j('#showabspathfaq').slideUp('fast');
+					$j('#showabspathfaq').removeClass('open');
+				}
+			});
+			$j("input#import_from_waks").click(function() {
+				if (!$j('#showabspathwaks').hasClass('open')) {
+					$j("#showabspathwaks").slideDown("fast");
+					$j('#showabspathwaks').addClass("open");
+				}
+				if ($j('#showabspathaa').hasClass('open')) {
+					$j('#showabspathaa').slideUp('fast');
+					$j('#showabspathaa').removeClass('open');
+				}
+				if ($j('#showabspathfaq').hasClass('open')) {
+					$j('#showabspathfaq').slideUp('fast');
+					$j('#showabspathfaq').removeClass('open');
+				}
+			});
+			$j("input#import_from_faqtastic").click(function() {
+				if (!$j('#showabspathfaq').hasClass('open')) {
+					$j("#showabspathfaq").slideDown("fast");
+					$j('#showabspathfaq').addClass("open");
+				}
+				if ($j('#showabspathaa').hasClass('open')) {
+					$j('#showabspathaa').slideUp('fast');
+					$j('#showabspathaa').removeClass('open');
+				}
+				if ($j('#showabspathwaks').hasClass('open')) {
+					$j('#showabspathwaks').slideUp('fast');
+					$j('#showabspathwaks').removeClass('open');
+				}
+			});
+			$j("input#import_from_other").click(function() {
+				if ($j('#showabspathaa').hasClass('open')) {
+					$j('#showabspathaa').slideUp('fast');
+					$j('#showabspathaa').removeClass('open');
+				}
+				if ($j('#showabspathfaq').hasClass('open')) {
+					$j('#showabspathfaq').slideUp('fast');
+					$j('#showabspathfaq').removeClass('open');
+				}
+				if ($j('#showabspathwaks').hasClass('open')) {
+					$j('#showabspathwaks').slideUp('fast');
+					$j('#showabspathwaks').removeClass('open');
+				}
+			});
+		});
+	</script>
 </head>
 
 <body>
@@ -202,9 +264,9 @@ function check_stuff() {
 		exit;
 	}
 	if (basename($_SERVER['PHP_SELF'] != 'admin.php')) {
-		if (file_exists('import/import.php') || file_exists('import/convertaa.php') || file_exists('import/convertwaks.php') || file_exists('import/convertfaqtastic.php') || file_exists('upgrade.php')) { ?>
+		if (file_exists('upgrade.php')) { ?>
 	 		<h1>Error</h1>
-	 		<p>Please delete <code>upgrade.php</code> and the contents of the <code>/import</code> directory if you are not upgrading from a previous version of Askably or are not planning to import any questions into the script.</p>
+	 		<p>Please delete <code>upgrade.php</code> if you are not upgrading from a previous version of Askably.</p>
 	 		<?php
 	 		exit;
 		}

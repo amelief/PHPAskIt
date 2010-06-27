@@ -86,13 +86,14 @@ function adminheader() {
 		.tools { border-top: 1px dotted #32cd32; padding-top: 0.2em; }
 		.unanswered { color: #c0c0c0; letter-spacing: 0.1em; }
 	</style>
-	<script type="text/javascript" src="prototype.js"></script>
-	<script type="text/javascript" src="jquery.js"></script>
+	<script type="text/javascript" src="js/prototype.js"></script>
+	<script type="text/javascript" src="js/scriptaculous.js"></script>
+	<script type="text/javascript" src="js/effects.js"></script>
+	<script type="text/javascript" src="js/jquery.js"></script>
 	<script type="text/javascript">
 		//<![CDATA[
 		var $j = jQuery.noConflict();
-		//]]>
-		
+
 		$j(function() {
 			$j('input#import_from_aa').click(function() {
 				if (!$j('#showabspathaa').hasClass('open')) {
@@ -151,6 +152,23 @@ function adminheader() {
 				}
 			});
 		});
+
+		function updateStats() {
+			new Ajax.Request('admin.php?reset=stats', {
+				asynchronous: true,
+				onComplete: function(request) {
+					$('stats-info').update(request.responseText);
+				}
+			});
+			new Ajax.Request('admin.php?reset=unans', {
+				asynchronous: true,
+				onComplete: function(request) {
+					$('unanswered-qs').update(request.responseText);
+					if ($('unanswered-qs-header')) $('unanswered-qs-header').update(request.responseText);
+				}
+			});
+		}
+		//]]>
 	</script>
 </head>
 

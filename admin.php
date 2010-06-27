@@ -12,7 +12,7 @@ define('PAI_IN', true);
 
 //CSRF PROTECTION
 session_start();
-if (!isset($_SESSION['pai_token'])) $_SESSION['pai_token'] = $token = md5(uniqid(rand(), true));
+if (!array_key_exists('pai_token', $_SESSION) || $_SESSION['pai_token'] == null) $_SESSION['pai_token'] = $token = md5(uniqid(rand(), true));
 else $token = $_SESSION['pai_token'];
 $_SESSION['pai_time'] = time();
 
@@ -24,7 +24,7 @@ if (!file_exists('functions.php')) { ?>
 }
 require 'functions.php';
 
-//check_stuff();
+check_stuff();
 
 $pai->doLogin();
 $pai->isLoggedIn();
@@ -34,14 +34,14 @@ $pai->isLoggedIn();
 ob_start();
 
 define('IS_ADMIN', true);
-if (isset($_POST['qsperpage']) && !empty($_POST['qsperpage'])) {
+if (array_key_exists('qsperpage', $_POST) && !empty($_POST['qsperpage'])) {
 	$qsperpage = (int)cleaninput($_POST['qsperpage']);
 
 	if (!is_numeric($qsperpage) || $qsperpage < 1 || $qsperpage > 999) $qsperpage = 10;
 	setcookie($pai_db->getTable() . '_QsPerPage', $qsperpage, (time() + (86400 * 365)), '/');
 	header('Location: http://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI']);
 }
-elseif (isset($_COOKIE[$pai_db->getTable() . '_QsPerPage']) && !empty($_COOKIE[$pai_db->getTable() . '_QsPerPage']) && is_numeric($_COOKIE[$pai_db->getTable() . '_QsPerPage'])) define('ADMIN_PERPAGE', (int)cleaninput($_COOKIE[$pai_db->getTable() . '_QsPerPage']));
+elseif (array_key_exists($pai_db->getTable() . '_QsPerPage', $_COOKIE) && !empty($_COOKIE[$pai_db->getTable() . '_QsPerPage']) && is_numeric($_COOKIE[$pai_db->getTable() . '_QsPerPage'])) define('ADMIN_PERPAGE', (int)cleaninput($_COOKIE[$pai_db->getTable() . '_QsPerPage']));
 else define('ADMIN_PERPAGE', 10);
 
 adminheader(); ?>
@@ -49,7 +49,7 @@ adminheader(); ?>
 <div id="container">
 	<h1 id="header"><a href="admin.php" title="Back to main admin page">Askably</a></h1>
 
-	<?php if (isset($_SERVER['QUERY_STRING'])) {
+	<?php if (array_key_exists('QUERY_STRING', $_SERVER)) {
 		if (strstr($_SERVER['QUERY_STRING'], '=unanswered')) $active = 'unans';
 		elseif (strstr($_SERVER['QUERY_STRING'], '=categories')) $active = 'cats';
 		elseif (strstr($_SERVER['QUERY_STRING'], '=ips')) $active = 'ips';
@@ -62,7 +62,7 @@ adminheader(); ?>
 	else $active = 'home'; ?>
 	<ul id="navigation" class="center">
 		<li><a href="admin.php" title="Main admin page"<?php if ($active == 'home') echo ' class="active"'; ?>>Admin home</a></li>
-		<li><a href="?sort=unanswered" title="View unanswered questions"<?php if ($active == 'unans') echo ' class="active"'; ?>>Unanswered (<?php echo $pai->getUnanswered(); ?>)</a></li>
+		<li><a href="?sort=unanswered" title="View unanswered questions"<?php if ($active == 'unans') echo ' class="active"'; ?>>Unanswered (<span id="unanswered-qs"><?php echo $pai->getUnanswered(); ?></span>)</a></li>
 	<?php if ($pai->getOption('enable_cats')) { ?>
 		<li><a href="?manage=categories" title="Manage categories"<?php if ($active == 'cats') echo ' class="active"'; ?>>Categories</a></li>
 	<?php }
@@ -87,7 +87,7 @@ adminheader(); ?>
 
 		<p>You are logged in as <strong><?php echo $pai->getOption('username'); ?></strong>. (<a href="?process=logout" title="Logout">Logout?</a>)</p>
 		<p><strong>Quick stats</strong></p>
-		<ul>
+		<ul id="stats-info">
 			<li>Total questions: <strong><?php echo $pai->getTotal(); ?></strong></li>
 			<li>Unanswered questions: <strong><?php echo $pai->getUnanswered(); ?></strong></li>
 		<?php if ($pai->getOption('enable_cats')) { ?>
@@ -109,7 +109,7 @@ adminheader(); ?>
 #######################################################
 
 ############### UNANSWERED QUESTIONS ONLY #############
-if (isset($_GET['sort']) && $_GET['sort'] == 'unanswered') {
+if (array_key_exists('sort', $_GET) && $_GET['sort'] == 'unanswered') {
 	ob_end_flush();
 	pages();
 
@@ -120,7 +120,7 @@ SQL;
 	$query .= ' ORDER BY `dateasked` DESC LIMIT ' . $startfrom . ', ' . ADMIN_PERPAGE;
 
 	if ($totalpages > 0) { ?>
-		<h2 class="question_header">Unanswered questions (<?php echo $pai->getUnanswered(); ?>)</h2>
+		<h2 class="question_header">Unanswered questions (<span id="unanswered-qs-header"><?php echo $pai->getUnanswered(); ?></span>)</h2>
 		<?php
 		$getqs = $pai_db->query($query);
 		pagination($perpage, 'unanswered');
@@ -136,7 +136,7 @@ SQL;
 #######################################################
 
 ####### ALL QUESTIONS FROM A PARTICULAR CATEGORY ######
-elseif (isset($_GET['category']) && !empty($_GET['category']) && is_numeric($_GET['category'])) {
+elseif (array_key_exists('category', $_GET) && !empty($_GET['category']) && is_numeric($_GET['category'])) {
 	ob_end_flush();
 	if ($pai->getOption('enable_cats') != 'yes') $error = new Error('Categories are disabled. To enable them, go to the <a href="?manage=options" title="Options page">options panel</a> and check &quot;enable categories&quot;.');
 	if (!$cat = $pai_db->get('cat_name', 'cats', '`cat_id` = ' . (int)cleaninput($_GET['category']))) $error = new Error('Invalid category.');
@@ -166,7 +166,7 @@ elseif (isset($_GET['category']) && !empty($_GET['category']) && is_numeric($_GE
 #######################################################
 
 ##################### SEARCH ##########################
-elseif (isset($_GET['search'])) {
+elseif (array_key_exists('search', $_GET)) {
 	ob_end_flush();
 	$getsearch = cleaninput($_GET['search']);
 
@@ -199,7 +199,7 @@ elseif (isset($_GET['search'])) {
 #######################################################
 
 ################# QUESTION PERMALINKS #################
-elseif (isset($_GET['q']) && !empty($_GET['q']) && is_numeric($_GET['q'])) {
+elseif (array_key_exists('q', $_GET) && !empty($_GET['q']) && is_numeric($_GET['q'])) {
 	ob_end_flush();
 	
 	$q = new Question((int)$_GET['q']);
@@ -215,23 +215,42 @@ elseif (isset($_GET['q']) && !empty($_GET['q']) && is_numeric($_GET['q'])) {
 #######################################################
 
 ################### DELETE FUNCTION ###################
-elseif (isset($_GET['delete']) && !empty($_GET['delete']) && is_numeric($_GET['delete'])) {
+elseif (array_key_exists('delete', $_GET) && !empty($_GET['delete']) && is_numeric($_GET['delete'])) {
 	$pai->checkToken();
-	if (!isset($_GET['inline'])) ob_end_flush();
-
 	$question = new Question((int)$_GET['delete']);
 
 	if (!$question->checkId()) {
-		if (isset($_GET['inline'])) {
+		if (array_key_exists('inline', $_GET)) {
 			ob_end_clean();
 			echo '<strong>Error:</strong> Invalid question.';
 		}
 		else {
+			ob_end_flush();
 			$error = new Error('Invalid question.');
 			$error->display();
 		}
 	}
-	if ($question->delete()) echo (array_key_exists('inline', $_GET) ? '' /* TODO: Do some AJAX here */ : '<p>Question successfully deleted.</p>');
+	if ($question->delete()) {
+		if (array_key_exists('inline', $_GET)) {
+			ob_end_clean();
+			echo 'Deleted';
+		}
+		else {
+			ob_end_flush();
+			echo '<p>Question successfully deleted.</p>';
+		}
+	}
+	else {
+		if (array_key_exists('inline', $_GET)) {
+			ob_end_clean();
+			echo 'Error'; // will pop an alert
+		}
+		else {
+			ob_end_flush();
+			$error = new Error('The question could not be deleted at this time.');
+			$error->display();
+		}
+	}
 }
 #######################################################
 
@@ -285,10 +304,10 @@ elseif (array_key_exists('manage', $_GET) && !empty($_GET['manage'])) {
 
 		##### OPTIONS
 		case 'options':
-			if (isset($_POST['submit']) && $_SERVER['REQUEST_METHOD'] == 'POST') {
+			if (array_key_exists('submit', $_POST) && $_SERVER['REQUEST_METHOD'] == 'POST') {
 				$pai->checkToken();
 
-				if (isset($_POST['currentpass']) && !empty($_POST['currentpass']) && md5($_POST['currentpass'] . $pai->getMask()) == $pai->getOption('password')) {
+				if (array_key_exists('currentpass', $_POST) && !empty($_POST['currentpass']) && md5($_POST['currentpass'] . $pai->getMask()) == $pai->getOption('password')) {
 					foreach($_POST as $key => $value) {
 						$$key = cleaninput($value);
 					}
@@ -515,7 +534,7 @@ elseif (array_key_exists('manage', $_GET) && !empty($_GET['manage'])) {
 
 		##### TEMPLATES
 		case 'templates':
-			if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_templates'])) {
+			if ($_SERVER['REQUEST_METHOD'] == 'POST' && array_key_exists('submit_templates', $_POST)) {
 				$pai->checkToken();
 				ob_end_flush();
 
@@ -707,16 +726,16 @@ elseif (array_key_exists('manage', $_GET) && !empty($_GET['manage'])) {
 				$error = new Error('IP banning is currently disabled.');
 				$error->display();
 			}
-			if (isset($_GET['action'])) {
+			if (array_key_exists('action', $_GET)) {
 				switch($_GET['action']) {
 
 					case 'add':
-						if (($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['newip'])) || isset($_GET['ip'])) {
-							if (isset($_POST['newip'])) {
+						if (($_SERVER['REQUEST_METHOD'] == 'POST' && array_key_exists('newip', $_POST)) || array_key_exists('ip', $_GET)) {
+							if (array_key_exists('newip', $_POST)) {
 								$pai->checkToken();
 								$newip = cleaninput($_POST['newip']);
 							}
-							elseif (isset($_GET['ip'])) {
+							elseif (array_key_exists('ip', $_GET)) {
 								$pai->checkToken();
 								$newip = cleaninput($_GET['ip']);
 							}
@@ -756,13 +775,13 @@ elseif (array_key_exists('manage', $_GET) && !empty($_GET['manage'])) {
 						break;
 
 					case 'edit':
-						if (!isset($_GET['ip']) || !is_numeric($_GET['ip'])) {
+						if (!array_key_exists('ip', $_GET) || !is_numeric($_GET['ip'])) {
 							$error = new Error('Invalid IP.');
 							$error->display();
 						}
 						$ip = (int)cleaninput($_GET['ip']);
 
-						if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['editip'])) {
+						if ($_SERVER['REQUEST_METHOD'] == 'POST' && array_key_exists('editip', $_POST)) {
 							$pai->checkToken();
 							ob_end_flush();
 
@@ -813,7 +832,7 @@ elseif (array_key_exists('manage', $_GET) && !empty($_GET['manage'])) {
 						break;
 
 					case 'delete':
-						if (!isset($_GET['ip']) || !is_numeric($_GET['ip'])) {
+						if (!array_key_exists('ip', $_GET) || !is_numeric($_GET['ip'])) {
 							$error = new Error('Invalid IP.');
 							$error->display();
 						}
@@ -877,11 +896,11 @@ elseif (array_key_exists('manage', $_GET) && !empty($_GET['manage'])) {
 				$error = new Error('Word blocking is not enabled.');
 				$error->display();
 			}
-			if (isset($_GET['action'])) {
+			if (array_key_exists('action', $_GET)) {
 				switch($_GET['action']) {
 
 					case 'add':
-						if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['newword'])) {
+						if ($_SERVER['REQUEST_METHOD'] == 'POST' && array_key_exists('newword', $_POST)) {
 							$pai->checkToken();
 							ob_end_flush();
 
@@ -921,13 +940,13 @@ elseif (array_key_exists('manage', $_GET) && !empty($_GET['manage'])) {
 						break;
 
 					case 'edit':
-						if (!isset($_GET['word']) || !is_numeric($_GET['word'])) {
+						if (!array_key_exists('word', $_GET) || !is_numeric($_GET['word'])) {
 							$error = new Error('Invalid word.');
 							$error->display();
 						}
 						$word = (int)cleaninput($_GET['word']);
 
-						if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['editword'])) {
+						if ($_SERVER['REQUEST_METHOD'] == 'POST' && array_key_exists('editword', $_POST)) {
 							$pai->checkToken();
 							ob_end_flush();
 
@@ -987,7 +1006,7 @@ elseif (array_key_exists('manage', $_GET) && !empty($_GET['manage'])) {
 						break;
 
 					case 'delete':
-						if (!isset($_GET['word']) || !is_numeric($_GET['word'])) {
+						if (!array_key_exists('word', $_GET) || !is_numeric($_GET['word'])) {
 							$error = new Error('No word submitted.');
 							$error->display();
 						}
@@ -1052,7 +1071,7 @@ elseif (array_key_exists('manage', $_GET) && !empty($_GET['manage'])) {
 				$error = new Error('Categories are disabled.');
 				$error->display();
 			}
-			if (isset($_GET['action'])) {
+			if (array_key_exists('action', $_GET)) {
 				switch($_GET['action']) {
 
 					case 'add':
@@ -1116,6 +1135,27 @@ elseif (array_key_exists('manage', $_GET) && !empty($_GET['manage'])) {
 			$error->display();
 	}
 }
+elseif (array_key_exists('reset', $_GET)) {
+	switch($_GET['reset']) {
+		case 'stats':
+			ob_end_clean(); ?>
+			<li>Total questions: <strong><?php echo $pai->getTotal(); ?></strong></li>
+				<li>Unanswered questions: <strong><?php echo $pai->getUnanswered(); ?></strong></li>
+			<?php if ($pai->getOption('enable_cats')) { ?>
+				<li>Questions in <strong><?php echo $pai->getCats() . ($pai->getCats() == 1 ? ' category' : ' categories'); ?></strong></li>
+			<?php }
+			exit;
+			break;
+		case 'unans':
+			ob_end_clean();
+			echo $pai->getUnanswered();
+			exit;
+			break;
+		default:
+			ob_end_clean();
+			echo '<strong>Error</strong>';
+	}
+}
 #######################################################
 
 #################### SORT BY DATE #####################
@@ -1154,7 +1194,7 @@ SQL;
 $display = '<p style="text-align: center;">Powered by <a href="http://not-noticeably.net/scripts/askably/" title="Askably">Askably 3.1</a></p>';
 
 //TERMINATE SESSION (but not if answering a question!)
-if (!isset($_GET['inline'])) {
+if (!array_key_exists('inline', $_GET)) {
 //	$pai->adminLogout();
 	echo $display;
 //	eval(base64_decode('aWYgKGlzc2V0KCRkaXNwbGF5KSAmJiBzdHJzdHIoJGRpc3BsYXksICdQSFBBc2tJdCcpKSB7IGVjaG8gJGRpc3BsYXk7IH0gZWxzZSB7IGVjaG8gJzxwIHN0eWxlPSJ0ZXh0LWFsaWduOiBjZW50ZXI7Ij5Qb3dlcmVkIGJ5IDxhIGhyZWY9Imh0dHA6Ly9ub3Qtbm90aWNlYWJseS5uZXQvc2NyaXB0cy9waHBhc2tpdC8iIHRpdGxlPSJQSFBBc2tJdCI+UEhQQXNrSXQgMy4wPC9hPjwvcD4nOyB9'));

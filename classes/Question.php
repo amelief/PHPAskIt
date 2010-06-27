@@ -344,18 +344,18 @@ class Question implements Model {
 	public function show($admin = false) {
 		global $pai, $token;
 		if (defined('IS_ADMIN')) { ?>
-			<li class="question-container">
+			<li class="question-container" id="question-container-<?php echo $this->id; ?>">
 				<form action="admin.php?edit=category&amp;inline=true" method="post" onsubmit="
 					new Ajax.Request('admin.php?edit=category&amp;inline=true', {
 						asynchronous:true,
 						onComplete:function(request) {
-							Element.show('category_read_<?php echo $this->id; ?>');
-							Element.hide('indicator<?php echo $this->id; ?>');
-							Element.hide('category_edit_<?php echo $this->id; ?>');
+							$('category_read_<?php echo $this->id; ?>').appear({ duration: 0.3 });
+							$('indicator<?php echo $this->id; ?>').hide();
+							$('category_edit_<?php echo $this->id; ?>').hide();
 							$('category_read_<?php echo $this->id; ?>').update(request.responseText);
 						},
 						onLoading:function(request) {
-							Element.show('indicator<?php echo $this->id; ?>');
+							$('indicator<?php echo $this->id; ?>').show();
 						},
 						parameters:Form.serialize(this)
 					}); return false;">
@@ -378,13 +378,13 @@ class Question implements Model {
 					new Ajax.Request('admin.php?edit=question&amp;inline=true', {
 						asynchronous:true,
 						onComplete:function(request) {
-							$('question_read_<?php echo $this->id; ?>').style.display = 'block';
-							Element.hide('indicator<?php echo $this->id; ?>');
-							Element.hide('question_edit_<?php echo $this->id; ?>');
+							$('question_read_<?php echo $this->id; ?>').appear({ duration: 0.3 });
+							$('indicator<?php echo $this->id; ?>').hide();
+							$('question_edit_<?php echo $this->id; ?>').hide();
 							$('question_read_<?php echo $this->id; ?>').update(request.responseText);
 						},
 						onLoading:function(request) {
-							Element.show('indicator<?php echo $this->id; ?>');
+							$('indicator<?php echo $this->id; ?>').show();
 						},
 						parameters:Form.serialize(this)
 					}); return false;">
@@ -406,13 +406,14 @@ class Question implements Model {
 						onComplete:function(request) {
 							if (request.responseText == '(No answer)') $('answer<?php echo $this->id; ?>').className = 'answer unanswered';
 							else $('answer<?php echo $this->id; ?>').className = 'answer';
-							$('answer_read_<?php echo $this->id; ?>').style.display = 'block';
-							Element.hide('indicator<?php echo $this->id; ?>');
-							Element.hide('answer_edit_<?php echo $this->id; ?>');
+							$('answer_read_<?php echo $this->id; ?>').appear({ duration: 0.3 });
+							$('indicator<?php echo $this->id; ?>').hide();
+							$('answer_edit_<?php echo $this->id; ?>').hide();
 							$('answer_read_<?php echo $this->id; ?>').update(request.responseText);
+							updateStats();
 						},
 						onLoading:function(request) {
-							Element.show('indicator<?php echo $this->id; ?>');
+							$('indicator<?php echo $this->id; ?>').show();
 						},
 						parameters:Form.serialize(this)
 					}); return false;">
@@ -446,7 +447,19 @@ class Question implements Model {
 						Change Category</a>
 						<?php
 					} ?>
-					| <a href="admin.php?delete=<?php echo $this->id; ?>&amp;token=<?php echo $token; ?>" onclick="return confirm('Are you sure you want to delete this question?')" title="Delete this question">Delete</a>
+					| <a href="admin.php?delete=<?php echo $this->id; ?>&amp;token=<?php echo $token; ?>" onclick="if(confirm('Are you sure you want to delete this question?')) { new Ajax.Request('admin.php?delete=<?php echo $this->id; ?>&amp;inline=true', {
+						asynchronous:true,
+						onComplete:function(request) {
+							if (request.responseText == 'Deleted') $('question-container-<?php echo $this->id; ?>').fade({ duration: 0.7 });
+							else alert('Sorry, the question could not be deleted at this time.');
+							$('indicator<?php echo $this->id; ?>').hide();
+							updateStats();
+						},
+						onLoading:function(request) {
+							$('indicator<?php echo $this->id; ?>').show();
+						},
+						parameters: { token: '<?php echo $token; ?>' }
+					}); return false; } else return false;" title="Delete this question">Delete</a>
 				</p>
 			</li>
 			<?php

@@ -50,7 +50,7 @@ $askably['table'] = 'askably'; 		// Name of the table used in the database. You 
 //---------------------------
 
 // TODO: DEBUG - REMOVE
-//require '../../htpasswds/settings.php';
+require '../../htpasswds/settings.php';
 
 define('PAI_HOST', $askably['dbhost']);
 define('PAI_DB', $askably['dbname']);

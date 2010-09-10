@@ -1,7 +1,7 @@
 <?php
 /*
   ==============================================================================================
-  Askably 3.1 © 2005-2010 Amelie M.
+  Askably 3.1 © 2005-2010 Amelie F.
   ==============================================================================================
 */
 
@@ -178,7 +178,6 @@ class Importer {
 			$error->display();
 		}
 
-
 		$faqtasticqs = array();
 
 		$getqs = mysql_query('SELECT * FROM `' . $tablefaqs . '`', $db);
@@ -221,20 +220,37 @@ class Importer {
 	}
 
 	private function importFromManual() {
-		echo 'Manual import goes here';
+		global $pai_db;
+		if ($this->from != 'none') return false;
 
-		// Display a form. HTML? Plain text?
+		echo '<h2>Manual import</h2>';
 
-		return;
-
+		if (!array_key_exists('importme', $_POST) || empty($_POST['importme'])) {
+			$error = new Error('No questions entered, please enter some and try again.');
+			$error->display();
+		}
+		$c = new Category;
 		$sql = 'INSERT INTO `' . $pai_db->getTable() . '` VALUES ';
-		foreach($question as $q) {
+
+		$questions = explode("\n", $_POST['importme']);
+		$i = 1;
+		foreach($questions as $q) {
+			$q = trim($q, "\r");
+			if (empty($q) || !preg_match('/^(.*)\|\|(.*)?$/', $q)) {
+				$error = new Error('Invalid question format on line ' . $i . ': questions could not be imported. Please make sure each question is on a new line, separated from its answer with \'||\' and that there are no blank lines.');
+				$error->display();
+			}
+
 			$qa = explode('||', $q);
-			$sql .= "('', '" . cleaninput($qa[0]) . "', '" . cleaninput($qa[1]) . "', 1, NOW(), '" . cleaninput($_SERVER['REMOTE_ADDR']) . "'),";
+			$sql .= "('', '" . cleaninput($qa[0]) . "', '" . cleaninput($qa[1]) . "', " . $c->getDefault() . ", NOW(), '" . cleaninput($_SERVER['REMOTE_ADDR']) . "'),";
+			$i++;
 		}
 		if (substr($sql, -1, 1) == ',') $sql = substr_replace($sql, '', -1, 1);
 
-		if ($pai_db->query($sql)) echo '<p>Your questions were successfully imported into the database. You should now delete this file.</p>';
-		else echo '<p>An error occurred while importing your questions. Please check your database settings and try again.</p>';
+		if ($pai_db->query($sql)) echo '<p>' . mysql_affected_rows($pai_db->getConnection()) . ' question(s) were successfully imported into the database.</p>';
+		else {
+			$error = new Error('An error occurred while importing your questions. Please check your question syntax and database settings, then try again.');
+			$error->display();
+		}
 	}
 } ?>

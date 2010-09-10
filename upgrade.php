@@ -1,7 +1,7 @@
 <?php
 /*
   ==============================================================================================
-  Askably 3.1 © 2005-2009 Amelie M.
+  Askably 3.1 © 2005-2010 Amelie F.
   ==============================================================================================
 */
 
@@ -23,12 +23,12 @@ if (!$pai_db->get('question', 'main')) { ?>
 	<?php
 	exit;
 }
-/* if ($pai->getOption('version') == '3.1') { ?>
+if ($pai->getOption('version') == '3.1') { ?>
 	<h1>Error</h1>
 	<p>Your Askably installation is already up to date. Please delete this file, you do not need to run it again.</p>
 	<?php
 	exit;
-} */
+}
 
 $header = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">

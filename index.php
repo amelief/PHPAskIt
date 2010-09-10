@@ -1,7 +1,7 @@
 <?php
 /*
   ==============================================================================================
-  Askably 3.1 © 2005-2010 Amelie M.
+  Askably 3.1 © 2005-2010 Amelie F.
   ==============================================================================================
 */
 
@@ -236,7 +236,7 @@ else {
 ################### MISC FUNCTIONS ####################
 
 //CREDIT LINK. DO NOT REMOVE
-$display = '<p style="text-align: center;">Powered by <a href="http://not-noticeably.net/scripts/askably/" title="Askably">Askably 3.1</a></p>';
+$display = '<p style="text-align: center;">Powered by <a href="http://amelie.nu/scripts/" title="Askably">Askably 3.1</a></p>';
 echo $display;
 
 //IS USER LOGGED IN? TERMINATE SESSION

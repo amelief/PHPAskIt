@@ -1,7 +1,7 @@
 <?php
 /*
   ==============================================================================================
-  Askably 3.1 © 2005-2010 Amelie M.
+  Askably 3.1 © 2005-2010 Amelie F.
   ==============================================================================================
 */
 
@@ -102,7 +102,7 @@ class Error extends Exception {
 		echo '<li><p>' . parent::getMessage() . '</p></li>';
 
 		if ($this->kill == true) {
-			echo '</ul><p style="text-align: center;">Powered by <a href="http://not-noticeably.net/scripts/askably/" title="Askably">Askably 3.1</a></p>';
+			echo '</ul><p style="text-align: center;">Powered by <a href="http://amelie.nu/scripts/" title="Askably">Askably 3.1</a></p>';
 			if (defined('IS_ADMIN')) echo '</div></div></body></html>';
 			elseif ($pai->getOption('is_wordpress') == 'yes') {
 				 if (function_exists('get_sidebar')) get_sidebar();

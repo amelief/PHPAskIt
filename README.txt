@@ -8,7 +8,7 @@
 PLEASE BE SURE TO READ ALL OF THIS FILE BEFORE USING Askably.
 
 ===================================================================
-Askably (formerly PHPAskIt): Copyright © 2005-2010 Amelie M.
+Askably (formerly PHPAskIt): Copyright © 2005-2010 Amelie F.
 
 You may:
 - Use and edit/modify Askably however you like, AS LONG AS THE CREDIT LINE STAYS INTACT AND UNEDITED
@@ -293,7 +293,7 @@ TROUBLESHOOTING
 
 Having problems? Spotted a bug? Something not working?
 
-You may contact me personally at amelie@not-noticeably.net but please be warned that I have limited time available to answer personal requests. I am active at the CodeGrrl forums (http://codegrrl.com/forums/) and will be able to answer any queries there. This is a better option than contacting me personally since questions asked and answered on the forums will be available for future reference, which may help others having similar problems. Your query may also be answered more quickly by other members.
+You may contact me personally at amelie@amelie.nu but please be warned that I have limited time available to answer personal requests. I am active at the CodeGrrl forums (http://codegrrl.com/forums/) and will be able to answer any queries there. This is a better option than contacting me personally since questions asked and answered on the forums will be available for future reference, which may help others having similar problems. Your query may also be answered more quickly by other members.
 
 
 
@@ -302,16 +302,18 @@ CREDITS
 
 Askably would not have been possible without the help of the following wonderful people:
 
-Amanda (http://punkified.net), Vixx (http://furious-angel.com), Jem (http://www.jemjabella.co.uk), Valerie (http://spoken-for.org), Katy, Rachael (http://www.calmbanana.co.uk/) and Melissa (http://melly.me/).
+Amanda (http://punkified.net), Vixx (http://furious-angel.com), Jem (http://www.jemjabella.co.uk), Valerie (http://spoken-for.org), Katy, Rachael (http://rachaely.com) and Melissa (http://melly.me).
 
 The spinner/loading graphic is provided by http://www.ajaxload.info. Visit to get your own loading graphics!
+
+Askably makes use of the Prototype (prototypejs.org) and jQuery (jquery.com) Javascript libraries, and the Scriptaculous (script.aculo.us) effects bundle.
 
 
 
 TERMS OF USE/DISCLAIMER
 --------------------------------------------------------
 
-Askably is a linkware script. You may use, modify and customise the script however you like as long as the link on the bottom of each page to Not-Noticeably.net is maintained.
+Askably is a linkware script. You may use, modify and customise the script however you like as long as the link on the bottom of each page to Amelie.nu is maintained.
 
 You may not claim ownership of this script, however much you have modified it. You may not request money for anything to do with this script either. The script is to remain free at all times. This includes requesting money for customising and/or installing, modifying or distributing Askably to/for others, whether this is a modified version of the script or not. If I am not making any money from my script, then neither should you.
 
@@ -319,4 +321,4 @@ If you are in any doubt as to whether what you wish to do with the script compli
 
 Please be aware that I DO NOT accept any responsibility for anything that may happen to your site, server or computer as a result of you using this script. I do my best to fully test my scripts, but I cannot guarantee their safety and security. By using this script, you do so AT YOUR OWN RISK.
 
-Askably is Copyright © 2005-2010 Amelie M. All rights reserved.
+Askably is Copyright © 2005-2010 Amelie F. All rights reserved.

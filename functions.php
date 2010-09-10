@@ -1,7 +1,7 @@
 <?php
 /*
   ==============================================================================================
-  Askably 3.1 © 2005-2010 Amelie M.
+  Askably 3.1 © 2005-2010 Amelie F.
   ==============================================================================================
 */
 
@@ -25,7 +25,7 @@ foreach($required_files as $file) {
 	else require_once $file;
 }
 
-$display = '<p style="text-align: center;">Powered by <a href="http://not-noticeably.net/scripts/askably/" title="Askably">Askably 3.1</a></p>';
+$display = '<p style="text-align: center;">Powered by <a href="http://amelie.nu/scripts/" title="Askably">Askably 3.1</a></p>';
 
 function cleaninput($data) {
 	global $pai_db;
@@ -92,6 +92,7 @@ function adminheader() {
 	<script type="text/javascript" src="js/jquery.js"></script>
 	<script type="text/javascript">
 		//<![CDATA[
+		// Um, mess.
 		var $j = jQuery.noConflict();
 
 		$j(function() {
@@ -108,6 +109,10 @@ function adminheader() {
 					$j('#showabspathfaq').slideUp('fast');
 					$j('#showabspathfaq').removeClass('open');
 				}
+				if ($j('#showabspathnone').hasClass('open')) {
+					$j('#showabspathnone').slideUp('fast');
+					$j('#showabspathnone').removeClass('open');
+				}
 			});
 			$j("input#import_from_waks").click(function() {
 				if (!$j('#showabspathwaks').hasClass('open')) {
@@ -121,6 +126,10 @@ function adminheader() {
 				if ($j('#showabspathfaq').hasClass('open')) {
 					$j('#showabspathfaq').slideUp('fast');
 					$j('#showabspathfaq').removeClass('open');
+				}
+				if ($j('#showabspathnone').hasClass('open')) {
+					$j('#showabspathnone').slideUp('fast');
+					$j('#showabspathnone').removeClass('open');
 				}
 			});
 			$j("input#import_from_faqtastic").click(function() {
@@ -136,6 +145,10 @@ function adminheader() {
 					$j('#showabspathwaks').slideUp('fast');
 					$j('#showabspathwaks').removeClass('open');
 				}
+				if ($j('#showabspathnone').hasClass('open')) {
+					$j('#showabspathnone').slideUp('fast');
+					$j('#showabspathnone').removeClass('open');
+				}
 			});
 			$j("input#import_from_other").click(function() {
 				if ($j('#showabspathaa').hasClass('open')) {
@@ -149,6 +162,10 @@ function adminheader() {
 				if ($j('#showabspathwaks').hasClass('open')) {
 					$j('#showabspathwaks').slideUp('fast');
 					$j('#showabspathwaks').removeClass('open');
+				}
+				if (!$j('#showabspathnone').hasClass('open')) {
+					$j('#showabspathnone').slideDown('fast');
+					$j('#showabspathnone').addClass('open');
 				}
 			});
 		});
@@ -291,10 +308,22 @@ function check_stuff() {
 	}
 }
 
+function checkTime(&$pai) {
+	if (array_key_exists('pai_time', $_SESSION)) {
+		// TODO user defined time
+		if ((time() - $_SESSION['pai_time']) > 3600) $pai->killToken(true);
+		//if ($pai->getOption('timeout') && !empty($pai->getOption('timeout')) {
+			//if ((time() - $_SESSION['pai_time']) > (int)$pai->getOption('timeout')) $pai->killToken(true);
+		//}
+		else $_SESSION['pai_time'] = time();
+	}
+	else $_SESSION['pai_time'] = time();
+}
+
 $pai_db = new Database(PAI_HOST, PAI_USER, PAI_PASS, PAI_DB);
 $pai = new PAI();
 
-$display = '<p style="text-align: center;">Powered by <a href="http://not-noticeably.net/scripts/askably/" title="Askably">Askably 3.1</a></p>';
+$display = '<p style="text-align: center;">Powered by <a href="http://amelie.nu/scripts/" title="Askably">Askably 3.1</a></p>';
 
 foreach($_SERVER as $key => $value) {
 	$_SERVER[$key] = clean_array($value);

@@ -1,7 +1,7 @@
 <?php
 /*
   ==============================================================================================
-  Askably 3.1 © 2005-2010 Amelie M.
+  Askably 3.1 © 2005-2010 Amelie F.
   ==============================================================================================
 */
 
@@ -404,8 +404,8 @@ class Question implements Model {
 					new Ajax.Request('admin.php?edit=answer&amp;inline=true', {
 						asynchronous:true,
 						onComplete:function(request) {
-							if (request.responseText == '(No answer)') $('answer<?php echo $this->id; ?>').className = 'answer unanswered';
-							else $('answer<?php echo $this->id; ?>').className = 'answer';
+							if (request.responseText == '(No answer)') $('answer<?php echo $this->id; ?>').addClassName('unanswered');
+							else $('answer<?php echo $this->id; ?>').removeClassName('unanswered');
 							$('answer_read_<?php echo $this->id; ?>').appear({ duration: 0.3 });
 							$('indicator<?php echo $this->id; ?>').hide();
 							$('answer_edit_<?php echo $this->id; ?>').hide();

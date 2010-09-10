@@ -2,7 +2,7 @@
 
 /*
 ===============================================================================================
-Askably 3.1 © 2005-2010 Amelie M.
+Askably 3.1 © 2005-2010 Amelie F.
 
 You may:
 - Use and edit/modify Askably however you like
@@ -16,7 +16,7 @@ You may not:
 - Hold Askably's creator responsible for anything that arises from its use
 - Remove, modify, hide or use any other method to eliminate or render invisible the "Powered by Askably 3.1" line at the bottom of the index.php and admin.php files
 
-Amelie, Not-Noticeably.net
+Amelie, Amelie.nu
 ===============================================================================================
 */
 
@@ -41,6 +41,7 @@ $askably['dbuser'] = ''; 			// The username that has access to the above databas
 $askably['dbpass'] = '';			// Password for above user
 
 $askably['table'] = 'askably'; 		// Name of the table used in the database. You need only change this if you are using more than one installation, as it is also the name of the login cookie. (If you do not change it with more than one installation, you will find logging in difficult.) */
+$askably['salt'] = '6743892djkdgjh'; // 'Salt' with which to encrypt your password. You don't have to remember this, so make it as long and as complicated as you like. The only character you can't use is the single quote/apostrophe (').
 
 //---------------------------
 
@@ -57,6 +58,7 @@ define('PAI_DB', $askably['dbname']);
 define('PAI_USER', $askably['dbuser']);
 define('PAI_PASS', $askably['dbpass']);
 define('PAI_TABLE', $askably['table']);
+define('PAI_SALT', $askably['salt']);
 
 $askably = array(); unset($askably);
 ?>

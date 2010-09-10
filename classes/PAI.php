@@ -1,7 +1,7 @@
 <?php
 /*
   ==============================================================================================
-  Askably 3.1 © 2005-2010 Amelie M.
+  Askably 3.1 © 2005-2010 Amelie F.
   ==============================================================================================
 */
 
@@ -75,15 +75,14 @@ class PAI {
 
 		$this->answered = $this->total - $this->unanswered;
 
-		// TODO: Errr... Do we really want to be showing only categories where questions are asked? Why not just count all categories?
-		$cats = mysql_fetch_object($pai_db->query('SELECT COUNT(DISTINCT `category`) AS `num` FROM `' . $pai_db->getTable() . '`'));
+		$cats = mysql_fetch_object($pai_db->query('SELECT COUNT(`cat_id`) AS `num` FROM `' . $pai_db->getTable() . '_cats`'));
 		$this->cats = $cats->num;
 
 		$options = $pai_db->query('SELECT `option_name`, `option_value` FROM `' . $pai_db->getTable() . '_options`');
 		while($get_options = mysql_fetch_object($options)) {
 			$this->options[$get_options->option_name] = $get_options->option_value;
 		}
-		$this->mask = md5($this->options['security_word'] . '6743892djkdgjh');
+		$this->mask = md5($this->options['security_word'] . PAI_SALT);
 	}
 
 	/**
@@ -97,7 +96,7 @@ class PAI {
 		while($get_options = mysql_fetch_object($options)) {
 			$this->options[$get_options->option_name] = $get_options->option_value;
 		}
-		$this->mask = md5($this->options['security_word'] . '6743892djkdgjh');
+		$this->mask = md5($this->options['security_word'] . PAI_SALT);
 	}
 
 	/**
@@ -115,7 +114,7 @@ class PAI {
 	 * @param string $word The user's security word.
 	 */
 	public function setMask($word) {
-		$this->mask = md5($word . '6743892djkdgjh');
+		$this->mask = md5($word . PAI_SALT);
 	}
 
 	/**
@@ -311,26 +310,43 @@ HTML;
 		if (!array_key_exists('pai_token', $_SESSION) || $token != $_SESSION['pai_token']) $this->killToken();
 
 		// TODO: Redo this - doesn't work
-		if (!array_key_exists('pai_time', $_SESSION) || ((time() - $_SESSION['pai_time']) > 300)) $this->killToken();
+		//if (!array_key_exists('pai_time', $_SESSION) || ((time() - $_SESSION['pai_time']) > 300)) $this->killToken();
 	}
 
 	/**
 	 * Clear session token.
 	 *
-	 * @param boolean $inline Is this an AJAX request?
+	 * @param boolean $time Is this caused by a timeout or an invalid token?
 	 */
-	protected function killToken() {
+	public function killToken($time = false) {
+		global $pai_db;
 		$_SESSION = array();
 		if (array_key_exists(session_name(), $_COOKIE)) setcookie(session_name(), '', time()-3600, '/');
 		@session_destroy();
 		if (array_key_exists('inline', $_GET)) {
-			ob_end_clean();
-			exit('<strong>Error:</strong> Your session has expired. Please refresh the page to correct this problem.');
+			if ($time) {
+				ob_end_clean();
+				exit('<strong>Error:</strong> Your session has expired. Please <a href="admin.php?message=expired">login again</a> to correct this problem.');
+			}
+			else {
+				ob_end_clean();
+				exit('<strong>Error:</strong> Your session has expired. Please refresh the page to correct this problem.');
+			}
 		}
 		else {
-			ob_end_flush();
-			$error = new Error('Your session has expired. Please refresh the page to correct this problem.');
-			$error->display();
+			if ($time) {
+				ob_end_clean();
+				setcookie($pai_db->getTable() . '_user', '', time()-3600, '/');
+				setcookie($pai_db->getTable() . '_pass', '', time()-3600, '/');
+
+				header('Location: http://' . $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']) . '/admin.php?message=expired');
+				exit;
+			}
+			else {
+				ob_end_flush();
+				$error = new Error('Your session has expired. Please refresh the page to correct this problem.');
+				$error->display();
+			}
 		}
 	}
 
@@ -489,7 +505,9 @@ HTML;
 			}
 			elseif ($nodata == false) $this->displayLogin('Your session has expired. Please login again.');
 		}
-		elseif ($nodata == false) $this->displayLogin();
+		elseif ($nodata == false) {
+			array_key_exists('message', $_GET) ? $this->displayLogin('Your session has expired. Please login again.') : $this->displayLogin();
+		}
 	}
 
 	/**
@@ -523,7 +541,7 @@ HTML;
 
 			<p><input name="submitlogin" id="submitlogin" type="submit" value="Login" /></p>
 		</form>
-		<p class="center">Powered by <a href="http://not-noticeably.net/scripts/askably/" title="Askably">Askably 3.1</a></p>
+		<p class="center">Powered by <a href="http://amelie.nu/scripts/" title="Askably">Askably 3.1</a></p>
 		<?php
 		echo '</body></html>';
 		mysql_close($pai_db->getConnection());

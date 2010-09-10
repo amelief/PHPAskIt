@@ -1,7 +1,7 @@
 <?php
 /*
   ==============================================================================================
-  Askably 3.1 © 2005-2010 Amelie M.
+  Askably 3.1 © 2005-2010 Amelie F.
   ==============================================================================================
 */
 
@@ -14,7 +14,6 @@ define('PAI_IN', true);
 session_start();
 if (!array_key_exists('pai_token', $_SESSION) || $_SESSION['pai_token'] == null) $_SESSION['pai_token'] = $token = md5(uniqid(rand(), true));
 else $token = $_SESSION['pai_token'];
-$_SESSION['pai_time'] = time();
 
 if (!file_exists('functions.php')) { ?>
 	<h1>Error</h1>
@@ -32,6 +31,7 @@ $pai->isLoggedIn();
 
 ############# SUMMARIES, NAVIGATION, ETC. #############
 ob_start();
+checkTime($pai);
 
 define('IS_ADMIN', true);
 if (array_key_exists('qsperpage', $_POST) && !empty($_POST['qsperpage'])) {
@@ -50,18 +50,18 @@ adminheader(); ?>
 	<h1 id="header"><a href="admin.php" title="Back to main admin page">Askably</a></h1>
 
 	<?php if (array_key_exists('QUERY_STRING', $_SERVER)) {
-		if (strstr($_SERVER['QUERY_STRING'], '=unanswered')) $active = 'unans';
-		elseif (strstr($_SERVER['QUERY_STRING'], '=categories')) $active = 'cats';
-		elseif (strstr($_SERVER['QUERY_STRING'], '=ips')) $active = 'ips';
-		elseif (strstr($_SERVER['QUERY_STRING'], '=antispam')) $active = 'spam';
-		elseif (strstr($_SERVER['QUERY_STRING'], '=options')) $active = 'opt';
-		elseif (strstr($_SERVER['QUERY_STRING'], '=templates')) $active = 'temp';
-		elseif (strstr($_SERVER['QUERY_STRING'], '=import')) $active = 'import';
+		if (strpos($_SERVER['QUERY_STRING'], '=unanswered') !== false) $active = 'unans';
+		elseif (strpos($_SERVER['QUERY_STRING'], '=categories') !== false) $active = 'cats';
+		elseif (strpos($_SERVER['QUERY_STRING'], '=ips') !== false) $active = 'ips';
+		elseif (strpos($_SERVER['QUERY_STRING'], '=antispam') !== false) $active = 'spam';
+		elseif (strpos($_SERVER['QUERY_STRING'], '=options') !== false) $active = 'opt';
+		elseif (strpos($_SERVER['QUERY_STRING'], '=templates') !== false) $active = 'temp';
+		elseif (strpos($_SERVER['QUERY_STRING'], '=import') !== false) $active = 'import';
 		else $active = 'home';
 	}
 	else $active = 'home'; ?>
 	<ul id="navigation" class="center">
-		<li><a href="admin.php" title="Main admin page"<?php if ($active == 'home') echo ' class="active"'; ?>>Admin home</a></li>
+		<li><a href="admin.php" title="Main admin page"<?php if ($active == 'home') echo ' class="active"'; ?>>Home</a></li>
 		<li><a href="?sort=unanswered" title="View unanswered questions"<?php if ($active == 'unans') echo ' class="active"'; ?>>Unanswered (<span id="unanswered-qs"><?php echo $pai->getUnanswered(); ?></span>)</a></li>
 	<?php if ($pai->getOption('enable_cats')) { ?>
 		<li><a href="?manage=categories" title="Manage categories"<?php if ($active == 'cats') echo ' class="active"'; ?>>Categories</a></li>
@@ -70,9 +70,9 @@ adminheader(); ?>
 		<li><a href="?manage=ips" title="Manage blocked IP addresses"<?php if ($active == 'ips') echo ' class="active"'; ?>>Blocked IPs</a></li>
 	<?php }
 	if ($pai->getOption('antispam_enable')) { ?>
-		<li><a href="?manage=antispam" title="Manage blocked words"<?php if ($active == 'spam') echo ' class="active"'; ?>>Blocked words</a></li>
+		<li><a href="?manage=antispam" title="Manage blocked words"<?php if ($active == 'spam') echo ' class="active"'; ?>>Antispam</a></li>
 	<?php } ?>
-		<li><a href="?manage=options" title="Edit options"<?php if ($active == 'opt') echo ' class="active"'; ?>>Options</a></li>
+		<li><a href="?manage=options" title="Edit options"<?php if ($active == 'opt') echo ' class="active"'; ?>>Settings</a></li>
 		<li><a href="?manage=templates" title="Edit templates"<?php if ($active == 'temp') echo ' class="active"'; ?>>Templates</a></li>
 		<li><a href="?manage=import" title="Import questions"<?php if ($active == 'import') echo ' class="active"'; ?>>Import</a></li>
 		<li><a href="index.php?recent" title="Questions page">Recent</a></li>
@@ -138,8 +138,8 @@ SQL;
 ####### ALL QUESTIONS FROM A PARTICULAR CATEGORY ######
 elseif (array_key_exists('category', $_GET) && !empty($_GET['category']) && is_numeric($_GET['category'])) {
 	ob_end_flush();
-	if ($pai->getOption('enable_cats') != 'yes') $error = new Error('Categories are disabled. To enable them, go to the <a href="?manage=options" title="Options page">options panel</a> and check &quot;enable categories&quot;.');
-	if (!$cat = $pai_db->get('cat_name', 'cats', '`cat_id` = ' . (int)cleaninput($_GET['category']))) $error = new Error('Invalid category.');
+	if (!$pai->getOption('enable_cats')) $error = new Error('Categories are disabled. To enable them, go to the <a href="?manage=options" title="Options page">options panel</a> and check &quot;enable categories&quot;.');
+	if (!$cat = $pai_db->get('cat_name', 'cats', '`cat_id` = ' . (int)cleaninput($_GET['category']))) $error[] = new Error('Invalid category.');
 	if (isset($error)) $error->display();
 
 	pages();
@@ -359,6 +359,7 @@ elseif (array_key_exists('manage', $_GET) && !empty($_GET['manage'])) {
 					}
 
 					if (empty($totalpage_faq) || $totalpage_faq < 1 || $totalpage_faq > 999 || !is_numeric($totalpage_faq)) $totalpage_faq = 10;
+					if (!empty($timeout) && ($timeout < 1 || $timeout > (86400*365) || !is_numeric($timeout)) $timeout = 3600;
 					if (empty($titleofpage)) $titleofpage = 'Q&amp;A';
 					if (empty($date_format)) $date_format = 'l F j, Y - g:ia';
 
@@ -423,6 +424,7 @@ elseif (array_key_exists('manage', $_GET) && !empty($_GET['manage'])) {
 					$update[] = 'UPDATE `' . $pai_db->getTable() . "_options` SET `option_value` = '" . $notifybymail . "' WHERE `option_name` = 'notifybymail' LIMIT 1";
 					$update[] = 'UPDATE `' . $pai_db->getTable() . "_options` SET `option_value` = '" . $youraddress . "' WHERE `option_name` = 'youraddress' LIMIT 1";
 					$update[] = 'UPDATE `' . $pai_db->getTable() . "_options` SET `option_value` = '" . (int)$totalpage_faq . "' WHERE `option_name` = 'totalpage_faq' LIMIT 1";
+					$update[] = 'UPDATE `' . $pai_db->getTable() . "_options` SET `option_value` = '" . (int)$timeout . "' WHERE `option_name` = 'timeout' LIMIT 1";
 
 					if (!empty($username) && $username != $pai->getOption('username')) $update[] = 'UPDATE `' . $pai_db->getTable() . "_options` SET `option_value` = '" . $username . "' WHERE `option_name` = 'username'";
 
@@ -525,6 +527,10 @@ elseif (array_key_exists('manage', $_GET) && !empty($_GET['manage'])) {
 					The FAQ page is the page that visitors to your site see.<br />
 					<input type="text" name="totalpage_faq" id="totalpage_faq" value="<?php echo (int)$pai->getOption('totalpage_faq'); ?>" maxlength="3" /></p>
 
+					<p><strong><label for="timeout">Login timeout:</label></strong><br />
+					The script will log you out after this many seconds. 3600 is an hour, 86400 is a day. The maximum time you can be logged in is a year. To disable this feature, leave the field empty.<br />
+					<input type="text" name="timeout" id="timeout" value="<?php echo (int)$pai->getOption('timeout'); ?>" maxlength="10" /></p>
+					
 					<p><input type="submit" name="submit" id="submit" value="Submit" /></p>
 				</form>
 
@@ -671,7 +677,7 @@ elseif (array_key_exists('manage', $_GET) && !empty($_GET['manage'])) {
 							if (!empty($a)) $abspath = $a;
 						}
 					}
-					else $abspath = '';
+					if (!isset($abspath)) $abspath = '';
 					$imp = new Importer($_POST['import_from'], $abspath);
 				}
 				else {
@@ -693,19 +699,26 @@ elseif (array_key_exists('manage', $_GET) && !empty($_GET['manage'])) {
 					</ul>
 					
 					<div id="showabspathaa" style="display: none;">
-						<p><strong>Please note:</strong> Imported questions will show as coming from <strong>your</strong> IP address and as being asked on today's date.</p>
+						<p><strong>Please note:</strong> Imported questions will show as coming from <strong>your</strong> IP address and as being asked on today's date.<?php if ($pai->getOption('enable_cats')) { ?> Questions will be entered into the default category.<?php } ?></p>
 						<p><label for="abspathaa">Please enter your Ask&amp;Answer installation path:</label><br />
 						<input type="text" name="abspath[]" id="abspathaa" /></p>
 					</div>
 					<div id="showabspathwaks" style="display: none;">
-						<p><strong>Please note:</strong> Only <strong>answered</strong> questions will be imported from Wak's Ask&amp;Answer.</p>
+						<p><strong>Please note:</strong> Only <strong>answered</strong> questions will be imported from Wak's Ask&amp;Answer.<?php if ($pai->getOption('enable_cats')) { ?> Questions will be entered into the default category.<?php } ?></p>
 						<p><label for="abspathwaks">Please enter your Wak's Ask&amp;Answer installation path:</label><br />
 						<input type="text" name="abspath[]" id="abspathwaks" /></p>
 					</div>
 					<div id="showabspathfaq" style="display: none;">
-						<p><strong>Please note:</strong> ALL questions will be imported, whether they have been approved or not. No names or email addresses of question askers will be retained; the same goes for any settings and templates. Questions will appear as having been asked on today's date.</p>
+						<p><strong>Please note:</strong> ALL questions will be imported, whether they have been approved or not. No names or email addresses of question askers will be retained; the same goes for any settings and templates. Questions will appear as having been asked on today's date<?php if ($pai->getOption('enable_cats')) { ?> and will be entered into the default category<?php } ?>.</p>
 						<p><label for="abspathfaq">Please enter your Faqtastic installation path:</label><br />
 						<input type="text" name="abspath[]" id="abspathfaq" /></p>
+					</div>
+					<div id="showabspathnone" style="display: none;">
+						<p><strong>Please note:</strong> Enter your questions in the following format: QUESTION || ANSWER. E.g. What's your favourite food? || I like pasta and cheese. Put each question on a new line. If a question has no answer, enter the question like this: QUESTION || (leave a space after the ||).<br />
+						Questions will appear as having been asked on today's date, from <strong>your</strong> IP address<?php if ($pai->getOption('enable_cats')) { ?> and will be entered into the default category<?php } ?>.</p>
+						<p><label for="abspathnone">Please enter your questions below:</label><br />
+						<textarea cols="50" rows="10" name="importme" id="abspathnone">QUESTION || ANSWER
+QUESTION || ANSWER</textarea></p>
 					</div>
 					<noscript>
 						<p>
@@ -1067,13 +1080,12 @@ elseif (array_key_exists('manage', $_GET) && !empty($_GET['manage'])) {
 
 		##### CATEGORIES
 		case 'categories':
-			if ($pai->getOption('enable_cats') != 'yes') {
+			if (!$pai->getOption('enable_cats')) {
 				$error = new Error('Categories are disabled.');
 				$error->display();
 			}
 			if (array_key_exists('action', $_GET)) {
 				switch($_GET['action']) {
-
 					case 'add':
 						$cat = new Category();
 						$cat->add();
@@ -1191,7 +1203,7 @@ SQL;
 
 #################### MISC FUNCTIONS ###################
 //CREDIT LINK. DO NOT REMOVE
-$display = '<p style="text-align: center;">Powered by <a href="http://not-noticeably.net/scripts/askably/" title="Askably">Askably 3.1</a></p>';
+$display = '<p style="text-align: center;">Powered by <a href="http://amelie.nu/scripts/" title="Askably">Askably 3.1</a></p>';
 
 //TERMINATE SESSION (but not if answering a question!)
 if (!array_key_exists('inline', $_GET)) {

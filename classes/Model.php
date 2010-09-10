@@ -1,7 +1,7 @@
 <?php
 /*
   ==============================================================================================
-  Askably 3.1 © 2005-2010 Amelie M.
+  Askably 3.1 © 2005-2010 Amelie F.
   ==============================================================================================
 */
 
@@ -14,7 +14,7 @@ if (!defined('PAI_IN')) exit('<p>This file cannot be loaded directly.</p>');
 /**
  * Basic model for classes.
  *
- * @author Amelie M.
+ * @author Amelie F.
  */
 interface Model {
 	/**

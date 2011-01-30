@@ -359,7 +359,7 @@ elseif (array_key_exists('manage', $_GET) && !empty($_GET['manage'])) {
 					}
 
 					if (empty($totalpage_faq) || $totalpage_faq < 1 || $totalpage_faq > 999 || !is_numeric($totalpage_faq)) $totalpage_faq = 10;
-					if (!empty($timeout) && ($timeout < 1 || $timeout > (86400*365) || !is_numeric($timeout)) $timeout = 3600;
+					if (!empty($timeout) && ($timeout < 1 || $timeout > (86400*365) || !is_numeric($timeout))) $timeout = 3600;
 					if (empty($titleofpage)) $titleofpage = 'Q&amp;A';
 					if (empty($date_format)) $date_format = 'l F j, Y - g:ia';
 

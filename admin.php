@@ -47,61 +47,69 @@ else define('ADMIN_PERPAGE', 10);
 adminheader(); ?>
 
 <div id="container">
-	<h1 id="header"><a href="admin.php" title="Back to main admin page">Askably</a></h1>
+	<header>
+		<h1 id="header"><a href="admin.php" title="Back to main admin page">Askably</a></h1>
 
-	<?php $active = 'home';
-	if (array_key_exists('QUERY_STRING', $_SERVER)) {
-		if (strpos($_SERVER['QUERY_STRING'], '=unanswered') !== false) $active = 'unans';
-		elseif (strpos($_SERVER['QUERY_STRING'], '=categories') !== false) $active = 'cats';
-		elseif (strpos($_SERVER['QUERY_STRING'], '=ips') !== false) $active = 'ips';
-		elseif (strpos($_SERVER['QUERY_STRING'], '=antispam') !== false) $active = 'spam';
-		elseif (strpos($_SERVER['QUERY_STRING'], '=options') !== false) $active = 'opt';
-		elseif (strpos($_SERVER['QUERY_STRING'], '=templates') !== false) $active = 'temp';
-		elseif (strpos($_SERVER['QUERY_STRING'], '=import') !== false) $active = 'import';
-	} ?>
-	<ul id="navigation" class="center">
-		<li><a href="admin.php" title="Main admin page"<?php if ($active == 'home') echo ' class="active"'; ?>>Home</a></li>
-		<li><a href="?sort=unanswered" title="View unanswered questions"<?php if ($active == 'unans') echo ' class="active"'; ?>>Unanswered (<span id="unanswered-qs"><?php echo $pai->getUnanswered(); ?></span>)</a></li>
-	<?php if ($pai->getOption('enable_cats')) { ?>
-		<li><a href="?manage=categories" title="Manage categories"<?php if ($active == 'cats') echo ' class="active"'; ?>>Categories</a></li>
-	<?php }
-	if ($pai->getOption('ipban_enable')) { ?>
-		<li><a href="?manage=ips" title="Manage blocked IP addresses"<?php if ($active == 'ips') echo ' class="active"'; ?>>Blocked IPs</a></li>
-	<?php }
-	if ($pai->getOption('antispam_enable')) { ?>
-		<li><a href="?manage=antispam" title="Manage blocked words"<?php if ($active == 'spam') echo ' class="active"'; ?>>Antispam</a></li>
-	<?php } ?>
-		<li><a href="?manage=options" title="Edit options"<?php if ($active == 'opt') echo ' class="active"'; ?>>Settings</a></li>
-		<li><a href="?manage=templates" title="Edit templates"<?php if ($active == 'temp') echo ' class="active"'; ?>>Templates</a></li>
-		<li><a href="?manage=import" title="Import questions"<?php if ($active == 'import') echo ' class="active"'; ?>>Import</a></li>
-		<li><a href="index.php?recent" title="Questions page">Recent</a></li>
+		<?php $active = 'home';
+		if (array_key_exists('QUERY_STRING', $_SERVER)) {
+			if (strpos($_SERVER['QUERY_STRING'], '=unanswered') !== false) $active = 'unans';
+			elseif (strpos($_SERVER['QUERY_STRING'], '=categories') !== false) $active = 'cats';
+			elseif (strpos($_SERVER['QUERY_STRING'], '=ips') !== false) $active = 'ips';
+			elseif (strpos($_SERVER['QUERY_STRING'], '=antispam') !== false) $active = 'spam';
+			elseif (strpos($_SERVER['QUERY_STRING'], '=options') !== false) $active = 'opt';
+			elseif (strpos($_SERVER['QUERY_STRING'], '=templates') !== false) $active = 'temp';
+			elseif (strpos($_SERVER['QUERY_STRING'], '=import') !== false) $active = 'import';
+		} ?>
+		<nav>
+			<ul id="navigation" class="center">
+				<li><a href="admin.php" title="Main admin page"<?php if ($active == 'home') echo ' class="active"'; ?>>Home</a></li>
+				<li><a href="?sort=unanswered" title="View unanswered questions"<?php if ($active == 'unans') echo ' class="active"'; ?>>Unanswered (<span id="unanswered-qs"><?php echo $pai->getUnanswered(); ?></span>)</a></li>
+			<?php if ($pai->getOption('enable_cats')) { ?>
+				<li><a href="?manage=categories" title="Manage categories"<?php if ($active == 'cats') echo ' class="active"'; ?>>Categories</a></li>
+			<?php }
+			if ($pai->getOption('ipban_enable')) { ?>
+				<li><a href="?manage=ips" title="Manage blocked IP addresses"<?php if ($active == 'ips') echo ' class="active"'; ?>>Blocked IPs</a></li>
+			<?php }
+			if ($pai->getOption('antispam_enable')) { ?>
+				<li><a href="?manage=antispam" title="Manage blocked words"<?php if ($active == 'spam') echo ' class="active"'; ?>>Antispam</a></li>
+			<?php } ?>
+				<li><a href="?manage=options" title="Edit options"<?php if ($active == 'opt') echo ' class="active"'; ?>>Settings</a></li>
+				<li><a href="?manage=templates" title="Edit templates"<?php if ($active == 'temp') echo ' class="active"'; ?>>Templates</a></li>
+				<li><a href="?manage=import" title="Import questions"<?php if ($active == 'import') echo ' class="active"'; ?>>Import</a></li>
+				<li><a href="index.php?recent" title="Questions page">Recent</a></li>
 
-	<?php if ($pai->getOption('enable_cats') && $pai->getOption('summary_enable')) { ?>
-		<li><a href="index.php" title="Summary page">Summary</a></li>
-	<?php } ?>
-	</ul>
+			<?php if ($pai->getOption('enable_cats') && $pai->getOption('summary_enable')) { ?>
+				<li><a href="index.php" title="Summary page">Summary</a></li>
+			<?php } ?>
+			</ul>
+		</nav>
+	</header>
 
 	<div id="side">
-		<h3>Summary</h3>
+		<section>
+			<h3>Summary</h3>
 
-		<p>You are logged in as <strong><?php echo $pai->getOption('username'); ?></strong>. (<a href="?process=logout" title="Logout">Logout?</a>)</p>
-		<p><strong>Quick stats</strong></p>
-		<ul id="stats-info">
-			<li>Total questions: <strong><?php echo $pai->getTotal(); ?></strong></li>
-			<li>Unanswered questions: <strong><?php echo $pai->getUnanswered(); ?></strong></li>
-		<?php if ($pai->getOption('enable_cats')) { ?>
-			<li>Questions in <strong><?php echo $pai->getCats() . ($pai->getCats() == 1 ? ' category' : ' categories'); ?></strong></li>
-		<?php } ?>
-		</ul>
+			<p>You are logged in as <strong><?php echo $pai->getOption('username'); ?></strong>. (<a href="?process=logout" title="Logout">Logout?</a>)</p>
+			<p><strong>Quick stats</strong></p>
+			<ul id="stats-info">
+				<li>Total questions: <strong><?php echo $pai->getTotal(); ?></strong></li>
+				<li>Unanswered questions: <strong><?php echo $pai->getUnanswered(); ?></strong></li>
+			<?php if ($pai->getOption('enable_cats')) { ?>
+				<li>Questions in <strong><?php echo $pai->getCats() . ($pai->getCats() == 1 ? ' category' : ' categories'); ?></strong></li>
+			<?php } ?>
+			</ul>
+		</section>
 
-		<h3>Options</h3>
-		<form method="post" action="<?php echo $_SERVER['REQUEST_URI']; ?>">
-			<p><strong>View <input type="text" maxlength="3" size="3" value="<?php if (defined('ADMIN_PERPAGE')) echo (int)ADMIN_PERPAGE; ?>" name="qsperpage" id="qsperpage"> <?php echo (defined('ADMIN_PERPAGE') && (int)ADMIN_PERPAGE == 1) ? 'question' : 'questions'; ?> per page. <input name="go" type="submit" value="Go"></strong></p>
-		</form>
-		<form method="get" action="admin.php">
-			<p><label for="search">Search questions:</label><br>
-			<input type="text" name="search" id="search"> <input type="submit" value="Search"></p>
-		</form>
+		<section>
+			<h3>Options</h3>
+			<form method="post" action="<?php echo $_SERVER['REQUEST_URI']; ?>">
+				<p><strong>View <input type="text" maxlength="3" size="3" value="<?php if (defined('ADMIN_PERPAGE')) echo (int)ADMIN_PERPAGE; ?>" name="qsperpage" id="qsperpage"> <?php echo (defined('ADMIN_PERPAGE') && (int)ADMIN_PERPAGE == 1) ? 'question' : 'questions'; ?> per page. <input name="go" type="submit" value="Go"></strong></p>
+			</form>
+			<form method="get" action="admin.php">
+				<p><label for="search">Search questions:</label><br>
+				<input type="text" name="search" id="search"> <input type="submit" value="Search"></p>
+			</form>
+		</section>
 	</div>
 	<div id="main">
 <?php
@@ -312,7 +320,7 @@ elseif (array_key_exists('manage', $_GET) && !empty($_GET['manage'])) {
 					<input type="text" name="word" id="word" value="<?php echo $pai->getOption('security_word'); ?>"></p>
 
 					<p><strong><label for="headerfile">Header file you wish to use:</label></strong><br>
-					Absolute or relative path - leave blank to use default. <strong>DO NOT</strong> enter a <acronym title="Uniform Resource Locator - usually in this form: http://www.domainname.tld">URL</acronym> here, it will not work!<br>
+					Absolute or relative path - leave blank to use default. <strong>DO NOT</strong> enter a <abbr title="Uniform Resource Locator - usually in this form: http://www.domainname.tld">URL</abbr> here, it will not work!<br>
 					NOTE: DO NOT FILL IN THIS PART IF YOU ARE USING WORDPRESS THEMES!<br>
 					<input type="text" name="headerfile" id="headerfile" value="<?php echo $pai->getOption('headerfile'); ?>"></p>
 
@@ -333,7 +341,7 @@ elseif (array_key_exists('manage', $_GET) && !empty($_GET['manage'])) {
 
 					<p><strong><label for="enable_cats">Enable categories?</label></strong> <input type="checkbox" name="enable_cats" id="enable_cats" value="yes"<?php if ($pai->getOption('enable_cats')) echo ' checked="checked"'; ?>></p>
 
-					<p><strong><label for="ipban_enable">Enable <acronym title="Internet Protocol">IP</acronym> address blocking?</label></strong> <input type="checkbox" name="ipban_enable" id="ipban_enable" value="yes"<?php if ($pai->getOption('ipban_enable')) echo ' checked="checked"'; ?>></p>
+					<p><strong><label for="ipban_enable">Enable <abbr title="Internet Protocol">IP</abbr> address blocking?</label></strong> <input type="checkbox" name="ipban_enable" id="ipban_enable" value="yes"<?php if ($pai->getOption('ipban_enable')) echo ' checked="checked"'; ?>></p>
 
 					<p><strong><label for="antispam_enable">Enable anti-spam (word blocking)?</label></strong> <input type="checkbox" name="antispam_enable" id="antispam_enable" value="yes"<?php if ($pai->getOption('antispam_enable')) echo ' checked="checked"'; ?>></p>
 
@@ -373,10 +381,10 @@ elseif (array_key_exists('manage', $_GET) && !empty($_GET['manage'])) {
 				$pai->checkToken();
 				ob_end_flush();
 
-				$form = strip_tags($_POST['question_form'], '<div> <p> <img> <span> <b> <i> <u> <em> <strong> <table> <tr> <td> <th> <br> <br /> <acronym> <abbr> <hr> <hr /> <big> <small> <blockquote> <center> <cite> <fieldset> <ul> <li> <ol> <font> <h1> <h2> <h3> <h4> <h5> <h6> <h7> <q> <thead> <tfoot> <sub> <tt> <tbody> <sup> <kbd> <del> <ins> <label> <legend>');
-				$q = strip_tags($_POST['questions'], '<a> <div> <p> <img> <span> <b> <i> <u> <em> <strong> <table> <tr> <td> <th> <br> <br /> <acronym> <abbr> <hr> <hr /> <big> <small> <blockquote> <center> <cite> <fieldset> <ul> <li> <ol> <font> <h1> <h2> <h3> <h4> <h5> <h6> <h7> <q> <thead> <tfoot> <sub> <tt> <tbody> <sup> <kbd> <del> <ins>');
-				$summary = strip_tags($_POST['summary'], '<a> <div> <p> <img> <span> <b> <i> <u> <em> <strong> <table> <tr> <td> <th> <br> <br /> <acronym> <abbr> <hr> <hr /> <big> <small> <blockquote> <center> <cite> <fieldset> <ul> <li> <ol> <font> <h1> <h2> <h3> <h4> <h5> <h6> <h7> <q> <thead> <tfoot> <sub> <tt> <tbody> <sup> <kbd> <del> <ins>');
-				$success_msg = strip_tags($_POST['success_msg'], '<a> <div> <p> <img> <span> <b> <i> <u> <em> <strong> <table> <tr> <td> <th> <br> <br /> <acronym> <abbr> <hr> <hr /> <big> <small> <blockquote> <center> <cite> <fieldset> <ul> <li> <ol> <font> <h1> <h2> <h3> <h4> <h5> <h6> <h7> <q> <thead> <tfoot> <sub> <tt> <tbody> <sup> <kbd> <del> <ins>');
+				$form = strip_tags($_POST['question_form'], '<header> <section> <nav> <menu> <footer> <div> <p> <img> <span> <b> <i> <u> <em> <strong> <table> <tr> <td> <th> <br> <br /> <acronym> <abbr> <hr> <hr /> <big> <small> <blockquote> <center> <cite> <fieldset> <ul> <li> <ol> <font> <h1> <h2> <h3> <h4> <h5> <h6> <h7> <q> <thead> <tfoot> <sub> <tt> <tbody> <sup> <kbd> <del> <ins> <label> <legend>');
+				$q = strip_tags($_POST['questions'], '<header> <section> <nav> <menu> <footer> <a> <div> <p> <img> <span> <b> <i> <u> <em> <strong> <table> <tr> <td> <th> <br> <br /> <acronym> <abbr> <hr> <hr /> <big> <small> <blockquote> <center> <cite> <fieldset> <ul> <li> <ol> <font> <h1> <h2> <h3> <h4> <h5> <h6> <h7> <q> <thead> <tfoot> <sub> <tt> <tbody> <sup> <kbd> <del> <ins>');
+				$summary = strip_tags($_POST['summary'], '<header> <section> <nav> <menu> <summary> <footer> <a> <div> <p> <img> <span> <b> <i> <u> <em> <strong> <table> <tr> <td> <th> <br> <br /> <acronym> <abbr> <hr> <hr /> <big> <small> <blockquote> <center> <cite> <fieldset> <ul> <li> <ol> <font> <h1> <h2> <h3> <h4> <h5> <h6> <h7> <q> <thead> <tfoot> <sub> <tt> <tbody> <sup> <kbd> <del> <ins>');
+				$success_msg = strip_tags($_POST['success_msg'], '<header> <section> <nav> <menu> <footer> <a> <div> <p> <img> <span> <b> <i> <u> <em> <strong> <table> <tr> <td> <th> <br> <br /> <acronym> <abbr> <hr> <hr /> <big> <small> <blockquote> <center> <cite> <fieldset> <ul> <li> <ol> <font> <h1> <h2> <h3> <h4> <h5> <h6> <h7> <q> <thead> <tfoot> <sub> <tt> <tbody> <sup> <kbd> <del> <ins>');
 
 				$no = '/(onclick|ondblclick|onload|onfocus|onblur|onmouse|onkey=|javascript|alert)/i';
 				if (preg_match($no, $form) || preg_match($no, $q) || preg_match($no, $summary) || preg_match($no, $success_msg)) Error::showMessage('Please don\'t use JavaScript in your templates.');
@@ -514,29 +522,29 @@ elseif (array_key_exists('manage', $_GET) && !empty($_GET['manage'])) {
 
 				<form action="admin.php?manage=import" method="post">
 					<p>I am importing from:</p>
-					<ul class="nolist">
+					<ul class="nolist" id="importlist">
 						<li><input type="radio" name="import_from" id="import_from_aa" value="aa"> <label for="import_from_aa">Ask&amp;Answer (posed.org version)</label></li>
 						<li><input type="radio" name="import_from" id="import_from_waks" value="waks"> <label for="import_from_waks">Wak's Ask&amp;Answer (luved.org version)</label></li>
 						<li><input type="radio" name="import_from" id="import_from_faqtastic" value="faq"> <label for="import_from_faqtastic">Faqtastic (v2 or v3)</label></li>
 						<li><input type="radio" name="import_from" id="import_from_other" value="none"> <label for="import_from_other">None of the above</label></li>
 					</ul>
-					
-					<div id="showabspathaa" style="display: none;">
+
+					<div id="showabspathaa" class="option_content" style="display: none;">
 						<p><strong>Please note:</strong> Imported questions will show as coming from <strong>your</strong> IP address and as being asked on today's date.<?php if ($pai->getOption('enable_cats')) { ?> Questions will be entered into the default category.<?php } ?></p>
 						<p><label for="abspathaa">Please enter your Ask&amp;Answer installation path:</label><br>
 						<input type="text" name="abspath[]" id="abspathaa"></p>
 					</div>
-					<div id="showabspathwaks" style="display: none;">
+					<div id="showabspathwaks" class="option_content" style="display: none;">
 						<p><strong>Please note:</strong> Only <strong>answered</strong> questions will be imported from Wak's Ask&amp;Answer.<?php if ($pai->getOption('enable_cats')) { ?> Questions will be entered into the default category.<?php } ?></p>
 						<p><label for="abspathwaks">Please enter your Wak's Ask&amp;Answer installation path:</label><br>
 						<input type="text" name="abspath[]" id="abspathwaks"></p>
 					</div>
-					<div id="showabspathfaq" style="display: none;">
+					<div id="showabspathfaq" class="option_content" style="display: none;">
 						<p><strong>Please note:</strong> ALL questions will be imported, whether they have been approved or not. No names or email addresses of question askers will be retained; the same goes for any settings and templates. Questions will appear as having been asked on today's date<?php if ($pai->getOption('enable_cats')) { ?> and will be entered into the default category<?php } ?>.</p>
 						<p><label for="abspathfaq">Please enter your Faqtastic installation path:</label><br>
 						<input type="text" name="abspath[]" id="abspathfaq"></p>
 					</div>
-					<div id="showabspathnone" style="display: none;">
+					<div id="showabspathnone" class="option_content" style="display: none;">
 						<p><strong>Please note:</strong> Enter your questions in the following format: QUESTION || ANSWER. E.g. What's your favourite food? || I like pasta and cheese. Put each question on a new line. If a question has no answer, enter the question like this: QUESTION || (leave a space after the ||).<br>
 						Questions will appear as having been asked on today's date, from <strong>your</strong> IP address<?php if ($pai->getOption('enable_cats')) { ?> and will be entered into the default category<?php } ?>.</p>
 						<p><label for="abspathnone">Please enter your questions below:</label><br>

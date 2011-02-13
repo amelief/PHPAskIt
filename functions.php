@@ -43,7 +43,7 @@ function adminheader() {
 <html>
 <head>
 	<title>Askably 3.1: Admin</title>
-	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<meta charset="utf-8">
 	<style type="text/css">
 		body { color: #222; font: 0.7em/1.2em Verdana, Arial, Helvetica, sans-serif; text-align: center; }
 		a { color: #0080ff; text-decoration: none; }
@@ -94,81 +94,12 @@ function adminheader() {
 	<script type="text/javascript" src="js/jquery.js"></script>
 	<script type="text/javascript">
 		//<![CDATA[
-		// Um, mess.
 		var $j = jQuery.noConflict();
 
 		$j(function() {
-			$j('input#import_from_aa').click(function() {
-				if (!$j('#showabspathaa').hasClass('open')) {
-					$j('#showabspathaa').slideDown("fast");
-					$j('#showabspathaa').addClass("open");
-				}
-				if ($j('#showabspathwaks').hasClass('open')) {
-					$j('#showabspathwaks').slideUp('fast');
-					$j('#showabspathwaks').removeClass('open');
-				}
-				if ($j('#showabspathfaq').hasClass('open')) {
-					$j('#showabspathfaq').slideUp('fast');
-					$j('#showabspathfaq').removeClass('open');
-				}
-				if ($j('#showabspathnone').hasClass('open')) {
-					$j('#showabspathnone').slideUp('fast');
-					$j('#showabspathnone').removeClass('open');
-				}
-			});
-			$j("input#import_from_waks").click(function() {
-				if (!$j('#showabspathwaks').hasClass('open')) {
-					$j("#showabspathwaks").slideDown("fast");
-					$j('#showabspathwaks').addClass("open");
-				}
-				if ($j('#showabspathaa').hasClass('open')) {
-					$j('#showabspathaa').slideUp('fast');
-					$j('#showabspathaa').removeClass('open');
-				}
-				if ($j('#showabspathfaq').hasClass('open')) {
-					$j('#showabspathfaq').slideUp('fast');
-					$j('#showabspathfaq').removeClass('open');
-				}
-				if ($j('#showabspathnone').hasClass('open')) {
-					$j('#showabspathnone').slideUp('fast');
-					$j('#showabspathnone').removeClass('open');
-				}
-			});
-			$j("input#import_from_faqtastic").click(function() {
-				if (!$j('#showabspathfaq').hasClass('open')) {
-					$j("#showabspathfaq").slideDown("fast");
-					$j('#showabspathfaq').addClass("open");
-				}
-				if ($j('#showabspathaa').hasClass('open')) {
-					$j('#showabspathaa').slideUp('fast');
-					$j('#showabspathaa').removeClass('open');
-				}
-				if ($j('#showabspathwaks').hasClass('open')) {
-					$j('#showabspathwaks').slideUp('fast');
-					$j('#showabspathwaks').removeClass('open');
-				}
-				if ($j('#showabspathnone').hasClass('open')) {
-					$j('#showabspathnone').slideUp('fast');
-					$j('#showabspathnone').removeClass('open');
-				}
-			});
-			$j("input#import_from_other").click(function() {
-				if ($j('#showabspathaa').hasClass('open')) {
-					$j('#showabspathaa').slideUp('fast');
-					$j('#showabspathaa').removeClass('open');
-				}
-				if ($j('#showabspathfaq').hasClass('open')) {
-					$j('#showabspathfaq').slideUp('fast');
-					$j('#showabspathfaq').removeClass('open');
-				}
-				if ($j('#showabspathwaks').hasClass('open')) {
-					$j('#showabspathwaks').slideUp('fast');
-					$j('#showabspathwaks').removeClass('open');
-				}
-				if (!$j('#showabspathnone').hasClass('open')) {
-					$j('#showabspathnone').slideDown('fast');
-					$j('#showabspathnone').addClass('open');
-				}
+			$j("ul#importlist input[type=radio]").click(function() {
+				$j(".option_content:visible").slideUp();
+				$j("#showabspath" + $j(this).attr("value")).slideDown();
 			});
 		});
 
@@ -189,6 +120,9 @@ function adminheader() {
 		}
 		//]]>
 	</script>
+	<!--[if lt IE 9]>
+		<script src="js/html5.js"></script>
+	<![endif]-->
 </head>
 
 <body>

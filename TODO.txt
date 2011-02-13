@@ -3,7 +3,6 @@
 - Rewrite index.php using new question callbacks
 - Inline editing of IP ban
 - Convert antispam/IP ban to own tables - inline editing
-- Sort out jQuery mess
 - Convert prototype to jQuery where possible
 - Further static method usage where possible
 - Javadoc bits

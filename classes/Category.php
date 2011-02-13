@@ -101,8 +101,7 @@ class Category implements Model {
 	public function setName($name, $validation = false) {
 		if ($validation) {
 			$this->name = cleaninput($name);
-			if (empty($this->name)) $error = new Error('Category name not submitted');
-			if (isset($error)) $error->display();
+			if (empty($this->name)) Error::showMessage('Category name not submitted');
 		}
 		else $this->name = $name;
 	}
@@ -172,7 +171,7 @@ class Category implements Model {
 	public function delete() {
 		global $pai_db;
 		if (!$this->checkId()) return false;
-		if ($this->isDefault()) $error = new Error('You cannot delete the default category.');
+		if ($this->isDefault()) Error::showMessage('You cannot delete the default category.');
 
 		if ($pai_db->query('DELETE FROM `' . $pai_db->getTable() . '_cats` WHERE `cat_id` = ' . $this->id . ' LIMIT 1')) {
 			// Move deleted questions to default category
@@ -256,20 +255,18 @@ class Category implements Model {
 
 			$this->setName(cleaninput($_POST['newcat']));
 
-			if ($pai_db->get('cat_name', 'cats', "`cat_name` = '" . $_POST['newcat'] . "'")) {
-				$error = new Error('You already have a category with that name.');
-				$error->display();
-			}
+			if ($pai_db->get('cat_name', 'cats', "`cat_name` = '" . $_POST['newcat'] . "'")) Error::showMessage('You already have a category with that name.');
+
 			if ($this->create()) echo '<p>The category has been added successfully.</p>';
 		}
 		else { ?>
 			<h2>Add a new category</h2>
 
 			<form method="post" action="admin.php?manage=categories&amp;action=add">
-				<p><input type="hidden" name="token" id="token" value="<?php echo $token; ?>" />
+				<p><input type="hidden" name="token" id="token" value="<?php echo $token; ?>">
 				<label for="newcat">Category name:</label>
-				<input type="text" name="newcat" id="newcat" maxlength="100" />
-				<input type="submit" name="addcat" id="addcat" value="Add" /></p>
+				<input type="text" name="newcat" id="newcat" maxlength="100">
+				<input type="submit" name="addcat" id="addcat" value="Add"></p>
 			</form>
 
 			<?php
@@ -291,31 +288,25 @@ class Category implements Model {
 
 			foreach($_POST as $key => $value) {
 				$$key = cleaninput($value);
-				if (empty($$key)) {
-					$error = new Error('Missing parameter: ' . $key);
-					$error->display();
-				}
+				if (empty($$key)) Error::showMessage('Missing parameter: ' . $key);
 			}
-			if (!$this->checkId()) $error = new Error('Invalid category.');
+			if (!$this->checkId()) Error::showMessage('Invalid category.');
 			$this->setName($catname);
 
 			if (isset($default) && is_numeric($default)) $this->setDefault((bool)$default);
 
-			if ($pai_db->get('cat_name', 'cats', "`cat_name` = '" . strtolower($catname) . "' AND cat_id != " . $this->getId())) $error = new Error('You already have a category with that name.');
-			if (isset($error)) $error->display();
+			if ($pai_db->get('cat_name', 'cats', "`cat_name` = '" . strtolower($catname) . "' AND cat_id != " . $this->getId())) Error::showMessage('You already have a category with that name.');
 
 			if ($this->save()) echo '<p>Category updated successfully.</p>';
 		}
 		else {
-			if (!$this->checkId()) {
-				$error = new Error('Invalid category.');
-				$error->display();
-			}
+			if (!$this->checkId()) Error::showMessage('Invalid category.');
+
 			$pai->checkToken();
 			ob_end_flush();
 
 			$_GET['id'] = (int)cleaninput($_GET['id']);
-			if (empty($_GET['id'])) $error = new Error('Invalid category.'); ?>
+			if (empty($_GET['id'])) Error::showMessage('Invalid category.'); ?>
 
 			<h2>Edit your categories</h2>
 			<p>Type the new category name below:</p>
@@ -326,11 +317,11 @@ class Category implements Model {
 			$cat = new Category($theCat->cat_id); ?>
 
 			<form id="categoryedit" method="post" action="admin.php?manage=categories&amp;action=edit">
-				<p><input type="hidden" name="id" id="id" value="<?php echo $cat->getId(); ?>" />
-				<input type="hidden" name="token" id="token" value="<?php echo $token; ?>" />
-				<input type="text" name="catname" id="catname" value="<?php echo $cat->getName(); ?>" /></p>
-				<p><input type="checkbox" name="default" id="default" value="1"<?php if ($cat->isDefault()) echo ' checked="checked"'; ?> /> Make default?</p>
-				<p><input type="submit" name="submitedit" id="submitedit" value="Edit" /></p>
+				<p><input type="hidden" name="id" id="id" value="<?php echo $cat->getId(); ?>">
+				<input type="hidden" name="token" id="token" value="<?php echo $token; ?>">
+				<input type="text" name="catname" id="catname" value="<?php echo $cat->getName(); ?>"></p>
+				<p><input type="checkbox" name="default" id="default" value="1"<?php if ($cat->isDefault()) echo ' checked="checked"'; ?>> Make default?</p>
+				<p><input type="submit" name="submitedit" id="submitedit" value="Edit"></p>
 			</form>
 			<?php
 		}

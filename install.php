@@ -26,11 +26,11 @@ if ($pai->getoption('username')) { ?>
 }
 
 $header = <<<HTML
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<!DOCTYPE html>
+<html>
 <head>
 	<title>Askably 3.1: Install Askably</title>
-	<meta http-equiv="Content-Type" content="text/html; charset=utf8" />
+	<meta http-equiv="Content-Type" content="text/html; charset=utf8">
 	<style type="text/css">
 		body { color: #222; font: 0.7em/1.2em Verdana, Arial, Helvetica, sans-serif; text-align: center; }
 		a { color: #0080ff; text-decoration: none; }
@@ -219,66 +219,66 @@ else {
 	<p class="center">The * character denotes a required field. Any other fields you do not fill in will use the default settings. You will be able to change all of these options in your admin panel once you have installed the script.</p>
 
 	<form method="post" action="install.php">
-		<p><strong><label for="username">The username you will use to log in to the admin panel:</label></strong><br />
-		CASE SENSITIVE<br />
-		<input type="text" name="username" id="username" /> *</p>
+		<p><strong><label for="username">The username you will use to log in to the admin panel:</label></strong><br>
+		CASE SENSITIVE<br>
+		<input type="text" name="username" id="username"> *</p>
 
-		<p><strong><label for="password">The password you will use to log in to the admin panel:</label></strong><br />
-		CASE SENSITIVE. <strong>Do not use these characters: &quot;, &amp;, ', &lt;, &gt; otherwise you will be unable to login.</strong><br />
-		<input type="password" name="password" id="password" /> *</p>
+		<p><strong><label for="password">The password you will use to log in to the admin panel:</label></strong><br>
+		CASE SENSITIVE. <strong>Do not use these characters: &quot;, &amp;, ', &lt;, &gt; otherwise you will be unable to login.</strong><br>
+		<input type="password" name="password" id="password"> *</p>
 
-		<p><strong><label for="confirm_pass">Re-enter password:</label></strong><br />
-		<input type="password" name="confirm_pass" id="confirm_pass"/> *</p>
+		<p><strong><label for="confirm_pass">Re-enter password:</label></strong><br>
+		<input type="password" name="confirm_pass" id="confirm_pass"> *</p>
 
-		<p><strong><label for="word">Security word:</label></strong><br />
-		In case you forget your password, you will need this to reset it. <strong>This cannot be left blank and should not contain any of the aforementioned symbols.</strong><br />
-		<input type="text" name="word" id="word" value="" /> *</p>
+		<p><strong><label for="word">Security word:</label></strong><br>
+		In case you forget your password, you will need this to reset it. <strong>This cannot be left blank and should not contain any of the aforementioned symbols.</strong><br>
+		<input type="text" name="word" id="word" value=""> *</p>
 
-		<p><strong><label for="headerfile">Header file you wish to use on your questions page:</label></strong><br />
-		Absolute or relative path - leave blank to use default. <strong>DO NOT</strong> enter a <acronym title="Uniform Resource Locator - usually in this form: http://www.domainname.tld">URL</acronym> here, it will not work!<br />
-		NOTE: DO NOT FILL IN THIS PART IF YOU ARE USING WORDPRESS THEMES!<br />
-		<input type="text" name="headerfile" id="headerfile" value="" /></p>
+		<p><strong><label for="headerfile">Header file you wish to use on your questions page:</label></strong><br>
+		Absolute or relative path - leave blank to use default. <strong>DO NOT</strong> enter a <acronym title="Uniform Resource Locator - usually in this form: http://www.domainname.tld">URL</acronym> here, it will not work!<br>
+		NOTE: DO NOT FILL IN THIS PART IF YOU ARE USING WORDPRESS THEMES!<br>
+		<input type="text" name="headerfile" id="headerfile" value=""></p>
 
-		<p><strong><label for="footerfile">Footer file you wish to use on your questions page:</label></strong><br />
-		As above. Again, do NOT fill in this part if you are using WordPress Themes.<br />
-		<input type="text" name="footerfile" id="footerfile" value="" /></p>
+		<p><strong><label for="footerfile">Footer file you wish to use on your questions page:</label></strong><br>
+		As above. Again, do NOT fill in this part if you are using WordPress Themes.<br>
+		<input type="text" name="footerfile" id="footerfile" value=""></p>
 
-		<p><strong><label for="is_wordpress">Are you using WordPress Themes with Askably?</label></strong> <input type="checkbox" name="is_wordpress" id="is_wordpress" value="yes" /><br />If you have themed your site using WordPress (i.e. using get_header() and get_footer()) and would like to apply the same themes to your questions page, please check this box.</p>
+		<p><strong><label for="is_wordpress">Are you using WordPress Themes with Askably?</label></strong> <input type="checkbox" name="is_wordpress" id="is_wordpress" value="yes"><br>If you have themed your site using WordPress (i.e. using get_header() and get_footer()) and would like to apply the same themes to your questions page, please check this box.</p>
 
-		<p><strong><label for="is_wp_blog_header">Absolute path to wp-blog-header.php:</label></strong><br />
-		If you checked the above option, please enter your FULL ABSOLUTE PATH to wp-blog-header.php here.<br />
-		<input type="text" name="is_wp_blog_header" id="is_wp_blog_header" value="" /></p>
+		<p><strong><label for="is_wp_blog_header">Absolute path to wp-blog-header.php:</label></strong><br>
+		If you checked the above option, please enter your FULL ABSOLUTE PATH to wp-blog-header.php here.<br>
+		<input type="text" name="is_wp_blog_header" id="is_wp_blog_header" value=""></p>
 
-		<p><strong><label for="date_format">Date/time format to use for questions:</label></strong><br />
-		(See <a href="http://www.php.net/date" title="PHP Manual for Date options">http://www.php.net/date</a> for more information)<br />
-		<input type="text" name="date_format" id="date_format" value="jS F Y - H:i" /></p>
+		<p><strong><label for="date_format">Date/time format to use for questions:</label></strong><br>
+		(See <a href="http://www.php.net/date" title="PHP Manual for Date options">http://www.php.net/date</a> for more information)<br>
+		<input type="text" name="date_format" id="date_format" value="jS F Y - H:i"></p>
 
-		<p><strong><label for="enable_cats">Enable categories?</label></strong> <input type="checkbox" name="enable_cats" id="enable_cats" value="yes" checked="checked" /></p>
+		<p><strong><label for="enable_cats">Enable categories?</label></strong> <input type="checkbox" name="enable_cats" id="enable_cats" value="yes" checked="checked"></p>
 
-		<p><strong><label for="ipban_enable">Enable <acronym title="Internet Protocol">IP</acronym> address blocking?</label></strong> <input type="checkbox" name="ipban_enable" id="ipban_enable" value="yes" checked="checked" /></p>
+		<p><strong><label for="ipban_enable">Enable <acronym title="Internet Protocol">IP</acronym> address blocking?</label></strong> <input type="checkbox" name="ipban_enable" id="ipban_enable" value="yes" checked="checked"></p>
 
-		<p><strong><label for="antispam_enable">Enable anti-spam (word blocking)?</label></strong> <input type="checkbox" name="antispam_enable" id="antispam_enable" value="yes" checked="checked" /></p>
+		<p><strong><label for="antispam_enable">Enable anti-spam (word blocking)?</label></strong> <input type="checkbox" name="antispam_enable" id="antispam_enable" value="yes" checked="checked"></p>
 
-		<p><strong><label for="show_unanswered">Show unanswered questions on the front page?</label></strong> <input type="checkbox" name="show_unanswered" id="show_unanswered" value="yes" /></p>
+		<p><strong><label for="show_unanswered">Show unanswered questions on the front page?</label></strong> <input type="checkbox" name="show_unanswered" id="show_unanswered" value="yes"></p>
 
-		<p><strong><label for="summary_enable">Enable summary?</label></strong> <input type="checkbox" name="summary_enable" id="summary_enable" value="yes" checked="checked" /><br />
+		<p><strong><label for="summary_enable">Enable summary?</label></strong> <input type="checkbox" name="summary_enable" id="summary_enable" value="yes" checked="checked"><br>
 		Do you want to show a summary of questions by category on the front page?</p>
 
-		<p><strong><label for="titleofpage">Front page title:</label></strong><br />
-		This is the title users see at the top of the questions page.<br />
-		<input type="text" name="titleofpage" id="titleofpage" value="Q&amp;A" /></p>
+		<p><strong><label for="titleofpage">Front page title:</label></strong><br>
+		This is the title users see at the top of the questions page.<br>
+		<input type="text" name="titleofpage" id="titleofpage" value="Q&amp;A"></p>
 
-		<p><strong><label for="notifybymail">Notify by email when a new question is asked?</label></strong>  <input type="checkbox" name="notifybymail" id="notifybymail" value="yes" checked="checked" /><br />Requires a valid email address to be entered below.</p>
+		<p><strong><label for="notifybymail">Notify by email when a new question is asked?</label></strong>  <input type="checkbox" name="notifybymail" id="notifybymail" value="yes" checked="checked"><br>Requires a valid email address to be entered below.</p>
 
-		<p><strong><label for="youraddress">Your email address:</label></strong><br />
-		You must set this regardless of whether you want to be notified of new questions as it is used to reset your password in case you forget it.<br />
-		<input type="text" name="youraddress" id="youraddress" value="" /> *</p>
+		<p><strong><label for="youraddress">Your email address:</label></strong><br>
+		You must set this regardless of whether you want to be notified of new questions as it is used to reset your password in case you forget it.<br>
+		<input type="text" name="youraddress" id="youraddress" value=""> *</p>
 
-		<p><strong><label for="totalpage_faq">Questions per page:</label></strong><br />
-		The amount of questions to display per page (for end users - the admin panel has a separate option for this)<br />
-		<input type="text" name="totalpage_faq" id="totalpage_faq" value="10" maxlength="3" /></p>
+		<p><strong><label for="totalpage_faq">Questions per page:</label></strong><br>
+		The amount of questions to display per page (for end users - the admin panel has a separate option for this)<br>
+		<input type="text" name="totalpage_faq" id="totalpage_faq" value="10" maxlength="3"></p>
 
-		<p><input type="submit" name="submit" id="submit" value="Submit" /></p>
+		<p><input type="submit" name="submit" id="submit" value="Submit"></p>
 	</form>
 	<?php
 }

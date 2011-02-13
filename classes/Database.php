@@ -62,16 +62,17 @@ class Database {
 	 * @return resource The result.
 	 */
 	public function query($query) {
-		if ($this->connect == false) {
-			$error = new Error('Error: could not connect to MySQL. Your server may be temporarily unavailable; please try again later.');
-			$error->display();
-		}
+		if ($this->connect == false) Error::showMessage('Error: could not connect to MySQL. Your server may be temporarily unavailable; please try again later.');
+
+		//return mysql_query($query, $this->connect);
+
+		// TODO: DEBUG ONLY - USE ABOVE FOR PRODUCTION
 		$result = mysql_query($query, $this->connect);
 		if ($result == false) {
 			echo mysql_error();
 			return false;
 		}
-		else return $result;
+		return $result;
 	}
 
 	/**

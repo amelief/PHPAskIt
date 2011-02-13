@@ -17,7 +17,7 @@ else $token = $_SESSION['pai_token'];
 
 if (!file_exists('functions.php')) { ?>
 	<h1>Error</h1>
-	<strong><code>functions.php</code></strong> could not be found. Without this file, the script cannot operate. Please make sure it is present.</p>
+	<strong><code>functions.php</code></strong> could not be found. Without this file, the Askably cannot operate. Please make sure it is present.</p>
 	<?php
 	exit;
 }
@@ -49,7 +49,8 @@ adminheader(); ?>
 <div id="container">
 	<h1 id="header"><a href="admin.php" title="Back to main admin page">Askably</a></h1>
 
-	<?php if (array_key_exists('QUERY_STRING', $_SERVER)) {
+	<?php $active = 'home';
+	if (array_key_exists('QUERY_STRING', $_SERVER)) {
 		if (strpos($_SERVER['QUERY_STRING'], '=unanswered') !== false) $active = 'unans';
 		elseif (strpos($_SERVER['QUERY_STRING'], '=categories') !== false) $active = 'cats';
 		elseif (strpos($_SERVER['QUERY_STRING'], '=ips') !== false) $active = 'ips';
@@ -57,9 +58,7 @@ adminheader(); ?>
 		elseif (strpos($_SERVER['QUERY_STRING'], '=options') !== false) $active = 'opt';
 		elseif (strpos($_SERVER['QUERY_STRING'], '=templates') !== false) $active = 'temp';
 		elseif (strpos($_SERVER['QUERY_STRING'], '=import') !== false) $active = 'import';
-		else $active = 'home';
-	}
-	else $active = 'home'; ?>
+	} ?>
 	<ul id="navigation" class="center">
 		<li><a href="admin.php" title="Main admin page"<?php if ($active == 'home') echo ' class="active"'; ?>>Home</a></li>
 		<li><a href="?sort=unanswered" title="View unanswered questions"<?php if ($active == 'unans') echo ' class="active"'; ?>>Unanswered (<span id="unanswered-qs"><?php echo $pai->getUnanswered(); ?></span>)</a></li>
@@ -97,11 +96,11 @@ adminheader(); ?>
 
 		<h3>Options</h3>
 		<form method="post" action="<?php echo $_SERVER['REQUEST_URI']; ?>">
-			<p><strong>View <input type="text" maxlength="3" size="3" value="<?php if (defined('ADMIN_PERPAGE')) echo ADMIN_PERPAGE; ?>" name="qsperpage" id="qsperpage" /> <?php echo (defined('ADMIN_PERPAGE') && ADMIN_PERPAGE == 1) ? 'question' : 'questions'; ?> per page. <input name="go" type="submit" value="Go" /></strong></p>
+			<p><strong>View <input type="text" maxlength="3" size="3" value="<?php if (defined('ADMIN_PERPAGE')) echo (int)ADMIN_PERPAGE; ?>" name="qsperpage" id="qsperpage"> <?php echo (defined('ADMIN_PERPAGE') && (int)ADMIN_PERPAGE == 1) ? 'question' : 'questions'; ?> per page. <input name="go" type="submit" value="Go"></strong></p>
 		</form>
 		<form method="get" action="admin.php">
-			<p><label for="search">Search questions:</label><br />
-			<input type="text" name="search" id="search" /> <input type="submit" value="Search" /></p>
+			<p><label for="search">Search questions:</label><br>
+			<input type="text" name="search" id="search"> <input type="submit" value="Search"></p>
 		</form>
 	</div>
 	<div id="main">
@@ -109,104 +108,33 @@ adminheader(); ?>
 #######################################################
 
 ############### UNANSWERED QUESTIONS ONLY #############
-if (array_key_exists('sort', $_GET) && $_GET['sort'] == 'unanswered') {
-	ob_end_flush();
-	pages();
-
-	$query = <<<SQL
-SELECT `q_id` FROM `{$pai_db->getTable()}` WHERE (`answer` = '' OR `answer` IS NULL)
-SQL;
-	dopagination($query);
-	$query .= ' ORDER BY `dateasked` DESC LIMIT ' . $startfrom . ', ' . ADMIN_PERPAGE;
-
-	if ($totalpages > 0) { ?>
-		<h2 class="question_header">Unanswered questions (<span id="unanswered-qs-header"><?php echo $pai->getUnanswered(); ?></span>)</h2>
-		<?php
-		$getqs = $pai_db->query($query);
-		pagination($perpage, 'unanswered');
-		echo '<ul id="question-list">';
-		while($qs = mysql_fetch_object($getqs)) {
-			$q = new Question($qs->q_id);
-			$q->show();
-		}
-		echo '</ul>';
-	}
-	else echo '<p>No questions to answer.</p>';
-}
+if (array_key_exists('sort', $_GET) && $_GET['sort'] == 'unanswered') $pai->getQs(array('unanswered'));
 #######################################################
 
 ####### ALL QUESTIONS FROM A PARTICULAR CATEGORY ######
 elseif (array_key_exists('category', $_GET) && !empty($_GET['category']) && is_numeric($_GET['category'])) {
-	ob_end_flush();
-	if (!$pai->getOption('enable_cats')) $error = new Error('Categories are disabled. To enable them, go to the <a href="?manage=options" title="Options page">options panel</a> and check &quot;enable categories&quot;.');
-	if (!$cat = $pai_db->get('cat_name', 'cats', '`cat_id` = ' . (int)cleaninput($_GET['category']))) $error[] = new Error('Invalid category.');
-	if (isset($error)) $error->display();
+	if (!$pai->getOption('enable_cats')) Error::showMessage('Categories are disabled. To enable them, go to the <a href="?manage=options" title="Options page">options panel</a> and check &quot;enable categories&quot;.');
+	if (!$cat = $pai_db->get('cat_name', 'cats', '`cat_id` = ' . (int)cleaninput($_GET['category']))) Error::showMessage('Invalid category.', false);
 
-	pages();
-
-	$query = 'SELECT `q_id` FROM `' . $pai_db->getTable() . '` WHERE `category` = ' . (int)cleaninput($_GET['category']);
-	dopagination($query);
-	$query .= ' ORDER BY `q_id` DESC LIMIT ' . $startfrom . ', ' . ADMIN_PERPAGE;
-
-	if ($totalpages > 0) {
-		?>
-		<h2 class="question_header"><?php echo $totalpages . ($totalpages == 1 ? ' question' : ' questions'); ?> in the &quot;<?php echo $cat; ?>&quot; category</h2>
-		<?php
-		$getqs = $pai_db->query($query);
-		pagination($perpage, 'bycat');
-		echo '<ul id="question-list">';
-		while($qs = mysql_fetch_object($getqs)) {
-			$q = new Question($qs->q_id);
-			$q->show();
-		}
-		echo '</ul>';
-	}
-	else echo '<p>No questions in this category.</p>';
+	$pai->getQs(array('category', $cat));
 }
 #######################################################
 
 ##################### SEARCH ##########################
 elseif (array_key_exists('search', $_GET)) {
-	ob_end_flush();
 	$getsearch = cleaninput($_GET['search']);
+	if (empty($getsearch)) Error::showMessage('No search term entered.');
 
-	if (empty($getsearch)) {
-		$error = new Error('No search term entered.');
-		$error->display();
-	}
-
-	pages();
-
-	$query = 'SELECT `q_id` FROM `' . $pai_db->getTable() . "` WHERE `question` LIKE '%" . $getsearch . "%' OR `answer` LIKE '%" . $getsearch . "%' OR `ip` LIKE '%" . $getsearch . "%'";
-	dopagination($query);
-	$query .= ' ORDER BY `q_id` DESC LIMIT ' . $startfrom . ', ' . ADMIN_PERPAGE;
-
-	if ($totalpages > 0) {
-		$getqs = $pai_db->query($query);
-
-		echo '<h2 class="question_header">' . $totalpages . ' ' . ($totalpages == 1 ? 'question' : 'questions') . ' containing the term &quot;' . stripslashes($getsearch) . '&quot; ' . ($totalpages == 1 ? 'was' : 'were') . ' found.</h2>';
-
-		pagination($perpage, 'search');
-		echo '<ul id="question-list">';
-		while($qs = mysql_fetch_object($getqs)) {
-			$q = new Question($qs->q_id);
-			$q->show();
-		}
-		echo '</ul>';
-	}
-	else echo '<p>No items containing the term &quot;' . stripslashes($getsearch) . '&quot; were found.</p>';
+	$pai->getQs(array('search', $getsearch));
 }
 #######################################################
 
 ################# QUESTION PERMALINKS #################
 elseif (array_key_exists('q', $_GET) && !empty($_GET['q']) && is_numeric($_GET['q'])) {
 	ob_end_flush();
-	
+
 	$q = new Question((int)$_GET['q']);
-	if (!isset($q)) {
-		$error = new Error('Invalid question.');
-		$error->display();
-	}
+	if (!isset($q) || $q == null) Error::showMessage('Invalid question.');
 
 	echo '<ul id="question-list">';
 	$q->show();
@@ -217,85 +145,12 @@ elseif (array_key_exists('q', $_GET) && !empty($_GET['q']) && is_numeric($_GET['
 ################### DELETE FUNCTION ###################
 elseif (array_key_exists('delete', $_GET) && !empty($_GET['delete']) && is_numeric($_GET['delete'])) {
 	$pai->checkToken();
-	$question = new Question((int)$_GET['delete']);
-
-	if (!$question->checkId()) {
-		if (array_key_exists('inline', $_GET)) {
-			ob_end_clean();
-			echo '<strong>Error:</strong> Invalid question.';
-		}
-		else {
-			ob_end_flush();
-			$error = new Error('Invalid question.');
-			$error->display();
-		}
-	}
-	if ($question->delete()) {
-		if (array_key_exists('inline', $_GET)) {
-			ob_end_clean();
-			echo 'Deleted';
-		}
-		else {
-			ob_end_flush();
-			echo '<p>Question successfully deleted.</p>';
-		}
-	}
-	else {
-		if (array_key_exists('inline', $_GET)) {
-			ob_end_clean();
-			echo 'Error'; // will pop an alert
-		}
-		else {
-			ob_end_flush();
-			$error = new Error('The question could not be deleted at this time.');
-			$error->display();
-		}
-	}
+	Question::doDelete((int)$_GET['delete']);
 }
 #######################################################
 
 ################### EDIT FUNCTIONS ####################
-elseif (array_key_exists('edit', $_GET)) {
-	switch($_GET['edit']) {
-
-		##### EDIT QUESTIONS
-		case 'question':
-			if (array_key_exists('id', $_POST)) $question = new Question((int)$_POST['id']);
-			elseif (array_key_exists('qu', $_GET)) $question = new Question((int)$_GET['qu']);
-			if (isset($question)) $question->editQuestion();
-			else {
-				$error = new Error('Invalid question');
-				$error->display();
-			}
-			break;
-
-		##### EDIT ANSWERS
-		case 'answer':
-			if (array_key_exists('id', $_POST)) $question = new Question((int)$_POST['id']);
-			elseif (array_key_exists('qu', $_GET)) $question = new Question((int)$_GET['qu']);
-			if (isset($question)) $question->editAnswer();
-			else {
-				$error = new Error('Invalid question');
-				$error->display();
-			}
-			break;
-
-		##### EDIT CATEGORIES
-		case 'category':
-			if (array_key_exists('id', $_POST)) $question = new Question((int)$_POST['id']);
-			elseif (array_key_exists('qu', $_GET)) $question = new Question((int)$_GET['qu']);
-			if (isset($question)) $question->editCategory();
-			else {
-				$error = new Error('Invalid question');
-				$error->display();
-			}
-			break;
-
-		default:
-			ob_end_flush();
-			echo '<p>Invalid action.</p>';
-	}
-}
+elseif (array_key_exists('edit', $_GET)) Question::edit($_GET['edit']);
 #######################################################
 
 ############### MANAGEMENT AND OPTIONS ################
@@ -312,22 +167,11 @@ elseif (array_key_exists('manage', $_GET) && !empty($_GET['manage'])) {
 						$$key = cleaninput($value);
 					}
 					if (!empty($password)) {
-						if ($confirm_pass != $password) {
-							ob_end_flush();
-							$error = new Error('Passwords did not match, try again.');
-							$error->display();
-						}
-						if (!preg_match('/^([_a-z0-9@\.-]+)$/i', $_POST['password'])) {
-							ob_end_flush();
-							$error = new Error('Password contains invalid characters.');
-							$error->display();
-						}
+						if ($confirm_pass != $password) Error::showMessage('Passwords did not match, try again.');
+
+						if (!preg_match('/^([_a-z0-9@\.-]+)$/i', $_POST['password'])) Error::showMessage('Password contains invalid characters.');
 					}
-					if (empty($youraddress) || !preg_match('/^([_a-z0-9-]+)(\.[_a-z0-9-]+)*@([a-z0-9-]+)(\.[a-z0-9-]+)*(\.[a-z]{2,4})$/i', $youraddress)) {
-						ob_end_flush();
-						$error = new Error('Please enter a valid email address.');
-						$error->display();
-					}
+					if (empty($youraddress) || !preg_match('/^([_a-z0-9-]+)(\.[_a-z0-9-]+)*@([a-z0-9-]+)(\.[a-z0-9-]+)*(\.[a-z]{2,4})$/i', $youraddress)) Error::showMessage('Please enter a valid email address.');
 
 					$tooeasy = array('phpaskit', 'pai', 'abc123', '123abc', 'q&amp;a', 'question', 'questions', 'questionsandanswers', 'questionandanswer', 'q &amp; a', 'questionsandanswer', 'questionandanswers', 'questions and answer', 'question and answer', 'question and answers', 'questions and answers', 'qanda', 'q and a', 'q & a', 'security word', 'security', 'blah', 'yeah', 'password', 'word', 'test', 'askably');
 
@@ -393,20 +237,10 @@ elseif (array_key_exists('manage', $_GET) && !empty($_GET['manage'])) {
 					}
 
 					if ($is_wordpress == 'yes') {
-						if (empty($is_wp_blog_header)) {
-							ob_end_flush();
-							$error = new Error('Please enter your absolute path to wp-blog-header.php if you wish to use WordPress Themes. If not, please uncheck the appropriate option.');
-						}
-						elseif (strstr($is_wp_blog_header, 'http://')) {
-							ob_end_flush();
-							$error = new Error('Please enter an absolute path to wp-blog-header.php, NOT a URL.');
-						}
-						elseif (!file_exists($is_wp_blog_header)) {
-							ob_end_flush();
-							$error = new Error('Your path to wp-blog-header.php appears to be incorrect, as Askably cannot find it. Please go back and try again.');
-						}
+						if (empty($is_wp_blog_header)) Error::showMessage('Please enter your absolute path to wp-blog-header.php if you wish to use WordPress Themes. If not, please uncheck the appropriate option.');
+						elseif (strstr($is_wp_blog_header, 'http://')) Error::showMessage('Please enter an absolute path to wp-blog-header.php, NOT a URL.');
+						elseif (!file_exists($is_wp_blog_header)) Error::showMessage('Your path to wp-blog-header.php appears to be incorrect, as Askably cannot find it. Please go back and try again.');
 					}
-					if (isset($error)) $error->display();
 
 					$update = array();
 					$update[] = 'UPDATE `' . $pai_db->getTable() . "_options` SET `option_value` = '" . $word . "' WHERE `option_name` = 'security_word' LIMIT 1";
@@ -445,14 +279,9 @@ elseif (array_key_exists('manage', $_GET) && !empty($_GET['manage'])) {
 					echo '<p>Options updated.</p>';
 				}
 				elseif (empty($_POST['currentpass'])) {
-					ob_end_flush();
-					$error = new Error('You did not enter your current password. You cannot change the options if you do not enter this. Please go back and try again.');
+					Error::showMessage('You did not enter your current password. You cannot change the options if you do not enter this. Please go back and try again.');
 				}
-				else {
-					ob_end_flush();
-					$error = new Error('Incorrect current password supplied. Please press the back button on your browser to try again.');
-				}
-				if (isset($error)) $error->display();
+				else Error::showMessage('Incorrect current password supplied. Please press the back button on your browser to try again.');
 			}
 			else {
 				ob_end_flush();
@@ -462,76 +291,76 @@ elseif (array_key_exists('manage', $_GET) && !empty($_GET['manage'])) {
 				<p>Edit Askably's options here. Please note that if you change your password you may need to clear out your browser's cookies in order to be able to login again.</p>
 
 				<form method="post" action="admin.php?manage=options">
-					<p><input type="hidden" name="token" id="token" value="<?php echo $token; ?>" />
-					<strong><label for="username">Your username:</label></strong><br />
-					CASE SENSITIVE<br />
-					<input type="text" name="username" id="username" value="<?php echo $pai->getOption('username'); ?>" /></p>
+					<p><input type="hidden" name="token" id="token" value="<?php echo $token; ?>">
+					<strong><label for="username">Your username:</label></strong><br>
+					CASE SENSITIVE<br>
+					<input type="text" name="username" id="username" value="<?php echo $pai->getOption('username'); ?>"></p>
 
-					<p><strong><label for="currentpass">Current password:</label></strong><br />
-					CASE SENSITIVE - <strong style="color: red;">You must enter this in order to change any of the settings on this page.</strong><br />
-					<input type="password" name="currentpass" id="currentpass" /></p>
+					<p><strong><label for="currentpass">Current password:</label></strong><br>
+					CASE SENSITIVE - <strong style="color: red;">You must enter this in order to change any of the settings on this page.</strong><br>
+					<input type="password" name="currentpass" id="currentpass"></p>
 
-					<p><strong><label for="password">New password:</label></strong><br />
-					CASE SENSITIVE - only enter this if you want to change your password. <strong>Please only use alphanumeric characters. You may also use these characters: !, @, _, -, . (dot).</strong><br />
-					<input type="password" name="password" id="password" /></p>
+					<p><strong><label for="password">New password:</label></strong><br>
+					CASE SENSITIVE - only enter this if you want to change your password. <strong>Please only use alphanumeric characters. You may also use these characters: !, @, _, -, . (dot).</strong><br>
+					<input type="password" name="password" id="password"></p>
 
-					<p><strong><label for="confirm_pass">Re-enter new password:</label></strong><br />CASE SENSITIVE - only enter if you are changing your password.<br />
-					<input type="password" name="confirm_pass" id="confirm_pass"/></p>
+					<p><strong><label for="confirm_pass">Re-enter new password:</label></strong><br>CASE SENSITIVE - only enter if you are changing your password.<br>
+					<input type="password" name="confirm_pass" id="confirm_pass"></p>
 
-					<p><strong><label for="word">Security word:</label></strong><br />
-					In case you forget your password, you will need this to reset it. <strong>This cannot be left blank.</strong><br />
-					<input type="text" name="word" id="word" value="<?php echo $pai->getOption('security_word'); ?>" /></p>
+					<p><strong><label for="word">Security word:</label></strong><br>
+					In case you forget your password, you will need this to reset it. <strong>This cannot be left blank.</strong><br>
+					<input type="text" name="word" id="word" value="<?php echo $pai->getOption('security_word'); ?>"></p>
 
-					<p><strong><label for="headerfile">Header file you wish to use:</label></strong><br />
-					Absolute or relative path - leave blank to use default. <strong>DO NOT</strong> enter a <acronym title="Uniform Resource Locator - usually in this form: http://www.domainname.tld">URL</acronym> here, it will not work!<br />
-					NOTE: DO NOT FILL IN THIS PART IF YOU ARE USING WORDPRESS THEMES!<br />
-					<input type="text" name="headerfile" id="headerfile" value="<?php echo $pai->getOption('headerfile'); ?>" /></p>
+					<p><strong><label for="headerfile">Header file you wish to use:</label></strong><br>
+					Absolute or relative path - leave blank to use default. <strong>DO NOT</strong> enter a <acronym title="Uniform Resource Locator - usually in this form: http://www.domainname.tld">URL</acronym> here, it will not work!<br>
+					NOTE: DO NOT FILL IN THIS PART IF YOU ARE USING WORDPRESS THEMES!<br>
+					<input type="text" name="headerfile" id="headerfile" value="<?php echo $pai->getOption('headerfile'); ?>"></p>
 
-					<p><strong><label for="footerfile">Footer file you wish to use:</label></strong><br />
-					As above. Again, do NOT fill in this part if you are using WordPress Themes.<br />
-					<input type="text" name="footerfile" id="footerfile" value="<?php echo $pai->getOption('footerfile'); ?>" /></p>
+					<p><strong><label for="footerfile">Footer file you wish to use:</label></strong><br>
+					As above. Again, do NOT fill in this part if you are using WordPress Themes.<br>
+					<input type="text" name="footerfile" id="footerfile" value="<?php echo $pai->getOption('footerfile'); ?>"></p>
 
-					<p><strong><label for="is_wordpress">Are you using WordPress Themes with Askably?</label></strong> <input type="checkbox" name="is_wordpress" id="is_wordpress" value="yes" <?php if ($pai->getOption('is_wordpress')) echo 'checked="checked" '; ?>/><br />If you have themed your site using WordPress (i.e. using get_header() and get_footer()) please check this box.</p>
+					<p><strong><label for="is_wordpress">Are you using WordPress Themes with Askably?</label></strong> <input type="checkbox" name="is_wordpress" id="is_wordpress" value="yes" <?php if ($pai->getOption('is_wordpress')) echo 'checked="checked" '; ?>><br>If you have themed your site using WordPress (i.e. using get_header() and get_footer()) please check this box.</p>
 
-					<p><strong><label for="is_wp_blog_header">Absolute path to wp-blog-header.php:</label></strong><br />
-					If you checked the above option, please enter your FULL ABSOLUTE PATH to wp-blog-header.php here.<br />
-					<input type="text" name="is_wp_blog_header" id="is_wp_blog_header" value="<?php echo $pai->getOption('is_wp_blog_header'); ?>" /></p>
+					<p><strong><label for="is_wp_blog_header">Absolute path to wp-blog-header.php:</label></strong><br>
+					If you checked the above option, please enter your FULL ABSOLUTE PATH to wp-blog-header.php here.<br>
+					<input type="text" name="is_wp_blog_header" id="is_wp_blog_header" value="<?php echo $pai->getOption('is_wp_blog_header'); ?>"></p>
 
-					<p><strong><label for="date_format">Date/time format to use for questions:</label></strong><br />
-					Currently displays as <strong><?php echo date($pai->getOption('date_format')); ?></strong> - return to this page after changing the value to see how it comes out.<br />
-					(See <a href="http://www.php.net/date" title="PHP Manual for Date options">http://www.php.net/date</a> for more information)<br />
-					<input type="text" name="date_format" id="date_format" value="<?php echo $pai->getOption('date_format'); ?>" /></p>
+					<p><strong><label for="date_format">Date/time format to use for questions:</label></strong><br>
+					Currently displays as <strong><?php echo date($pai->getOption('date_format')); ?></strong> - return to this page after changing the value to see how it comes out.<br>
+					(See <a href="http://www.php.net/date" title="PHP Manual for Date options">http://www.php.net/date</a> for more information)<br>
+					<input type="text" name="date_format" id="date_format" value="<?php echo $pai->getOption('date_format'); ?>"></p>
 
-					<p><strong><label for="enable_cats">Enable categories?</label></strong> <input type="checkbox" name="enable_cats" id="enable_cats" value="yes" <?php if ($pai->getOption('enable_cats')) echo 'checked="checked" '; ?>/></p>
+					<p><strong><label for="enable_cats">Enable categories?</label></strong> <input type="checkbox" name="enable_cats" id="enable_cats" value="yes"<?php if ($pai->getOption('enable_cats')) echo ' checked="checked"'; ?>></p>
 
-					<p><strong><label for="ipban_enable">Enable <acronym title="Internet Protocol">IP</acronym> address blocking?</label></strong> <input type="checkbox" name="ipban_enable" id="ipban_enable" value="yes" <?php if ($pai->getOption('ipban_enable')) echo 'checked="checked" '; ?>/></p>
+					<p><strong><label for="ipban_enable">Enable <acronym title="Internet Protocol">IP</acronym> address blocking?</label></strong> <input type="checkbox" name="ipban_enable" id="ipban_enable" value="yes"<?php if ($pai->getOption('ipban_enable')) echo ' checked="checked"'; ?>></p>
 
-					<p><strong><label for="antispam_enable">Enable anti-spam (word blocking)?</label></strong> <input type="checkbox" name="antispam_enable" id="antispam_enable" value="yes" <?php if ($pai->getOption('antispam_enable')) echo 'checked="checked" '; ?>/></p>
+					<p><strong><label for="antispam_enable">Enable anti-spam (word blocking)?</label></strong> <input type="checkbox" name="antispam_enable" id="antispam_enable" value="yes"<?php if ($pai->getOption('antispam_enable')) echo ' checked="checked"'; ?>></p>
 
-					<p><strong><label for="show_unanswered">Show unanswered questions on the front page?</label></strong> <input type="checkbox" name="show_unanswered" id="show_unanswered" value="yes" <?php if ($pai->getOption('show_unanswered')) echo 'checked="checked" '; ?>/></p>
+					<p><strong><label for="show_unanswered">Show unanswered questions on the front page?</label></strong> <input type="checkbox" name="show_unanswered" id="show_unanswered" value="yes"<?php if ($pai->getOption('show_unanswered')) echo ' checked="checked"'; ?>></p>
 
-					<p><strong><label for="summary_enable">Enable summary?</label></strong> <input type="checkbox" name="summary_enable" id="summary_enable" value="yes" <?php if ($pai->getOption('summary_enable')) echo 'checked="checked" '; ?>/><br />
+					<p><strong><label for="summary_enable">Enable summary?</label></strong> <input type="checkbox" name="summary_enable" id="summary_enable" value="yes"<?php if ($pai->getOption('summary_enable')) echo ' checked="checked"'; ?>><br>
 					Do you want to show a summary of questions by category on the front page?</p>
 
-					<p><strong><label for="titleofpage">Front page title:</label></strong><br />
-					This is the title users see at the top of the questions page.<br />
-					<input type="text" name="titleofpage" id="titleofpage" value="<?php echo $pai->getOption('titleofpage'); ?>" /></p>
+					<p><strong><label for="titleofpage">Front page title:</label></strong><br>
+					This is the title users see at the top of the questions page.<br>
+					<input type="text" name="titleofpage" id="titleofpage" value="<?php echo $pai->getOption('titleofpage'); ?>"></p>
 
-					<p><strong><label for="notifybymail">Notify by e-mail when a new question is asked?</label></strong>  <input type="checkbox" name="notifybymail" id="notifybymail" value="yes" <?php if ($pai->getOption('notifybymail')) echo 'checked="checked" '; ?>/><br />Requires a valid e-mail address to be entered below.</p>
+					<p><strong><label for="notifybymail">Notify by e-mail when a new question is asked?</label></strong>  <input type="checkbox" name="notifybymail" id="notifybymail" value="yes"<?php if ($pai->getOption('notifybymail')) echo ' checked="checked"'; ?>><br>Requires a valid e-mail address to be entered below.</p>
 
-					<p><strong><label for="youraddress">Your e-mail address:</label></strong><br />
-					You should set this (regardless of whether you want to be notified of new questions) as it is used to reset your password in case you forget it.<br />
-					<input type="text" name="youraddress" id="youraddress" value="<?php echo $pai->getOption('youraddress'); ?>"/></p>
+					<p><strong><label for="youraddress">Your e-mail address:</label></strong><br>
+					You should set this (regardless of whether you want to be notified of new questions) as it is used to reset your password in case you forget it.<br>
+					<input type="text" name="youraddress" id="youraddress" value="<?php echo $pai->getOption('youraddress'); ?>"></p>
 
-					<p><strong><label for="totalpage_faq">Questions per page on the FAQ page:</label></strong><br />
-					The FAQ page is the page that visitors to your site see.<br />
-					<input type="text" name="totalpage_faq" id="totalpage_faq" value="<?php echo (int)$pai->getOption('totalpage_faq'); ?>" maxlength="3" /></p>
+					<p><strong><label for="totalpage_faq">Questions per page on the FAQ page:</label></strong><br>
+					The FAQ page is the page that visitors to your site see.<br>
+					<input type="text" name="totalpage_faq" id="totalpage_faq" value="<?php echo (int)$pai->getOption('totalpage_faq'); ?>" maxlength="3"></p>
 
-					<p><strong><label for="timeout">Login timeout:</label></strong><br />
-					The script will log you out after this many seconds. 3600 is an hour, 86400 is a day. The maximum time you can be logged in is a year. To disable this feature, leave the field empty.<br />
-					<input type="text" name="timeout" id="timeout" value="<?php echo (int)$pai->getOption('timeout'); ?>" maxlength="10" /></p>
+					<p><strong><label for="timeout">Login timeout:</label></strong><br>
+					The script will log you out after this many seconds. 3600 is an hour, 86400 is a day. The maximum time you can be logged in is a year. To disable this feature, leave the field empty.<br>
+					<input type="text" name="timeout" id="timeout" value="<?php echo (int)$pai->getOption('timeout'); ?>" maxlength="10"></p>
 					
-					<p><input type="submit" name="submit" id="submit" value="Submit" /></p>
+					<p><input type="submit" name="submit" id="submit" value="Submit"></p>
 				</form>
 
 				<?php
@@ -550,10 +379,7 @@ elseif (array_key_exists('manage', $_GET) && !empty($_GET['manage'])) {
 				$success_msg = strip_tags($_POST['success_msg'], '<a> <div> <p> <img> <span> <b> <i> <u> <em> <strong> <table> <tr> <td> <th> <br> <br /> <acronym> <abbr> <hr> <hr /> <big> <small> <blockquote> <center> <cite> <fieldset> <ul> <li> <ol> <font> <h1> <h2> <h3> <h4> <h5> <h6> <h7> <q> <thead> <tfoot> <sub> <tt> <tbody> <sup> <kbd> <del> <ins>');
 
 				$no = '/(onclick|ondblclick|onload|onfocus|onblur|onmouse|onkey=|javascript|alert)/i';
-				if (preg_match($no, $form) || preg_match($no, $q) || preg_match($no, $summary) || preg_match($no, $success_msg)) {
-					$error = new Error('Please don\'t use JavaScript in your templates.');
-					$error->display();
-				}
+				if (preg_match($no, $form) || preg_match($no, $q) || preg_match($no, $summary) || preg_match($no, $success_msg)) Error::showMessage('Please don\'t use JavaScript in your templates.');
 
 				if (empty($form)) {
 					$form = '<p>[[question]] ';
@@ -580,11 +406,11 @@ elseif (array_key_exists('manage', $_GET) && !empty($_GET['manage'])) {
 
 				if (!strstr(strtolower($form), '[[question]]')) $error[] = new Error('You must have the [[question]] variable in your question form template. Please go back and add it.');
 				if (!strstr(strtolower($form), '[[submit]]')) $error[] = new Error('You must have [[submit]] variable in your question form template. Please go back and add it.');
-				if (!strstr(strtolower($form), '[[category]]') && $pai->getOption('enable_cats')) $error[] = new Error('You must have the [[category]] variable in your question form template. Please go back and add it. If you do not wish to use categories, please disable them on the options page.');
+				if (!strstr(strtolower($form), '[[category]]') && $pai->getOption('enable_cats')) $error[] = new Error('You must have the [[category]] variable in your question form template. Please go back and add it. If you do not wish to use categories, please disable them in the settings.');
 
 				if (!strstr(strtolower($q), '[[question]]')) $error[] = new Error('You must have the [[question]] variable in your question/answer template. Please go back and add it.');
 				if (!strstr(strtolower($q), '[[answer]]')) $error[] = new Error('You must have the [[answer]] variable in your question/answer template. Please go back and add it.');
-				if (!strstr(strtolower($q), '[[category]]') && $pai->getOption('enable_cats')) $error[] = new Error('You must have the [[category]] variable in your question/answer template. Please go back and add it. If you do not wish to use categories, please disable them on the options page.');
+				if (!strstr(strtolower($q), '[[category]]') && $pai->getOption('enable_cats')) $error[] = new Error('You must have the [[category]] variable in your question/answer template. Please go back and add it. If you do not wish to use categories, please disable them on the settings.');
 
 				if (isset($error)) {
 					$num = count($error);
@@ -620,7 +446,7 @@ elseif (array_key_exists('manage', $_GET) && !empty($_GET['manage'])) {
 				<form method="post" action="admin.php?manage=templates">
 					<fieldset>
 						<legend></legend>
-						<input type="hidden" name="token" id="token" value="<?php echo $token; ?>" />
+						<input type="hidden" name="token" id="token" value="<?php echo $token; ?>">
 						<h4><a name="qf_template" id="qf_template"></a><label for="question_form">Question form</label></h4>
 						<p>This is the form used to ask questions.</p>
 						<p>Key:</p>
@@ -662,7 +488,7 @@ elseif (array_key_exists('manage', $_GET) && !empty($_GET['manage'])) {
 						<p><textarea name="success_msg" id="success_msg" cols="30" rows="5" class="template"><?php echo htmlentities($pai->getOption('success_msg_template')); ?></textarea></p>
 					</fieldset>
 
-					<p class="center"><input type="submit" name="submit_templates" id="submit_templates" value="Submit" style="padding-left: 2em; padding-right: 2em;" /></p>
+					<p class="center"><input type="submit" name="submit_templates" id="submit_templates" value="Submit" style="padding-left: 2em; padding-right: 2em;"></p>
 				</form>
 				<?php
 			}
@@ -680,10 +506,7 @@ elseif (array_key_exists('manage', $_GET) && !empty($_GET['manage'])) {
 					if (!isset($abspath)) $abspath = '';
 					$imp = new Importer($_POST['import_from'], $abspath);
 				}
-				else {
-					$error = new Error('Oops! Looks like you forgot to select an option. Please go back and try again.');
-					$error->display();
-				}
+				else Error::showMessage('Oops! Looks like you forgot to select an option. Please go back and try again.');
 			}
 			else { ?>
 				<h2>Import questions</h2>
@@ -692,42 +515,42 @@ elseif (array_key_exists('manage', $_GET) && !empty($_GET['manage'])) {
 				<form action="admin.php?manage=import" method="post">
 					<p>I am importing from:</p>
 					<ul class="nolist">
-						<li><input type="radio" name="import_from" id="import_from_aa" value="aa" /> <label for="import_from_aa">Ask&amp;Answer (posed.org version)</label></li>
-						<li><input type="radio" name="import_from" id="import_from_waks" value="waks" /> <label for="import_from_waks">Wak's Ask&amp;Answer (luved.org version)</label></li>
-						<li><input type="radio" name="import_from" id="import_from_faqtastic" value="faq" /> <label for="import_from_faqtastic">Faqtastic (v2 or v3)</label></li>
-						<li><input type="radio" name="import_from" id="import_from_other" value="none" /> <label for="import_from_other">None of the above</label></li>
+						<li><input type="radio" name="import_from" id="import_from_aa" value="aa"> <label for="import_from_aa">Ask&amp;Answer (posed.org version)</label></li>
+						<li><input type="radio" name="import_from" id="import_from_waks" value="waks"> <label for="import_from_waks">Wak's Ask&amp;Answer (luved.org version)</label></li>
+						<li><input type="radio" name="import_from" id="import_from_faqtastic" value="faq"> <label for="import_from_faqtastic">Faqtastic (v2 or v3)</label></li>
+						<li><input type="radio" name="import_from" id="import_from_other" value="none"> <label for="import_from_other">None of the above</label></li>
 					</ul>
 					
 					<div id="showabspathaa" style="display: none;">
 						<p><strong>Please note:</strong> Imported questions will show as coming from <strong>your</strong> IP address and as being asked on today's date.<?php if ($pai->getOption('enable_cats')) { ?> Questions will be entered into the default category.<?php } ?></p>
-						<p><label for="abspathaa">Please enter your Ask&amp;Answer installation path:</label><br />
-						<input type="text" name="abspath[]" id="abspathaa" /></p>
+						<p><label for="abspathaa">Please enter your Ask&amp;Answer installation path:</label><br>
+						<input type="text" name="abspath[]" id="abspathaa"></p>
 					</div>
 					<div id="showabspathwaks" style="display: none;">
 						<p><strong>Please note:</strong> Only <strong>answered</strong> questions will be imported from Wak's Ask&amp;Answer.<?php if ($pai->getOption('enable_cats')) { ?> Questions will be entered into the default category.<?php } ?></p>
-						<p><label for="abspathwaks">Please enter your Wak's Ask&amp;Answer installation path:</label><br />
-						<input type="text" name="abspath[]" id="abspathwaks" /></p>
+						<p><label for="abspathwaks">Please enter your Wak's Ask&amp;Answer installation path:</label><br>
+						<input type="text" name="abspath[]" id="abspathwaks"></p>
 					</div>
 					<div id="showabspathfaq" style="display: none;">
 						<p><strong>Please note:</strong> ALL questions will be imported, whether they have been approved or not. No names or email addresses of question askers will be retained; the same goes for any settings and templates. Questions will appear as having been asked on today's date<?php if ($pai->getOption('enable_cats')) { ?> and will be entered into the default category<?php } ?>.</p>
-						<p><label for="abspathfaq">Please enter your Faqtastic installation path:</label><br />
-						<input type="text" name="abspath[]" id="abspathfaq" /></p>
+						<p><label for="abspathfaq">Please enter your Faqtastic installation path:</label><br>
+						<input type="text" name="abspath[]" id="abspathfaq"></p>
 					</div>
 					<div id="showabspathnone" style="display: none;">
-						<p><strong>Please note:</strong> Enter your questions in the following format: QUESTION || ANSWER. E.g. What's your favourite food? || I like pasta and cheese. Put each question on a new line. If a question has no answer, enter the question like this: QUESTION || (leave a space after the ||).<br />
+						<p><strong>Please note:</strong> Enter your questions in the following format: QUESTION || ANSWER. E.g. What's your favourite food? || I like pasta and cheese. Put each question on a new line. If a question has no answer, enter the question like this: QUESTION || (leave a space after the ||).<br>
 						Questions will appear as having been asked on today's date, from <strong>your</strong> IP address<?php if ($pai->getOption('enable_cats')) { ?> and will be entered into the default category<?php } ?>.</p>
-						<p><label for="abspathnone">Please enter your questions below:</label><br />
+						<p><label for="abspathnone">Please enter your questions below:</label><br>
 						<textarea cols="50" rows="10" name="importme" id="abspathnone">QUESTION || ANSWER
 QUESTION || ANSWER</textarea></p>
 					</div>
 					<noscript>
 						<p>
-							<label for="abspath">Please enter your script's installation path:</label><br />
-							<input type="text" name="abspath" id="abspath" />
+							<label for="abspath">Please enter your script's installation path:</label><br>
+							<input type="text" name="abspath" id="abspath">
 						</p>
 					</noscript>
 
-					<p><input type="submit" id="step1" value="Import questions" /></p>
+					<p><input type="submit" id="step1" value="Import questions"></p>
 				</form>
 				<?php
 			}
@@ -735,10 +558,8 @@ QUESTION || ANSWER</textarea></p>
 
 		##### BLOCKED IPS
 		case 'ips':
-			if ($pai->getOption('ipban_enable') != 'yes') {
-				$error = new Error('IP banning is currently disabled.');
-				$error->display();
-			}
+			if (!$pai->getOption('ipban_enable')) Error::showMessage('IP banning is currently disabled.');
+
 			if (array_key_exists('action', $_GET)) {
 				switch($_GET['action']) {
 
@@ -755,17 +576,13 @@ QUESTION || ANSWER</textarea></p>
 							else $pai->killToken();
 							ob_end_flush();
 
-							if (!isset($newip) || empty($newip)) $error = new Error('Please enter an IP address.');
-							// Match IPv4 and IPv6
-							if (!preg_match("^((\d|[1-9]\d|2[0-4]\d|25[0-5]|1\d\d)(?:\.(\d|[1-9]\d|2[0-4]\d|25[0-5]|1\d\d)){3})$^", $newip) && !preg_match("/^\s*((([0-9A-Fa-f]{1,4}:){7}(([0-9A-Fa-f]{1,4})|:))|(([0-9A-Fa-f]{1,4}:){6}(:|((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})|(:[0-9A-Fa-f]{1,4})))|(([0-9A-Fa-f]{1,4}:){5}((:((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})?)|((:[0-9A-Fa-f]{1,4}){1,2})))|(([0-9A-Fa-f]{1,4}:){4}(:[0-9A-Fa-f]{1,4}){0,1}((:((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})?)|((:[0-9A-Fa-f]{1,4}){1,2})))|(([0-9A-Fa-f]{1,4}:){3}(:[0-9A-Fa-f]{1,4}){0,2}((:((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})?)|((:[0-9A-Fa-f]{1,4}){1,2})))|(([0-9A-Fa-f]{1,4}:){2}(:[0-9A-Fa-f]{1,4}){0,3}((:((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})?)|((:[0-9A-Fa-f]{1,4}){1,2})))|(([0-9A-Fa-f]{1,4}:)(:[0-9A-Fa-f]{1,4}){0,4}((:((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})?)|((:[0-9A-Fa-f]{1,4}){1,2})))|(:(:[0-9A-Fa-f]{1,4}){0,5}((:((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})?)|((:[0-9A-Fa-f]{1,4}){1,2})))|(((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})))(%.+)?\s*$/", $newip)) {
-								$error = new Error('Invalid IP address.');
-								$error->display();
-							}
+							if (!isset($newip) || empty($newip)) Error::showMessage('Please enter an IP address.');
+							// Match IPv4 and IPv6 - yes, some people are actually using IPv6 (as they should!)
+							if (!preg_match("^((\d|[1-9]\d|2[0-4]\d|25[0-5]|1\d\d)(?:\.(\d|[1-9]\d|2[0-4]\d|25[0-5]|1\d\d)){3})$^", $newip) && !preg_match("/^\s*((([0-9A-Fa-f]{1,4}:){7}(([0-9A-Fa-f]{1,4})|:))|(([0-9A-Fa-f]{1,4}:){6}(:|((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})|(:[0-9A-Fa-f]{1,4})))|(([0-9A-Fa-f]{1,4}:){5}((:((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})?)|((:[0-9A-Fa-f]{1,4}){1,2})))|(([0-9A-Fa-f]{1,4}:){4}(:[0-9A-Fa-f]{1,4}){0,1}((:((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})?)|((:[0-9A-Fa-f]{1,4}){1,2})))|(([0-9A-Fa-f]{1,4}:){3}(:[0-9A-Fa-f]{1,4}){0,2}((:((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})?)|((:[0-9A-Fa-f]{1,4}){1,2})))|(([0-9A-Fa-f]{1,4}:){2}(:[0-9A-Fa-f]{1,4}){0,3}((:((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})?)|((:[0-9A-Fa-f]{1,4}){1,2})))|(([0-9A-Fa-f]{1,4}:)(:[0-9A-Fa-f]{1,4}){0,4}((:((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})?)|((:[0-9A-Fa-f]{1,4}){1,2})))|(:(:[0-9A-Fa-f]{1,4}){0,5}((:((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})?)|((:[0-9A-Fa-f]{1,4}){1,2})))|(((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})))(%.+)?\s*$/", $newip)) Error::showMessage('Invalid IP address.');
 
 							$existingips = explode(';', $pai->getOption('banned_ips'));
 
-							if (in_array($newip, $existingips)) $error = new Error('You have already blocked that IP address.');
-							if (isset($error)) $error->display();
+							if (in_array($newip, $existingips)) Error::showMessage('You have already blocked that IP address.');
 
 							if (strlen($pai->getOption('banned_ips')) > 0) $iplist = $pai->getOption('banned_ips') . $newip . ';';
 							else $iplist = $newip . ';';
@@ -779,19 +596,17 @@ QUESTION || ANSWER</textarea></p>
 							<p>Please note that blocking an IP address will not completely block a user from your site, it will only stop them from submitting questions using that particular IP address.</p>
 							<p><label for="newip">Type the IP to be blocked below, in the form x.x.x.x (x can be up to 3 digits long). You must include all four parts (digit groups) of the address; simply typing x.x.x. or x.x will result in an error. You cannot ban IP ranges using this script.</label></p>
 							<form method="post" action="admin.php?manage=ips&amp;action=add">
-								<p><input type="hidden" name="token" id="token" value="<?php echo $token; ?>" />
-								<input type="text" name="newip" id="newip" maxlength="15" />
-								<input type="submit" name="add_ip" id="add_ip" value="Add" /></p>
+								<p><input type="hidden" name="token" id="token" value="<?php echo $token; ?>">
+								<input type="text" name="newip" id="newip" maxlength="15">
+								<input type="submit" name="add_ip" id="add_ip" value="Add"></p>
 							</form>
 							<?php
 						}
 						break;
 
 					case 'edit':
-						if (!array_key_exists('ip', $_GET) || !is_numeric($_GET['ip'])) {
-							$error = new Error('Invalid IP.');
-							$error->display();
-						}
+						if (!array_key_exists('ip', $_GET) || !is_numeric($_GET['ip'])) Error::showMessage('Invalid IP.');
+
 						$ip = (int)cleaninput($_GET['ip']);
 
 						if ($_SERVER['REQUEST_METHOD'] == 'POST' && array_key_exists('editip', $_POST)) {
@@ -799,11 +614,10 @@ QUESTION || ANSWER</textarea></p>
 							ob_end_flush();
 
 							$editip = cleaninput($_POST['editip']);
-							if (!preg_match("^((\d|[1-9]\d|2[0-4]\d|25[0-5]|1\d\d)(?:\.(\d|[1-9]\d|2[0-4]\d|25[0-5]|1\d\d)){3})$^", $editip)) $error = new Error('Invalid IP.');
+							if (!preg_match("^((\d|[1-9]\d|2[0-4]\d|25[0-5]|1\d\d)(?:\.(\d|[1-9]\d|2[0-4]\d|25[0-5]|1\d\d)){3})$^", $editip)) Error::showMessage('Invalid IP.');
 							$iplist = explode(';', $pai->getOption('banned_ips'));
 
-							if (in_array($editip, $iplist)) $error = new Error('You have already blocked that IP.');
-							if (isset($error)) $error->display();
+							if (in_array($editip, $iplist)) Error::showMessage('You have already blocked that IP.');
 
 							if ($ip < count($iplist) && !empty($iplist[$ip])) {
 								$iplist[$ip] = $editip;
@@ -817,10 +631,7 @@ QUESTION || ANSWER</textarea></p>
 
 								if ($pai_db->query('UPDATE `' . $pai_db->getTable() . "_options` SET `option_value` = '" . $newips . "' WHERE `option_name` = 'banned_ips'")) echo '<p>IP address edited successfully.</p>';
 							}
-							else {
-								$error = new Error('There is no blocked IP address with that ID.');
-								$error->display();
-							}
+							else Error::showMessage('There is no blocked IP address with that ID.');
 						}
 						else {
 							$pai->checkToken();
@@ -832,23 +643,18 @@ QUESTION || ANSWER</textarea></p>
 								<h2>Edit IP address</h2>
 
 								<form method="post" action="admin.php?manage=ips&amp;action=edit&amp;ip=<?php echo $ip; ?>">
-									<p><input type="hidden" name="token" id="token" value="<?php echo $token; ?>" />
-									<input type="text" maxlength="15" name="editip" id="editip" value="<?php echo $iplist[$ip]; ?>" /> <input type="submit" name="submit" id="submit" value="Submit" /></p>
+									<p><input type="hidden" name="token" id="token" value="<?php echo $token; ?>">
+									<input type="text" maxlength="15" name="editip" id="editip" value="<?php echo $iplist[$ip]; ?>"> <input type="submit" name="submit" id="submit" value="Submit"></p>
 								</form>
 								<?php
 							}
-							else {
-								$error = new Error('There is no blocked IP address with that ID.');
-								$error->display();
-							}
+							else Error::showMessage('There is no blocked IP address with that ID.');
 						}
 						break;
 
 					case 'delete':
-						if (!array_key_exists('ip', $_GET) || !is_numeric($_GET['ip'])) {
-							$error = new Error('Invalid IP.');
-							$error->display();
-						}
+						if (!array_key_exists('ip', $_GET) || !is_numeric($_GET['ip'])) Error::showMessage('Invalid IP.');
+
 						$pai->checkToken();
 						ob_end_flush();
 
@@ -866,16 +672,11 @@ QUESTION || ANSWER</textarea></p>
 
 							if ($pai_db->query('UPDATE `' . $pai_db->getTable() . "_options` SET `option_value` = '" . $newips . "' WHERE `option_name` = 'banned_ips'")) echo '<p>The IP address has successfully been unblocked and will now be able to ask you questions.</p>';
 						}
-						else {
-							$error = new Error('There is no blocked IP with that ID.');
-							$error->display();
-						}
+						else Error::showMessage('There is no blocked IP with that ID.');
 						break;
 
 					default:
-						ob_end_flush();
-						$error = new Error('Invalid action.');
-						$error->display();
+						Error::showMessage('Invalid action.');
 				}
 			}
 			else {
@@ -905,10 +706,8 @@ QUESTION || ANSWER</textarea></p>
 
 		##### ANTISPAM
 		case 'antispam':
-			if ($pai->getOption('antispam_enable') != 'yes') {
-				$error = new Error('Word blocking is not enabled.');
-				$error->display();
-			}
+			if (!$pai->getOption('antispam_enable') != 'yes') Error::showMessage('Word blocking is not enabled.');
+
 			if (array_key_exists('action', $_GET)) {
 				switch($_GET['action']) {
 
@@ -920,12 +719,10 @@ QUESTION || ANSWER</textarea></p>
 							$replace = array('&', '<', '>', '\\', '[', ']', '/', '"', '*', '\$', '(', ')', '%', '^', '{', '}', '|');
 							$newword = cleaninput(str_replace($replace, '', strtolower($_POST['newword'])));
 
-							if (empty($newword)) $error = new Error('No word submitted.');
+							if (empty($newword)) Error::showMessage('No word submitted.');
 
 							$wordlist = explode('|', $pai->getOption('banned_words'));
-							if (in_array($newword, $wordlist)) $error = new Error('You have already blocked that word.');
-
-							if (isset($error)) $error->display();
+							if (in_array($newword, $wordlist)) Error::showMessage('You have already blocked that word.');
 
 							if (strlen($pai->getOption('banned_words')) > 0) $wordlist = $pai->getOption('banned_words') . $newword . '|';
 							else $wordlist = $newword . '|';
@@ -942,10 +739,10 @@ QUESTION || ANSWER</textarea></p>
 							<p><strong>Note:</strong> the system is case insensitive. By blacklisting the word &quot;word&quot;, you will also be blacklisting &quot;WORD&quot;, &quot;wOrD&quot;, &quot;WorD&quot; and other case variants.</p>
 
 							<form method="post" action="admin.php?manage=antispam&amp;action=add">
-								<p><input type="hidden" name="token" id="token" value="<?php echo $token; ?>" />
-								<label for="newword">Word to disallow:</label><br />
-								<input type="text" name="newword" id="newword" maxlength="100" />
-								<input type="submit" name="add_word" id="add_word" value="Add" /></p>
+								<p><input type="hidden" name="token" id="token" value="<?php echo $token; ?>">
+								<label for="newword">Word to disallow:</label><br>
+								<input type="text" name="newword" id="newword" maxlength="100">
+								<input type="submit" name="add_word" id="add_word" value="Add"></p>
 							</form>
 
 							<?php
@@ -953,10 +750,8 @@ QUESTION || ANSWER</textarea></p>
 						break;
 
 					case 'edit':
-						if (!array_key_exists('word', $_GET) || !is_numeric($_GET['word'])) {
-							$error = new Error('Invalid word.');
-							$error->display();
-						}
+						if (!array_key_exists('word', $_GET) || !is_numeric($_GET['word'])) Error::showMessage('Invalid word.');
+
 						$word = (int)cleaninput($_GET['word']);
 
 						if ($_SERVER['REQUEST_METHOD'] == 'POST' && array_key_exists('editword', $_POST)) {
@@ -966,17 +761,11 @@ QUESTION || ANSWER</textarea></p>
 							$replace = array('&', '<', '>', '\\', '[', ']', '/', '"', '*', '\$', '(', ')', '%', '^', '{', '}', '|', '#');
 							$editword = cleaninput(str_replace($replace, '', strtolower($_POST['editword'])));
 
-							if (empty($editword)) {
-								$error = new Error('No word submitted.');
-								$error->display();
-							}
+							if (empty($editword)) Error::showMessage('No word submitted.');
 
 							$wordlist = explode('|', $pai->getOption('banned_words'));
 
-							if (in_array($editword, $wordlist)) {
-								$error = new Error('You have already blocked that word.');
-								$error->display();
-							}
+							if (in_array($editword, $wordlist)) Error::showMessage('You have already blocked that word.');
 
 							if ($word < count($wordlist) && !empty($wordlist[$word])) {
 								$wordlist[$word] = $editword;
@@ -989,10 +778,7 @@ QUESTION || ANSWER</textarea></p>
 
 								if ($pai_db->query('UPDATE `' . $pai_db->getTable() . "_options` SET `option_value` = '" . $newwords . "' WHERE `option_name` = 'banned_words'")) echo '<p>Word edited successfully.</p>';
 							}
-							else {
-								$error = new Error('There is no blocked word with that ID');
-								$error->display();
-							}
+							else Error::showMessage('There is no blocked word with that ID');
 						}
 						else {
 							$pai->checkToken();
@@ -1005,24 +791,19 @@ QUESTION || ANSWER</textarea></p>
 								<p><strong>Do not use symbols (such as &amp; \ / ( ) [ ] $ * ^ % &gt; &lt; ) in the word you want to block or the system will not work.</strong></p>
 
 								<form method="post" action="admin.php?manage=antispam&amp;action=edit&amp;word=<?php echo $word; ?>">
-									<p><input type="hidden" name="token" id="token" value="<?php echo $token; ?>" />
-									<input type="text" maxlength="20" name="editword" id="editword" value="<?php echo $wordlist[$word]; ?>" /> <input type="submit" name="submit" id="submit" value="Submit" /></p>
+									<p><input type="hidden" name="token" id="token" value="<?php echo $token; ?>">
+									<input type="text" maxlength="20" name="editword" id="editword" value="<?php echo $wordlist[$word]; ?>"> <input type="submit" name="submit" id="submit" value="Submit"></p>
 								</form>
 
 								<?php
 							}
-							else {
-								$error = new Error('There is no blocked word with that ID.');
-								$error->display();
-							}
+							else Error::showMessage('There is no blocked word with that ID.');
 						}
 						break;
 
 					case 'delete':
-						if (!array_key_exists('word', $_GET) || !is_numeric($_GET['word'])) {
-							$error = new Error('No word submitted.');
-							$error->display();
-						}
+						if (!array_key_exists('word', $_GET) || !is_numeric($_GET['word'])) Error::showMessage('No word submitted.');
+
 						$pai->checkToken();
 						ob_end_flush();
 
@@ -1041,16 +822,11 @@ QUESTION || ANSWER</textarea></p>
 
 							if ($pai_db->query('UPDATE `' . $pai_db->getTable() . "_options` SET `option_value` = '" . $newwords . "' WHERE `option_name` = 'banned_words'")) echo '<p>The word has successfully been unblocked and will now be allowed in questions.</p>';
 						}
-						else {
-							$error = new Error('There is no blocked word with that ID.');
-							$error->display();
-						}
+						else Error::showMessage('There is no blocked word with that ID.');
 						break;
 
 					default:
-						ob_end_flush();
-						$error = new Error('Invalid action.');
-						$error->display();
+						Error::showMessage('Invalid action.');
 				}
 			}
 			else {
@@ -1080,10 +856,8 @@ QUESTION || ANSWER</textarea></p>
 
 		##### CATEGORIES
 		case 'categories':
-			if (!$pai->getOption('enable_cats')) {
-				$error = new Error('Categories are disabled.');
-				$error->display();
-			}
+			if (!$pai->getOption('enable_cats')) Error::showMessage('Categories are disabled.');
+
 			if (array_key_exists('action', $_GET)) {
 				switch($_GET['action']) {
 					case 'add':
@@ -1095,25 +869,17 @@ QUESTION || ANSWER</textarea></p>
 						if (array_key_exists('id', $_POST)) $cat = new Category((int)$_POST['id']);
 						elseif (array_key_exists('id', $_GET)) $cat = new Category((int)$_GET['id']);
 						if (isset($cat)) $cat->edit();
-						else {
-							$error = new Error('Invalid category.');
-							$error->display();
-						}
+						else Error::showMessage('Invalid category.');
 						break;
 
 					case 'delete':
 						if (array_key_exists('id', $_GET)) $cat = new Category((int)$_GET['id']);
 						if (isset($cat)) $cat->delete();
-						else {
-							$error = new Error('Invalid category.');
-							$error->display();
-						}
+						else Error::showMessage('Invalid category.');
 						break;
 
 					default:
-						ob_end_flush();
-						$error = new Error('Invalid action.');
-						$error->display();
+						Error::showMessage('Invalid action.');
 				}
 			}
 			else {
@@ -1142,9 +908,7 @@ QUESTION || ANSWER</textarea></p>
 			break;
 
 		default:
-			ob_end_flush();
-			$error = new Error('Invalid action.');
-			$error->display();
+			Error::showMessage('Invalid action.');
 	}
 }
 elseif (array_key_exists('reset', $_GET)) {
@@ -1171,34 +935,7 @@ elseif (array_key_exists('reset', $_GET)) {
 #######################################################
 
 #################### SORT BY DATE #####################
-else {
-	ob_end_flush();
-
-	pages();
-
-	$query = <<<SQL
-SELECT `{$pai_db->getTable()}`.*
-FROM `{$pai_db->getTable()}`
-SQL;
-
-	dopagination($query);
-	$query .= ' ORDER BY `dateasked` DESC LIMIT ' . $startfrom . ', ' . ADMIN_PERPAGE; ?>
-
-	<h2 class="question_header">Latest questions</h2>
-
-	<?php
-	if ($totalpages > 0) {
-		$getqs = $pai_db->query($query);
-		pagination($perpage, 'date');
-		echo '<ul id="question-list">';
-		while($qs = mysql_fetch_object($getqs)) {
-			$q = new Question($qs->q_id);
-			$q->show();
-		}
-		echo '</ul>';
-	}
-	else echo '<p>No questions found.</p>';
-}
+else $pai->getQs(array('date'));
 #######################################################
 
 #################### MISC FUNCTIONS ###################

@@ -5,10 +5,17 @@
 ~~~~~~~~~~~~~~~~~~
 
 
+=== PLEASE NOTE: ===
+
+This is a *DEVELOPMENT VERSION* of Askably. It's not alpha, beta or anything like that - it's not even reached testing yet. That means there WILL be bugs and possibly security issues, and you should really not use it on a production website. I take absolutely no responsibility for anything that does or does not happen as a result of you using development builds. For best results, please use the stable version of Askably available from http://amelie.nu/scripts.
+
+====================
+
+
 PLEASE BE SURE TO READ ALL OF THIS FILE BEFORE USING Askably.
 
 ===================================================================
-Askably (formerly PHPAskIt): Copyright © 2005-2010 Amelie F.
+Askably (formerly PHPAskIt): Copyright © 2005-2011 Amelie F.
 
 You may:
 - Use and edit/modify Askably however you like, AS LONG AS THE CREDIT LINE STAYS INTACT AND UNEDITED
@@ -54,9 +61,10 @@ CHANGE LOG
 VERSION 3.1
 - Another complete backend rewrite; optimised queries, code and general performance - now supports PHP5+ only
 - Enabled limited bbCode for better formatting of answers
-- Changed to Prototype JavaScript framework for more advanced AJAX integration
+- Changed to Prototype and jQuery JavaScript frameworks for more advanced AJAX integration
 - Renamed to Askably after request from PHP team
 - Removed import scripts - now built-in
+- Layout tweaks - now HTML5 output with CSS3 effects (HTML4/CSS2 fallback)
 
 VERSION 3.0
 - Complete backend rewrite, now uses object-oriented programming

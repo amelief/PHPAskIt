@@ -10,6 +10,7 @@
 ################################################################################################
 
 if (!defined('PAI_IN')) exit('<p>This file cannot be loaded directly.</p>');
+// TODO: DEBUG ONLY
 //error_reporting(0);
 
 $required_files = glob('classes/*.php');
@@ -18,7 +19,7 @@ $required_files[] = 'config.php';
 foreach($required_files as $file) {
 	if (!file_exists($file)) { ?>
 		<h1>Error</h1>
-		<p><strong><code><?php echo $file; ?></code></strong> could not be found. Without this file, the script cannot operate. Please make sure it is present.</p>
+		<p><strong><code><?php echo $file; ?></code></strong> could not be found. Without this file, the Askably cannot operate. Please make sure it is present.</p>
 		<?php
 		exit;
 	}
@@ -38,11 +39,11 @@ function clean_array($data) {
 }
 function adminheader() {
 	header('Content-Type: text/html; charset=utf-8');
-	?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+	?><!DOCTYPE html>
+<html>
 <head>
 	<title>Askably 3.1: Admin</title>
-	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 	<style type="text/css">
 		body { color: #222; font: 0.7em/1.2em Verdana, Arial, Helvetica, sans-serif; text-align: center; }
 		a { color: #0080ff; text-decoration: none; }
@@ -70,16 +71,17 @@ function adminheader() {
 		#question-list li { width: 99%; }
 		#side { float: left; width: 30%; }
 		.active:hover { background: transparent; }
-		.answer { margin-left: 2.3em; margin-right: 2.4em; padding: 0.5em; width: 85%; }
-		.answer:hover { background: #fff; -moz-border-radius: 4px; -webkit-border-radius: 4px; border-radius: 4px; }
+		.answer p { margin-left: 2.3em; margin-right: 2.4em; padding: 0.5em; width: 85%; }
+		.answer p:hover { background: #fff; cursor: text; -moz-border-radius: 4px; -webkit-border-radius: 4px; border-radius: 4px; }
 		.category { font-size: 0.9em; }
 		.center { text-align: center; }
 		.date { color: #32cd32; font-size: 1.5em; font-weight: bold; line-height: 1.6em; letter-spacing: -0.1em; margin-top: 0.5em; }
 		.edit { color: #000; font-size: 0.8em; font-weight: normal; letter-spacing: normal; }
 		.ip { color: green; font-size: 0.9em; text-align: right; }
 		.nolist { list-style: none; }
-		.question { font-size: 1.2em; font-weight: bold; margin-left: 1.5em; padding: 0.5em; width: 85% }
-		.question:hover { background: #fff; -moz-border-radius: 4px; -webkit-border-radius: 4px; border-radius: 4px; }
+		.question, .answer { padding: 0; margin: 0; }
+		.question p { font-size: 1.2em; font-weight: bold; margin-left: 1.5em; padding: 0.5em; width: 85% }
+		.question p:hover { background: #fff; cursor: text; -moz-border-radius: 4px; -webkit-border-radius: 4px; border-radius: 4px; }
 		.question-container { background: #e9fbe9; margin-bottom: 3em; padding: 0.5em 0.5em 0.2em 2em; -moz-border-radius: 20px; -webkit-border-radius: 20px; border-radius: 20px; -moz-box-shadow: 1px 1px 3px #ddd; -webkit-box-shadow: 1px 1px 3px #ddd; box-shadow: 1px 1px 3px #ddd; }
 		.question-container:hover { -moz-box-shadow: 2px 2px 2px #ccc; -webkit-box-shadow: 2px 2px 2px #ccc; box-shadow: 2px 2px 2px #ccc; }
 		.template { height: 12em; width: 90%; }
@@ -318,6 +320,13 @@ function checkTime(&$pai) {
 		else $_SESSION['pai_time'] = time();
 	}
 	else $_SESSION['pai_time'] = time();
+}
+
+// Because nl2br outputs <br /> which is XHTML. We're using HTML, so we want <br>
+function nl2br_brfix($data) {
+	if (version_compare(PHP_VERSION, '5.3.0', '>=')) return nl2br($data, false); // PHP 5.3 does this properly
+
+	return str_replace('<br />', '<br>', nl2br($data));
 }
 
 $pai_db = new Database(PAI_HOST, PAI_USER, PAI_PASS, PAI_DB);

@@ -45,10 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['question'])) {
 		$bannedips = explode(';', $pai->getOption('banned_ips'));
 
 		foreach($bannedips as $ip) {
-			if ($question->getIp() == $ip) {
-				$error = new Error('Sorry, this IP address has been banned from asking questions.');
-				$error->display();
-			}
+			if ($question->getIp() == $ip) Error::showMessage('Sorry, this IP address has been banned from asking questions.');
 		}
 	}
 
@@ -56,10 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['question'])) {
 		$bannedwords = $pai->getOption('banned_words');
 		if (substr($bannedwords, -1, 1) == '|') $bannedwords = substr_replace($bannedwords, '', -1, 1);
 
-		if (preg_match('/(' . $bannedwords . ')/i', strtolower($question->getQuestion()))) {
-			$error = new Error('One of the words in your question has been disallowed by the site owner. Please go back and change your question, then try again.');
-			$error->display();
-		}
+		if (preg_match('/(' . $bannedwords . ')/i', strtolower($question->getQuestion()))) Error::showMessage('One of the words in your question has been disallowed by the site owner. Please go back and change your question, then try again.');
 	}
 
 	$question->create();
@@ -127,16 +121,10 @@ else {
 
 ####### ALL QUESTIONS FROM A PARTICULAR CATEGORY ######
 	elseif (isset($_GET['category']) && is_numeric($_GET['category'])) {
-		if (!$pai->getOption('enable_cats')) {
-			$error = new Error('Category sorting is disabled.');
-			$error->display();
-		}
+		if (!$pai->getOption('enable_cats')) Error::showMessage('Category sorting is disabled.');
 
 		$cat = new Category((int)$_GET['category']);
-		if (!isset($cat)) {
-			$error = new Error('Invalid category.');
-			$error->display();
-		}
+		if (!isset($cat)) Error::showMessage('Invalid category.');
 
 		$pai->askForm($_SERVER['PHP_SELF']);
 		pages();
@@ -166,10 +154,8 @@ else {
 ###################### SEARCH #########################
 	elseif (isset($_GET['search'])) {
 		$getsearch = cleaninput($_GET['search']);
-		if (empty($getsearch)) $error = new Error('Please enter a valid search term.');
-		if (strlen($getsearch) < 4) $error = new Error('Please enter more than four characters.'); // Overrides last
-
-		if (isset($error)) $error->display();
+		if (empty($getsearch)) Error::showMessage('Please enter a valid search term.');
+		if (strlen($getsearch) < 4) Error::showMessage('Please enter more than four characters.');
 
 		$pai->askForm($_SERVER['PHP_SELF']);
 		pages();
@@ -202,10 +188,7 @@ else {
 
 		$q = new Question((int)$_GET['q']);
 
-		if (!isset($q) || (($q->getAnswer() == '' || $q->getAnswer() == null) && !$pai->getOption('show_unanswered'))) {
-			$error = new Error('Invalid question.');
-			$error->display();
-		}
+		if (!isset($q) || (($q->getAnswer() == '' || $q->getAnswer() == null) && !$pai->getOption('show_unanswered'))) Error::showMessage('Invalid question.');
 		else $q->show();
 
 	}
@@ -216,10 +199,7 @@ else {
 		$pai->askForm($_SERVER['PHP_SELF']);
 		$pai->showSummary();
 	}
-	else {
-		$error = new Error('Invalid query string.');
-		$error->display();
-	}
+	else Error::showMessage('Invalid query string.');
 }
 
 #######################################################
@@ -228,7 +208,7 @@ else {
 
 	<form class="pai-search" method="get" action="<?php echo $_SERVER['PHP_SELF']; ?>">
 		<h4 class="pai-search-text">Search questions:</h4>
-		<p><input type="text" name="search" id="search" maxlength="100" /> <input type="submit" value="Search" /></p>
+		<p><input type="text" name="search" id="search" maxlength="100"> <input type="submit" value="Search"></p>
 	</form>
 
 <?php #################################################

@@ -31,11 +31,11 @@ if ($pai->getOption('version') == '3.1') { ?>
 	exit;
 }
 
-$header = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+$header = '<!DOCTYPE html>
+<html>
 <head>
 	<title>Askably 3.1: Upgrade to v3.1</title>
-	<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+	<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
 	<style type="text/css">
 		body { color: #222; font: 0.7em/1.2em Verdana, Arial, Helvetica, sans-serif; text-align: center; }
 		a { color: #0080ff; text-decoration: none; }
@@ -201,7 +201,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['upgrade'])) {
 	<p>Because Askably could not import your settings, your old username and password for admin.php will no longer work. You should use the following details to gain access:</p>';
 	else echo '<p><strong>PLEASE NOTE:</strong> Your password for admin.php has changed. Please use the details below to log in:</p>';
 
-	echo '<p>Username: <code>' . $pai->getOption('username') . '</code><br />
+	echo '<p>Username: <code>' . $pai->getOption('username') . '</code><br>
 	Password: <code>' . $newpass . '</code></p>
 	<p>Log in to your admin panel as soon as possible and change these values.</p>';
 }
@@ -213,7 +213,7 @@ else {
 	<p>Please make sure to do a full backup of your files and database before upgrading. Please note that if you are upgrading from versions 1.x or 2.x of Askably, <strong>your layout customisations will not be retained.</strong></p>
 
 	<form action="upgrade1.php" method="post">
-		<p><input type="submit" name="upgrade" id="upgrade" value="Upgrade Askably &raquo;" /></p>
+		<p><input type="submit" name="upgrade" id="upgrade" value="Upgrade Askably &raquo;"></p>
 	</form>
 	<?php
 }

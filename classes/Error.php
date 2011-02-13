@@ -93,24 +93,37 @@ class Error extends Exception {
 	 */
 	public function display() {
 		global $pai;
-		if ($this->heading) {
-			echo '<h3>';
-			if (!empty($this->header)) echo $this->header; else echo 'Error';
-			echo '</h3>
-			<ul>';
+		if (isset($_GET['inline'])) {
+			ob_end_clean();
+			echo '<strong>Error:</strong> ' . parent::getMessage();
+			if ($this->kill == true) exit;
 		}
-		echo '<li><p>' . parent::getMessage() . '</p></li>';
-
-		if ($this->kill == true) {
-			echo '</ul><p style="text-align: center;">Powered by <a href="http://amelie.nu/scripts/" title="Askably">Askably 3.1</a></p>';
-			if (defined('IS_ADMIN')) echo '</div></div></body></html>';
-			elseif ($pai->getOption('is_wordpress') == 'yes') {
-				 if (function_exists('get_sidebar')) get_sidebar();
-				 if (function_exists('get_footer')) get_footer();
+		else {
+			ob_end_flush();
+			if ($this->heading) {
+				echo '<h3>';
+				if (!empty($this->header)) echo $this->header; else echo 'Error';
+				echo '</h3>
+				<ul>';
 			}
-			else include $pai->getOption('footerfile');
-			exit;
+			echo '<li><p>' . parent::getMessage() . '</p></li>';
+
+			if ($this->kill == true) {
+				echo '</ul><p style="text-align: center;">Powered by <a href="http://amelie.nu/scripts/" title="Askably">Askably 3.1</a></p>';
+				if (defined('IS_ADMIN')) echo '</div></div></body></html>';
+				elseif ($pai->getOption('is_wordpress') == 'yes') {
+					if (function_exists('get_sidebar')) get_sidebar();
+					if (function_exists('get_footer')) get_footer();
+				}
+				else include $pai->getOption('footerfile');
+				exit;
+			}
 		}
+	}
+	
+	public static function showMessage($message, $header = '', $heading = true) {
+		$error = new Error($message, true, $header, $heading);
+		$error->display();
 	}
 }
 ?>

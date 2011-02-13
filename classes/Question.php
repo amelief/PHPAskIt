@@ -74,9 +74,7 @@ class Question implements Model {
 				$this->category = 1;
 			}
 		}
-		else {
-			$this->dateAsked = time();
-		}
+		else $this->dateAsked = time();
 	}
 
 	/**
@@ -193,8 +191,7 @@ class Question implements Model {
 	public function setQuestion($question, $validation = true) {
 		if ($validation) {
 			$this->question = cleaninput($question);
-			if (empty($this->question)) $error = new Error('Question not submitted');
-			if (isset($error)) $error->display();
+			if (empty($this->question)) Error::showMessage('Question not submitted');
 		}
 		else $this->question = $question;
 	}
@@ -219,7 +216,7 @@ class Question implements Model {
 			$answer = cleaninput($answer);
 			if (strstr($answer, '\\n')) $answer = str_replace('\\n', "\n", $answer);
 			if (strstr($answer, '\\r')) $answer = str_replace('\\r', "\r", $answer);
-			$this->answer = stripslashes(nl2br($answer));
+			$this->answer = stripslashes(nl2br_brfix($answer));
 		}
 		else $this->answer = $answer;
 	}
@@ -341,69 +338,69 @@ class Question implements Model {
 	 * @global Pai PAI object.
 	 * @global string $token The session token.
 	 */
-	public function show($admin = false) {
+	public function show() {
 		global $pai, $token;
 		if (defined('IS_ADMIN')) { ?>
 			<li class="question-container" id="question-container-<?php echo $this->id; ?>">
 				<form action="admin.php?edit=category&amp;inline=true" method="post" onsubmit="
 					new Ajax.Request('admin.php?edit=category&amp;inline=true', {
-						asynchronous:true,
-						onComplete:function(request) {
+						asynchronous: true,
+						onComplete: function(request) {
 							$('category_read_<?php echo $this->id; ?>').appear({ duration: 0.3 });
 							$('indicator<?php echo $this->id; ?>').hide();
 							$('category_edit_<?php echo $this->id; ?>').hide();
 							$('category_read_<?php echo $this->id; ?>').update(request.responseText);
 						},
-						onLoading:function(request) {
+						onLoading: function(request) {
 							$('indicator<?php echo $this->id; ?>').show();
 						},
-						parameters:Form.serialize(this)
+						parameters: Form.serialize(this)
 					}); return false;">
 					<h4 class="date"><?php echo $this->getDateAskedFormatted();
 					if ($pai->getOption('enable_cats')) { ?>
 						<span class="category" id="category_read_<?php echo $this->id; ?>">(<a href="admin.php?category=<?php echo $this->category; ?>" title="See all questions in the <?php echo $this->getCategory(true); ?> category"><?php echo $this->getCategory(true); ?></a>)</span>
 						<span id="category_edit_<?php echo $this->id; ?>" class="category" style="display: none;">
-							<input type="hidden" name="id" id="category_id_<?php echo $this->id; ?>" value="<?php echo $this->id; ?>" />
-							<input type="hidden" name="token" id="category_token<?php echo $this->id; ?>" value="<?php echo $token; ?>" />
+							<input type="hidden" name="id" id="category_id_<?php echo $this->id; ?>" value="<?php echo $this->id; ?>">
+							<input type="hidden" name="token" id="category_token<?php echo $this->id; ?>" value="<?php echo $token; ?>">
 							<select name="category" id="category_edit_<?php echo $this->id; ?>_menu">
 								<?php $pai->getCategories($this->category); ?>
 							</select>
-							<input type="submit" value="Save category" name="submit_category" id="submit_category_<?php echo $this->id; ?>" style="font-size: 0.8em;" /> <input type="reset" onclick="Element.hide('category_edit_<?php echo $this->id; ?>'); Element.show('category_read_<?php echo $this->id; ?>'); return false;" name="cancel" id="cancel_category_<?php echo $this->id; ?>" value="Cancel" style="font-size: 0.8em" />
+							<input type="submit" value="Save category" name="submit_category" id="submit_category_<?php echo $this->id; ?>" style="font-size: 0.8em;"> <input type="reset" onclick="$('category_edit_<?php echo $this->id; ?>').hide(); $('category_read_<?php echo $this->id; ?>').show(); return false;" name="cancel" id="cancel_category_<?php echo $this->id; ?>" value="Cancel" style="font-size: 0.8em">
 						</span>
-						<a href="admin.php?edit=category" onclick="Element.hide('category_read_<?php echo $this->id; ?>'); Element.show('category_edit_<?php echo $this->id; ?>'); if ($('category_edit_<?php echo $this->id; ?>_menu')) $('category_edit_<?php echo $this->id; ?>_menu').focus(); return false;" style="font-size: 0.6em;">e</a>
+						<a href="admin.php?edit=category" onclick="$('category_read_<?php echo $this->id; ?>').hide(); $('category_edit_<?php echo $this->id; ?>').show(); if ($('category_edit_<?php echo $this->id; ?>_menu')) $('category_edit_<?php echo $this->id; ?>_menu').focus(); return false;" style="font-size: 0.6em;">e</a>
 					<?php
-				} ?> <img src="indicator.gif" alt="Saving..." title="Saving..." id="indicator<?php echo $this->id; ?>" style="display: none;" /></h4>
+				} ?> <img src="indicator.gif" alt="Saving..." title="Saving..." id="indicator<?php echo $this->id; ?>" style="display: none;"></h4>
 				</form>
 				<form action="admin.php?edit=question&amp;inline=true" method="post" onsubmit="
 					new Ajax.Request('admin.php?edit=question&amp;inline=true', {
-						asynchronous:true,
-						onComplete:function(request) {
+						asynchronous: true,
+						onComplete: function(request) {
 							$('question_read_<?php echo $this->id; ?>').appear({ duration: 0.3 });
 							$('indicator<?php echo $this->id; ?>').hide();
 							$('question_edit_<?php echo $this->id; ?>').hide();
 							$('question_read_<?php echo $this->id; ?>').update(request.responseText);
 						},
-						onLoading:function(request) {
+						onLoading: function(request) {
 							$('indicator<?php echo $this->id; ?>').show();
 						},
-						parameters:Form.serialize(this)
+						parameters: Form.serialize(this)
 					}); return false;">
-					<p class="question" id="question<?php echo $this->id; ?>" title="Click to edit question">
-						<span id="question_read_<?php echo $this->id; ?>" style="display: block;" onclick="Element.hide('question_read_<?php echo $this->id; ?>'); Element.show('question_edit_<?php echo $this->id; ?>'); if ($('question_edit_<?php echo $this->id; ?>_box')) $('question_edit_<?php echo $this->id; ?>_box').focus(); return false;">
+					<div class="question" id="question<?php echo $this->id; ?>" title="Click to edit question">
+						<p id="question_read_<?php echo $this->id; ?>" onclick="$('question_read_<?php echo $this->id; ?>').hide(); $('question_edit_<?php echo $this->id; ?>').show(); if ($('question_edit_<?php echo $this->id; ?>_box')) $('question_edit_<?php echo $this->id; ?>_box').focus(); return false;">
 							<a href="admin.php?q=<?php echo $this->id; ?>" title="Permalink to this question"><?php echo $this->question; ?></a>
-						</span>
-						<span id="question_edit_<?php echo $this->id; ?>" style="display: none;">
-							<input type="hidden" name="id" id="question_id_<?php echo $this->id; ?>" value="<?php echo $this->id; ?>" />
-							<input type="hidden" name="token" id="question_token<?php echo $this->id; ?>" value="<?php echo $token; ?>" />
-							<input type="text" name="question" id="question_edit_<?php echo $this->id; ?>_box" style="width: 99%;" value="<?php echo $this->question; ?>" /><br />
-							<input type="submit" value="Save question" name="submit_question" id="submit_question_<?php echo $this->id; ?>" /> <input type="reset" onclick="Element.hide('question_edit_<?php echo $this->id; ?>'); $('question_read_<?php echo $this->id; ?>').style.display = 'block'; return false;" name="cancel" id="cancel_question_<?php echo $this->id; ?>" value="Cancel" />
-						</span>
-					</p>
+						</p>
+						<p id="question_edit_<?php echo $this->id; ?>" style="display: none;">
+							<input type="hidden" name="id" id="question_id_<?php echo $this->id; ?>" value="<?php echo $this->id; ?>">
+							<input type="hidden" name="token" id="question_token<?php echo $this->id; ?>" value="<?php echo $token; ?>">
+							<input type="text" name="question" id="question_edit_<?php echo $this->id; ?>_box" style="width: 99%;" value="<?php echo $this->question; ?>"><br>
+							<input type="submit" value="Save question" name="submit_question" id="submit_question_<?php echo $this->id; ?>"> <input type="reset" onclick="$('question_edit_<?php echo $this->id; ?>').hide(); $('question_read_<?php echo $this->id; ?>').show(); return false;" name="cancel" id="cancel_question_<?php echo $this->id; ?>" value="Cancel">
+						</p>
+					</div>
 				</form>
 				<form action="admin.php?edit=answer&amp;inline=true" method="post" onsubmit="
 					new Ajax.Request('admin.php?edit=answer&amp;inline=true', {
-						asynchronous:true,
-						onComplete:function(request) {
+						asynchronous: true,
+						onComplete: function(request) {
 							if (request.responseText == '(No answer)') $('answer<?php echo $this->id; ?>').addClassName('unanswered');
 							else $('answer<?php echo $this->id; ?>').removeClassName('unanswered');
 							$('answer_read_<?php echo $this->id; ?>').appear({ duration: 0.3 });
@@ -412,22 +409,22 @@ class Question implements Model {
 							$('answer_read_<?php echo $this->id; ?>').update(request.responseText);
 							updateStats();
 						},
-						onLoading:function(request) {
+						onLoading: function(request) {
 							$('indicator<?php echo $this->id; ?>').show();
 						},
-						parameters:Form.serialize(this)
+						parameters: Form.serialize(this)
 					}); return false;">
-					<p id="answer<?php echo $this->id; ?>" class="answer<?php if ($this->answer == '' || $this->answer == null) echo ' unanswered'; ?>" title="<?php if ($this->answer == '') echo 'Click to add an answer'; else echo 'Click to edit answer'; ?>">
-					<span id="answer_read_<?php echo $this->id; ?>" style="display: block;" onclick="Element.hide('answer_read_<?php echo $this->id; ?>'); Element.show('answer_edit_<?php echo $this->id; ?>'); if ($('answer_edit_<?php echo $this->id; ?>_area')) $('answer_edit_<?php echo $this->id; ?>_area').focus(); return false;">
+					<div id="answer<?php echo $this->id; ?>" class="answer<?php if ($this->answer == '' || $this->answer == null) echo ' unanswered'; ?>" title="<?php if ($this->answer == '') echo 'Click to add an answer'; else echo 'Click to edit answer'; ?>">
+					<p id="answer_read_<?php echo $this->id; ?>" onclick="$('answer_read_<?php echo $this->id; ?>').hide(); $('answer_edit_<?php echo $this->id; ?>').show(); if ($('answer_edit_<?php echo $this->id; ?>_area')) $('answer_edit_<?php echo $this->id; ?>_area').focus(); return false;">
 						<?php if ($this->answer == '' || $this->answer == null) echo '(No answer)'; else echo $pai->convertBB($this->answer); ?>
-					</span>
-					<span id="answer_edit_<?php echo $this->id; ?>" style="display: none;">
-						<input type="hidden" name="id" id="answer_id_<?php echo $this->id; ?>" value="<?php echo $this->id; ?>" />
-						<input type="hidden" name="token" id="answer_token<?php echo $this->id; ?>" value="<?php echo $token; ?>" />
-						<textarea id="answer_edit_<?php echo $this->id; ?>_area" name="answer" style="width: 99%;" rows="10" cols="70"><?php echo (($this->answer == '' || $this->answer == null) ? '' : strip_tags($this->answer)); ?></textarea><br />
-						<input type="submit" value="Save answer" name="save" id="save_button_<?php echo $this->id; ?>" /> <input type="reset" onclick="Element.hide('answer_edit_<?php echo $this->id; ?>'); $('answer_read_<?php echo $this->id; ?>').style.display = 'block'; return false;" name="cancel" id="cancel_answer_<?php echo $this->id; ?>" value="Cancel" />
-					</span>
-				</p>
+					</p>
+					<p id="answer_edit_<?php echo $this->id; ?>" style="display: none;">
+						<input type="hidden" name="id" id="answer_id_<?php echo $this->id; ?>" value="<?php echo $this->id; ?>">
+						<input type="hidden" name="token" id="answer_token<?php echo $this->id; ?>" value="<?php echo $token; ?>">
+						<textarea id="answer_edit_<?php echo $this->id; ?>_area" name="answer" style="width: 99%;" rows="10" cols="70"><?php echo (($this->answer == '' || $this->answer == null) ? '' : strip_tags($this->answer)); ?></textarea><br>
+						<input type="submit" value="Save answer" name="save" id="save_button_<?php echo $this->id; ?>" onclick=""> <input type="reset" onclick="$('answer_edit_<?php echo $this->id; ?>').hide(); $('answer_read_<?php echo $this->id; ?>').show(); return false;" name="cancel" id="cancel_answer_<?php echo $this->id; ?>" value="Cancel">
+					</p>
+				</div>
 				</form>
 				<p class="ip"><?php echo $this->ip; ?> <?php if ($pai->getOption('ipban_enable') == 'yes') { ?>[<a href="admin.php?manage=ips&amp;action=add&amp;ip=<?php echo $this->ip; ?>&amp;token=<?php echo $token; ?>" title="Ban this IP from asking more questions">Ban?</a>]<?php } ?></p>
 
@@ -448,14 +445,14 @@ class Question implements Model {
 						<?php
 					} ?>
 					| <a href="admin.php?delete=<?php echo $this->id; ?>&amp;token=<?php echo $token; ?>" onclick="if(confirm('Are you sure you want to delete this question?')) { new Ajax.Request('admin.php?delete=<?php echo $this->id; ?>&amp;inline=true', {
-						asynchronous:true,
-						onComplete:function(request) {
+						asynchronous: true,
+						onComplete: function(request) {
 							if (request.responseText == 'Deleted') $('question-container-<?php echo $this->id; ?>').fade({ duration: 0.7 });
 							else alert('Sorry, the question could not be deleted at this time.');
 							$('indicator<?php echo $this->id; ?>').hide();
 							updateStats();
 						},
-						onLoading:function(request) {
+						onLoading: function(request) {
 							$('indicator<?php echo $this->id; ?>').show();
 						},
 						parameters: { token: '<?php echo $token; ?>' }
@@ -486,33 +483,12 @@ class Question implements Model {
 	 */
 	public function editQuestion() {
 		global $pai, $token;
+
 		if ($_SERVER['REQUEST_METHOD'] == 'POST' && (array_key_exists('id', $_POST) && !empty($_POST['id']))) {
 			$pai->checkToken();
 			foreach($_POST as $key => $value) {
 				$$key = cleaninput($value);
-				if (empty($value)) {
-					if (array_key_exists('inline', $_GET)) {
-						ob_end_clean();
-						exit('<strong>Error saving question:</strong><br />Missing parameter: ' . $key);
-					}
-					else {
-						ob_end_flush();
-						$error = new Error('Missing parameter: ' . $key);
-						$error->display();
-					}
-				}
-			}
-
-			if (!$this->checkId()) {
-				if (array_key_exists('inline', $_GET)) {
-					ob_end_clean();
-					exit('<strong>Error saving question:</strong><br />Invalid question ID.');
-				}
-				else {
-					ob_end_flush();
-					$error = new Error('Invalid question ID.');
-					$error->display();
-				}
+				if (empty($value)) Error::showMessage('Missing parameter: ' . $key);
 			}
 
 			$this->setQuestion($question, false);
@@ -527,31 +503,9 @@ class Question implements Model {
 					echo '<p>Question modified.</p>';
 				}
 			}
-			else {
-				if (array_key_exists('inline', $_GET)) {
-					ob_end_clean();
-					exit('<strong>Error modifying question:</strong><br />Could not contact database.');
-				}
-				else {
-					ob_end_flush();
-					$error = new Error('Could not modify question.');
-					$error->display();
-				}
-			}
+			else Error::showMessage('Could not modify question.');
 		}
 		else {
-			if (!array_key_exists('qu', $_GET) || (empty($_GET['qu']) || !is_numeric($_GET['qu']))) {
-				ob_end_flush();
-				$error = new Error('Invalid question.');
-				$error->display();
-			}
-
-			if (!$this->checkId()) {
-				ob_end_flush();
-				$error = new Error('Invalid question.');
-				$error->display();
-			}
-
 			$pai->checkToken();
 			ob_end_flush(); ?>
 
@@ -561,11 +515,11 @@ class Question implements Model {
 			<p>Asked by <?php echo $this->getIp(); ?> on <?php echo $this->getDateAskedFormatted(); ?></p>
 
 			<form method="post" action="admin.php?edit=question">
-				<p><input type="hidden" name="id" id="id" value="<?php echo $this->getId(); ?>" />
-				<input type="hidden" name="token" id="token" value="<?php echo $token; ?>" />
-				<label for="question">Question:</label><br />
-				<textarea rows="5" cols="45" name="question" id="question"><?php echo $this->getQuestion(); ?></textarea><br />
-				<input type="submit" name="submit_question" id="submit_question" value="Edit question" /></p>
+				<p><input type="hidden" name="id" id="id" value="<?php echo $this->getId(); ?>">
+				<input type="hidden" name="token" id="token" value="<?php echo $token; ?>">
+				<label for="question">Question:</label><br>
+				<textarea rows="5" cols="45" name="question" id="question"><?php echo $this->getQuestion(); ?></textarea><br>
+				<input type="submit" name="submit_question" id="submit_question" value="Edit question"></p>
 			</form>
 
 			<?php
@@ -585,40 +539,18 @@ class Question implements Model {
 
 			foreach($_POST as $key => $value) {
 				$$key = cleaninput($value);
-				if ($key != 'answer' && empty($value)) {
-					if (array_key_exists('inline', $_GET)) {
-						ob_end_clean();
-						exit('<strong>Error saving answer:</strong><br />Missing parameter: ' . $key);
-					}
-					else {
-						ob_end_flush();
-						$error = new Error('Missing parameter: ' . $key);
-						$error->display();
-					}
-				}
-			}
-
-			if (!$this->checkId()) {
-				if (array_key_exists('inline', $_GET)) {
-					ob_end_clean();
-					exit('<strong>Error saving answer:</strong><br />Invalid question ID.');
-				}
-				else {
-					ob_end_flush();
-					$error = new Error('Invalid question ID.');
-					$error->display();
-				}
+				if ($key != 'answer' && empty($value)) Error::showMessage('Missing parameter: ' . $key);
 			}
 
 			$answer = str_replace("\\r", "\r", $answer);
 			$answer = str_replace("\\n", "\n", $answer);
 
-			$this->setAnswer(nl2br($answer), false);
+			$this->setAnswer(nl2br_brfix($answer), false);
 
 			if ($this->save()) {
 				if (array_key_exists('inline', $_GET)) {
 					ob_end_clean();
-					if (!empty($answer)) echo $pai->convertBB(stripslashes(nl2br($answer)));
+					if (!empty($answer)) echo $pai->convertBB(stripslashes(nl2br_brfix($answer)));
 					else echo '(No answer)';
 				}
 				else {
@@ -626,31 +558,9 @@ class Question implements Model {
 					echo '<p>Your answer has been saved.</p>';
 				}
 			}
-			else {
-				if (array_key_exists('inline', $_GET)) {
-					ob_end_clean();
-					exit('<strong>Error saving answer:</strong><br />Could not contact database.');
-				}
-				else {
-					ob_end_flush();
-					$error = new Error('Could not save answer.');
-					$error->display();
-				}
-			}
+			else Error::showMessage('Could not save answer.');
 		}
 		else {
-			if (!array_key_exists('qu', $_GET) || (empty($_GET['qu']) || !is_numeric($_GET['qu']))) {
-				ob_end_flush();
-				$error = new Error('Invalid question.');
-				$error->display();
-			}
-
-			if (!$this->checkId()) {
-				ob_end_flush();
-				$error = new Error('Invalid question');
-				$error->display();
-			}
-
 			$pai->checkToken();
 			ob_end_flush(); ?>
 
@@ -659,11 +569,11 @@ class Question implements Model {
 			<p>Asked by <?php echo $this->getIp(); ?> on <?php echo $this->getDateAskedFormatted(); ?> </p>
 
 			<form method="post" action="admin.php?edit=answer">
-				<p><input type="hidden" name="id" id="id" value="<?php echo $this->getId(); ?>" />
-				<input type="hidden" name="token" id="token" value="<?php echo $token; ?>" />
-				Answer this question:<br />
-				<textarea rows="5" cols="45" name="answer" id="answer"><?php echo strip_tags($this->getAnswer()); ?></textarea><br />
-				<input type="submit" name="submit_answer" id="submit_answer" value="Answer" /></p>
+				<p><input type="hidden" name="id" id="id" value="<?php echo $this->getId(); ?>">
+				<input type="hidden" name="token" id="token" value="<?php echo $token; ?>">
+				Answer this question:<br>
+				<textarea rows="5" cols="45" name="answer" id="answer"><?php echo strip_tags($this->getAnswer()); ?></textarea><br>
+				<input type="submit" name="submit_answer" id="submit_answer" value="Answer"></p>
 			</form>
 			<?php
 		}
@@ -678,58 +588,20 @@ class Question implements Model {
 	 */
 	public function editCategory() {
 		global $pai, $token, $pai_db;
-		if ($pai->getOption('enable_cats') != 'yes') {
-			if (array_key_exists('inline', $_GET)) {
-				ob_end_clean();
-				exit('<strong>Error:</strong> Categories are disabled.');
-			}
-			else {
-				ob_end_flush();
-				$error = new Error('Categories are disabled.');
-				$error->display();
-			}
-		}
+		if (!$pai->getOption('enable_cats')) Error::showMessage('Categories are disabled.');
+
 		if ($_SERVER['REQUEST_METHOD'] == 'POST' && array_key_exists('submit_category', $_POST)) {
 			$pai->checkToken();
 
 			foreach($_POST as $key => $value) {
 				$$key = cleaninput($value);
-				if (empty($value)) {
-					if (array_key_exists('inline', $_GET)) {
-						ob_end_clean();
-						exit('<strong>Error saving category:</strong> Missing parameter: ' . $key);
-					}
-					else {
-						ob_end_flush();
-						$error = new Error('Missing parameter: ' . $key);
-						$error->display();
-					}
-				}
+				if (empty($value)) Error::showMessage('Missing parameter: ' . $key);
 			}
 
-			if (!$this->checkId()) {
-				if (array_key_exists('inline', $_GET)) {
-					ob_end_clean();
-					exit('<strong>Error:</strong> Invalid question');
-				}
-				else {
-					ob_end_flush();
-					$error = new Error('Invalid question.');
-					$error->display();
-				}
-			}
+			if (!$this->checkId()) Error::showMessage('Invalid question.');
+
 			$cat = new Category((int)$category);
-			if (!$cat->checkId()) {
-				if (array_key_exists('inline', $_GET)) {
-					ob_end_clean();
-					exit('<strong>Error:</strong> Invalid category.');
-				}
-				else {
-					ob_end_flush();
-					$error = new Error('Invalid category.');
-					$error->display();
-				}
-			}
+			if (!$cat->checkId()) Error::showMessage('Invalid category.');
 
 			$this->setCategory($cat->getId());
 			if ($this->save()) {
@@ -742,25 +614,9 @@ class Question implements Model {
 					echo '<p>The category for this question has been successfully modified.</p>';
 				}
 			}
-			else {
-				if (array_key_exists('inline', $_GET)) {
-					ob_end_clean();
-					exit('<strong>Error:</strong> Could not save category.');
-				}
-				else {
-					ob_end_flush();
-					$error = new Error('Could not save category.');
-					$error->display();
-				}
-			}
+			else Error::showMessage('Could not save category.');
 		}
 		else {
-			if (!array_key_exists('qu', $_GET) || (empty($_GET['qu']) || !is_numeric($_GET['qu']))) $error = new Error('Invalid question.');
-
-			if (!$this->getId()) {
-				$error = new Error('Invalid question.');
-				$error->display();
-			}
 			$pai->checkToken(); ?>
 
 			<h2>Editing category of question #<?php echo $this->getId(); ?></h2>
@@ -771,15 +627,48 @@ class Question implements Model {
 			<p>Current category: <?php echo $this->getCategory(true); ?></p>
 
 			<form method="post" action="admin.php?edit=category">
-				<p><input type="hidden" name="id" id="id" value="<?php echo $this->getId(); ?>" />
-				<input type="hidden" name="token" id="token" value="<?php echo $token; ?>" />
+				<p><input type="hidden" name="id" id="id" value="<?php echo $this->getId(); ?>">
+				<input type="hidden" name="token" id="token" value="<?php echo $token; ?>">
 				<select name="category" id="category">
 					<?php $pai->getCategories($this->getCategory()); ?>
-				</select><br />
-				<input type="submit" name="submit_category" id="submit_category" value="Edit question" /></p>
+				</select><br>
+				<input type="submit" name="submit_category" id="submit_category" value="Edit question"></p>
 			</form>
 			<?php
 		}
+	}
+
+	public static function doDelete($question) {
+		$q = new Question((int)$question);
+		if ($q == null || !$q->checkId()) Error::showMessage('Invalid question.');
+		if ($q->delete()) {
+			if (array_key_exists('inline', $_GET)) {
+				ob_end_clean();
+				echo 'Deleted';
+			}
+			else {
+				ob_end_flush();
+				echo '<p>Question successfully deleted.</p>';
+			}
+		}
+		else {
+			if (array_key_exists('inline', $_GET)) {
+				ob_end_clean();
+				echo 'Error'; // will pop an alert
+			}
+			else Error::showMessage('The question could not be deleted at this time.');
+		}
+	}
+
+	public static function edit($what) {
+		if (!in_array($what, array('question', 'answer', 'category'))) Error::showMessage('Invalid action');
+
+		// I have no idea why this is like this... Could've used the same var but that would be far too sensible
+		if (array_key_exists('id', $_POST)) $question = new Question((int)$_POST['id']);
+		elseif (array_key_exists('qu', $_GET)) $question = new Question((int)$_GET['qu']);
+
+		if ($question != null && $question->checkId()) call_user_func(array($question, 'edit' . ucfirst($what))); // yay callbacks
+		else Error::showMessage('Invalid question');
 	}
 }
 ?>

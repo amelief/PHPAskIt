@@ -232,7 +232,7 @@ class PAI {
 		else $cat = '';
 
 		$sub = array('[[question]]', '[[category]]', '[[submit]]');
-		$replace = array('<input type="text" name="question" id="question" />', $cat, '<input type="submit" name="askit" id="askit" value="Ask" />');
+		$replace = array('<input type="text" name="question" id="question">', $cat, '<input type="submit" name="askit" id="askit" value="Ask">');
 		?>
 
 		<form class="pai-question-form" method="post" action="<?php echo cleaninput($link); ?>">
@@ -308,9 +308,6 @@ HTML;
 			else $token = $_GET['token'];
 		}
 		if (!array_key_exists('pai_token', $_SESSION) || $token != $_SESSION['pai_token']) $this->killToken();
-
-		// TODO: Redo this - doesn't work
-		//if (!array_key_exists('pai_time', $_SESSION) || ((time() - $_SESSION['pai_time']) > 300)) $this->killToken();
 	}
 
 	/**
@@ -342,11 +339,7 @@ HTML;
 				header('Location: http://' . $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']) . '/admin.php?message=expired');
 				exit;
 			}
-			else {
-				ob_end_flush();
-				$error = new Error('Your session has expired. Please refresh the page to correct this problem.');
-				$error->display();
-			}
+			else Error::showMessage('Your session has expired. Please refresh the page to correct this problem.');
 		}
 	}
 
@@ -396,11 +389,7 @@ HTML;
 						</ul>
 						<div class="center">';
 
-						if (!array_key_exists('token', $_POST)) {
-							ob_end_flush();
-							$error = new Error('Your session has expired. Please reload the page to correct this issue.');
-							$error->display();
-						}
+						if (!array_key_exists('token', $_POST)) Error::showMessage('Your session has expired. Please reload the page to correct this issue.');
 						$this->checkToken();
 						if (cleaninput($_POST['userlogon']) == $this->getOption('username') && md5(cleaninput($_POST['userpassword']) . $this->getMask()) == $this->getOption('password')) {
 							setcookie($pai_db->getTable() . '_user', $this->getOption('username'), time()+(86400*365), '/');
@@ -439,11 +428,8 @@ HTML;
 					</ul>
 					<div class="center">';
 					if ($_SERVER['REQUEST_METHOD'] == 'POST' && array_key_exists('submit', $_POST) && array_key_exists('username', $_POST) && array_key_exists('email_address', $_POST) && array_key_exists('security_word', $_POST)) {
-						if (!array_key_exists('token', $_POST)) {
-							ob_end_flush();
-							$error = new Error('Your session has expired. Please reload the page to correct this issue.');
-							$error->display();
-						}
+						if (!array_key_exists('token', $_POST)) Error::showMessage('Your session has expired. Please reload the page to correct this issue.');
+
 						$this->checkToken();
 						ob_end_flush();
 						$username = cleaninput($_POST['username']);
@@ -463,17 +449,17 @@ HTML;
 					else { ?>
 						<p>Please enter the username, e-mail address and the security word you provided in the options panel.</p>
 						<form method="post" action="admin.php?process=reset">
-							<p><input type="hidden" name="token" id="token" value="<?php echo $token; ?>" />
-							<label for="username">Username:</label><br />
-							<input type="text" name="username" id="username" /></p>
+							<p><input type="hidden" name="token" id="token" value="<?php echo $token; ?>">
+							<label for="username">Username:</label><br>
+							<input type="text" name="username" id="username"></p>
 
-							<p><label for="email_address">E-mail address</label><br />
-							<input type="text" name="email_address" id="email_address" /></p>
+							<p><label for="email_address">E-mail address</label><br>
+							<input type="text" name="email_address" id="email_address"></p>
 
-							<p><label for="security_word">Security word</label><br />
-							<input type="text" name="security_word" id="security_word" /></p>
+							<p><label for="security_word">Security word</label><br>
+							<input type="text" name="security_word" id="security_word"></p>
 
-							<p><input type="submit" name="submit" id="submit" value="Submit" /></p>
+							<p><input type="submit" name="submit" id="submit" value="Submit"></p>
 						</form>
 						<?php
 					}
@@ -482,8 +468,7 @@ HTML;
 					break;
 
 				default:
-					$error = new Error('Invalid process.');
-					$error->display();
+					Error::showMessage('Invalid process.');
 			}
 		}
 	}
@@ -532,20 +517,80 @@ HTML;
 		<?php if (!empty($problem)) echo '<p>' . $problem . '</p>'; ?>
 
 		<form method="post" action="admin.php?process=login">
-			<p><input type="hidden" name="token" id="token" value="<?php echo $token; ?>" />
-			<label for="userlogon">Username:</label><br />
-			<input type="text" name="userlogon" id="userlogon" /></p>
+			<p><input type="hidden" name="token" id="token" value="<?php echo $token; ?>">
+			<label for="userlogon">Username:</label><br>
+			<input type="text" name="userlogon" id="userlogon"></p>
 
-			<p><label for="userpassword">Password:</label><br />
-			<input type="password" name="userpassword" id="userpassword" /></p>
+			<p><label for="userpassword">Password:</label><br>
+			<input type="password" name="userpassword" id="userpassword"></p>
 
-			<p><input name="submitlogin" id="submitlogin" type="submit" value="Login" /></p>
+			<p><input name="submitlogin" id="submitlogin" type="submit" value="Login"></p>
 		</form>
 		<p class="center">Powered by <a href="http://amelie.nu/scripts/" title="Askably">Askably 3.1</a></p>
 		<?php
 		echo '</body></html>';
 		mysql_close($pai_db->getConnection());
 		exit;
+	}
+
+	public function getQs($type = array()) {
+		global $pai_db, $totalpages, $startfrom, $perpage;
+
+		if (empty($type)) Error::showMessage('Unable to load questions.');
+
+		switch($type[0]) {
+			case 'unanswered':
+				$query = <<<SQL
+SELECT `q_id` FROM `{$pai_db->getTable()}` WHERE (`answer` = '' OR `answer` IS NULL)
+SQL;
+				$title = 'Unanswered questions (<span id="unanswered-qs-header">' . $this->getUnanswered() . '</span>)';
+
+				break;
+			case 'category':
+				if (empty($type[1])) Error::showMessage('Invalid category');
+
+				$query = 'SELECT `q_id` FROM `' . $pai_db->getTable() . '` WHERE `category` = ' . (int)cleaninput($_GET['category']);
+				$title = '%s %s found in the &quot;' . $type[1] . '&quot; category';
+
+				break;
+			case 'search':
+				if (empty($type[1])) Error::showMessage('Invalid search term');
+				$getsearch = $type[1];
+
+				$query = 'SELECT `q_id` FROM `' . $pai_db->getTable() . "` WHERE `question` LIKE '%" . $getsearch . "%' OR `answer` LIKE '%" . $getsearch . "%' OR `ip` LIKE '%" . $getsearch . "%'";
+				$title = '%s %s containing &quot;' . stripslashes($getsearch) . '&quot;.';
+
+				break;
+			case 'date':
+				$query = <<<SQL
+SELECT `{$pai_db->getTable()}`.* FROM `{$pai_db->getTable()}`
+SQL;
+				$title = 'Latest questions';
+
+				break;
+			default:
+				Error::showMessage('No questions found.');
+		}
+
+		ob_end_flush();
+		pages();
+
+		dopagination($query);
+		$query .= ' ORDER BY `dateasked` DESC LIMIT ' . $startfrom . ', ' . ADMIN_PERPAGE;
+
+		echo '<h2 class="question_header">' . sprintf($title, $totalpages, ($totalpages == 1 ? 'question' : 'questions')) . '</h2>';
+
+		if ($totalpages > 0) {
+			$getqs = $pai_db->query($query);
+			pagination($perpage, $type[0]);
+			echo '<ul id="question-list">';
+			while($qs = mysql_fetch_object($getqs)) {
+				$q = new Question($qs->q_id);
+				$q->show();
+			}
+			echo '</ul>';
+		}
+		else echo '<p>No questions found.</p>';
 	}
 }
 ?>

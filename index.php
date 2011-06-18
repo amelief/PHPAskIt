@@ -1,7 +1,20 @@
 <?php
 /*
   ==============================================================================================
-  Askably 3.1 Â© 2005-2011 Amelie F.
+  This file is part of PHPAskIt 3.1, Copyright © 2005-2011 Amelie F.
+
+  PHPAskIt is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  PHPAskIt is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this PHPAskIt.  If not, see <http://www.gnu.org/licenses/>.
   ==============================================================================================
 */
 
@@ -76,10 +89,10 @@ Login to your admin panel ';
 		$bodyemail .= 'to answer it.
 
 
-Powered by Askably 3.1.';
+Powered by PHPAskIt 3.1.';
 
-		if (strstr($_SERVER['SERVER_SOFTWARE'], 'Win32')) $extra = 'From: ' . $pai->getOption('youraddress') . "\r\nX-Mailer: Askably 3.1 PHP/" . phpversion();
-		else $extra = 'From: Askably <' . $pai->getOption('youraddress') . ">\r\nX-Mailer: Askably 3.1 PHP/" . phpversion();
+		if (strstr($_SERVER['SERVER_SOFTWARE'], 'Win32')) $extra = 'From: ' . $pai->getOption('youraddress') . "\r\nX-Mailer: PHPAskIt 3.1 PHP/" . phpversion();
+		else $extra = 'From: PHPAskIt <' . $pai->getOption('youraddress') . ">\r\nX-Mailer: PHPAskIt 3.1 PHP/" . phpversion();
 
 		mail($pai->getOption('youraddress'), $subject, $bodyemail, $extra);
 	}
@@ -216,7 +229,7 @@ else {
 ################### MISC FUNCTIONS ####################
 
 //CREDIT LINK. DO NOT REMOVE
-$display = '<p style="text-align: center;">Powered by <a href="http://amelie.nu/scripts/" title="Askably">Askably 3.1</a></p>';
+$display = '<p style="text-align: center;">Powered by <a href="http://amelie.nu/scripts/" title="PHPAskIt">PHPAskIt 3.1</a></p>';
 echo $display;
 
 //IS USER LOGGED IN? TERMINATE SESSION

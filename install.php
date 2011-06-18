@@ -1,8 +1,22 @@
 <?php
 // TODO ADD TIMEOUT
+
 /*
   ==============================================================================================
-  Askably 3.1 Â© 2005-2011 Amelie F.
+  This file is part of PHPAskIt 3.1, Copyright © 2005-2011 Amelie F.
+
+  PHPAskIt is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  PHPAskIt is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this PHPAskIt.  If not, see <http://www.gnu.org/licenses/>.
   ==============================================================================================
 */
 
@@ -29,7 +43,7 @@ $header = <<<HTML
 <!DOCTYPE html>
 <html>
 <head>
-	<title>Askably 3.1: Install Askably</title>
+	<title>PHPAskIt 3.1: Install PHPAskIt</title>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf8">
 	<style type="text/css">
 		body { color: #222; font: 0.7em/1.2em Verdana, Arial, Helvetica, sans-serif; text-align: center; }
@@ -56,7 +70,7 @@ $header = <<<HTML
 
 <body>
 
-	<h1 id="header"><a href="install.php" title="Askably">Askably</a></h1>
+	<h1 id="header"><a href="install.php" title="PHPAskIt">PHPAskIt</a></h1>
 	<ul id="navigation" class="center">
 		<li><a href="install.php" title="Setup" class="active">Setup</a></li>
 	</ul>
@@ -76,9 +90,9 @@ if (isset($_POST['submit']) && $_SERVER['REQUEST_METHOD'] == 'POST') {
 		if (!preg_match('/^([_a-z0-9@\.-]+)$/i', $_POST['password'])) exit('ERROR: Password contains invalid characters.');
 	}
 	else exit('ERROR: Please enter a password.');
-	if (empty($youraddress) || !preg_match('/^([_a-z0-9-]+)(\.[_a-z0-9-]+)*@([a-z0-9-]+)(\.[a-z0-9-]+)*(\.[a-z]{2,4})$/i', $youraddress)) exit('ERROR: Invalid email address. You must enter a valid address in order to install Askably.');
+	if (empty($youraddress) || !preg_match('/^([_a-z0-9-]+)(\.[_a-z0-9-]+)*@([a-z0-9-]+)(\.[a-z0-9-]+)*(\.[a-z]{2,4})$/i', $youraddress)) exit('ERROR: Invalid email address. You must enter a valid address in order to install PHPAskIt.');
 
-	$tooeasy = array('phpaskit', 'pai', 'abc123', '123abc', 'q&amp;a', 'question', 'questions', 'questionsandanswers', 'questionandanswer', 'q &amp; a', 'questionsandanswer', 'questionandanswers', 'questions and answer', 'question and answer', 'question and answers', 'questions and answers', 'qanda', 'q and a', 'q & a', 'security word', 'security', 'blah', 'yeah', 'password', 'word', 'test', 'askably');
+	$tooeasy = array('phpaskit', 'pai', 'abc123', '123abc', 'q&amp;a', 'question', 'questions', 'questionsandanswers', 'questionandanswer', 'q &amp; a', 'questionsandanswer', 'questionandanswers', 'questions and answer', 'question and answer', 'question and answers', 'questions and answers', 'qanda', 'q and a', 'q & a', 'security word', 'security', 'blah', 'yeah', 'password', 'word', 'test', 'phpaskit');
 
 	if (!isset($word) || (isset($word) && empty($word))) exit('ERROR: Enter a security word.');
 	elseif (strlen($word) <= 3 || strtolower($word) == $username || strtolower($word) == $youraddress || in_array(strtolower($word), $tooeasy)) exit('ERROR: Your security word is too obvious or too short. Try a different word.');
@@ -110,7 +124,7 @@ if (isset($_POST['submit']) && $_SERVER['REQUEST_METHOD'] == 'POST') {
 		if (empty($is_wp_blog_header)) exit('ERROR: Please enter your absolute path to wp-blog-header.php if you wish to use WordPress Themes. If not, please uncheck the appropriate option.');
 		elseif (strstr($is_wp_blog_header, 'http://')) exit('ERROR: Please enter an absolute path to wp-blog-header.php, NOT a URL.');
 		if (substr($is_wp_blog_header, -1, 18) != 'wp-blog-header.php') $is_wp_blog_header += 'wp-blog-header.php';
-		elseif (!file_exists($is_wp_blog_header) && !file_exists($is_wp_blog_header . 'wp_blog_header.php')) exit('ERROR: Your path to wp-blog-header.php appears to be incorrect, as Askably cannot find it. Please go back and try again.');
+		elseif (!file_exists($is_wp_blog_header) && !file_exists($is_wp_blog_header . 'wp_blog_header.php')) exit('ERROR: Your path to wp-blog-header.php appears to be incorrect, as PHPAskIt cannot find it. Please go back and try again.');
 	}
 
 	$makeTable = <<<SQL
@@ -215,7 +229,7 @@ SQL;
 else {
 	echo $header;
 	?>
-	<h3 class="center">Fill in the form below to install Askably 3.1.</h3>
+	<h3 class="center">Fill in the form below to install PHPAskIt 3.1.</h3>
 	<p class="center">The * character denotes a required field. Any other fields you do not fill in will use the default settings. You will be able to change all of these options in your admin panel once you have installed the script.</p>
 
 	<form method="post" action="install.php">
@@ -243,7 +257,7 @@ else {
 		As above. Again, do NOT fill in this part if you are using WordPress Themes.<br>
 		<input type="text" name="footerfile" id="footerfile" value=""></p>
 
-		<p><strong><label for="is_wordpress">Are you using WordPress Themes with Askably?</label></strong> <input type="checkbox" name="is_wordpress" id="is_wordpress" value="yes"><br>If you have themed your site using WordPress (i.e. using get_header() and get_footer()) and would like to apply the same themes to your questions page, please check this box.</p>
+		<p><strong><label for="is_wordpress">Are you using WordPress Themes with PHPAskIt?</label></strong> <input type="checkbox" name="is_wordpress" id="is_wordpress" value="yes"><br>If you have themed your site using WordPress (i.e. using get_header() and get_footer()) and would like to apply the same themes to your questions page, please check this box.</p>
 
 		<p><strong><label for="is_wp_blog_header">Absolute path to wp-blog-header.php:</label></strong><br>
 		If you checked the above option, please enter your FULL ABSOLUTE PATH to wp-blog-header.php here.<br>

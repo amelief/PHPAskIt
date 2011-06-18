@@ -1,7 +1,20 @@
 <?php
 /*
   ==============================================================================================
-  Askably 3.1 © 2005-2011 Amelie F.
+  This file is part of PHPAskIt 3.1, Copyright © 2005-2011 Amelie F.
+
+  PHPAskIt is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  PHPAskIt is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this PHPAskIt.  If not, see <http://www.gnu.org/licenses/>.
   ==============================================================================================
 */
 
@@ -17,7 +30,7 @@ else $token = $_SESSION['pai_token'];
 
 if (!file_exists('functions.php')) { ?>
 	<h1>Error</h1>
-	<strong><code>functions.php</code></strong> could not be found. Without this file, the Askably cannot operate. Please make sure it is present.</p>
+	<strong><code>functions.php</code></strong> could not be found. Without this file, the PHPAskIt cannot operate. Please make sure it is present.</p>
 	<?php
 	exit;
 }
@@ -48,7 +61,7 @@ adminheader(); ?>
 
 <div id="container">
 	<header>
-		<h1 id="header"><a href="admin.php" title="Back to main admin page">Askably</a></h1>
+		<h1 id="header"><a href="admin.php" title="Back to main admin page">PHPAskIt</a></h1>
 
 		<?php $active = 'home';
 		if (array_key_exists('QUERY_STRING', $_SERVER)) {
@@ -181,7 +194,7 @@ elseif (array_key_exists('manage', $_GET) && !empty($_GET['manage'])) {
 					}
 					if (empty($youraddress) || !preg_match('/^([_a-z0-9-]+)(\.[_a-z0-9-]+)*@([a-z0-9-]+)(\.[a-z0-9-]+)*(\.[a-z]{2,4})$/i', $youraddress)) Error::showMessage('Please enter a valid email address.');
 
-					$tooeasy = array('phpaskit', 'pai', 'abc123', '123abc', 'q&amp;a', 'question', 'questions', 'questionsandanswers', 'questionandanswer', 'q &amp; a', 'questionsandanswer', 'questionandanswers', 'questions and answer', 'question and answer', 'question and answers', 'questions and answers', 'qanda', 'q and a', 'q & a', 'security word', 'security', 'blah', 'yeah', 'password', 'word', 'test', 'askably');
+					$tooeasy = array('phpaskit', 'pai', 'abc123', '123abc', 'q&amp;a', 'question', 'questions', 'questionsandanswers', 'questionandanswer', 'q &amp; a', 'questionsandanswer', 'questionandanswers', 'questions and answer', 'question and answer', 'question and answers', 'questions and answers', 'qanda', 'q and a', 'q & a', 'security word', 'security', 'blah', 'yeah', 'password', 'word', 'test', 'phpaskit');
 
 					if (!isset($word) || (isset($word) && empty($word))) {
 						ob_end_flush();
@@ -247,7 +260,7 @@ elseif (array_key_exists('manage', $_GET) && !empty($_GET['manage'])) {
 					if ($is_wordpress == 'yes') {
 						if (empty($is_wp_blog_header)) Error::showMessage('Please enter your absolute path to wp-blog-header.php if you wish to use WordPress Themes. If not, please uncheck the appropriate option.');
 						elseif (strstr($is_wp_blog_header, 'http://')) Error::showMessage('Please enter an absolute path to wp-blog-header.php, NOT a URL.');
-						elseif (!file_exists($is_wp_blog_header)) Error::showMessage('Your path to wp-blog-header.php appears to be incorrect, as Askably cannot find it. Please go back and try again.');
+						elseif (!file_exists($is_wp_blog_header)) Error::showMessage('Your path to wp-blog-header.php appears to be incorrect, as PHPAskIt cannot find it. Please go back and try again.');
 					}
 
 					$update = array();
@@ -296,7 +309,7 @@ elseif (array_key_exists('manage', $_GET) && !empty($_GET['manage'])) {
 				?>
 
 				<h2>Options</h2>
-				<p>Edit Askably's options here. Please note that if you change your password you may need to clear out your browser's cookies in order to be able to login again.</p>
+				<p>Edit PHPAskIt's options here. Please note that if you change your password you may need to clear out your browser's cookies in order to be able to login again.</p>
 
 				<form method="post" action="admin.php?manage=options">
 					<p><input type="hidden" name="token" id="token" value="<?php echo $token; ?>">
@@ -328,7 +341,7 @@ elseif (array_key_exists('manage', $_GET) && !empty($_GET['manage'])) {
 					As above. Again, do NOT fill in this part if you are using WordPress Themes.<br>
 					<input type="text" name="footerfile" id="footerfile" value="<?php echo $pai->getOption('footerfile'); ?>"></p>
 
-					<p><strong><label for="is_wordpress">Are you using WordPress Themes with Askably?</label></strong> <input type="checkbox" name="is_wordpress" id="is_wordpress" value="yes" <?php if ($pai->getOption('is_wordpress')) echo 'checked="checked" '; ?>><br>If you have themed your site using WordPress (i.e. using get_header() and get_footer()) please check this box.</p>
+					<p><strong><label for="is_wordpress">Are you using WordPress Themes with PHPAskIt?</label></strong> <input type="checkbox" name="is_wordpress" id="is_wordpress" value="yes" <?php if ($pai->getOption('is_wordpress')) echo 'checked="checked" '; ?>><br>If you have themed your site using WordPress (i.e. using get_header() and get_footer()) please check this box.</p>
 
 					<p><strong><label for="is_wp_blog_header">Absolute path to wp-blog-header.php:</label></strong><br>
 					If you checked the above option, please enter your FULL ABSOLUTE PATH to wp-blog-header.php here.<br>
@@ -622,7 +635,7 @@ QUESTION || ANSWER</textarea></p>
 							ob_end_flush();
 
 							$editip = cleaninput($_POST['editip']);
-							if (!preg_match("^((\d|[1-9]\d|2[0-4]\d|25[0-5]|1\d\d)(?:\.(\d|[1-9]\d|2[0-4]\d|25[0-5]|1\d\d)){3})$^", $editip)) Error::showMessage('Invalid IP.');
+							if (!preg_match("^((\d|[1-9]\d|2[0-4]\d|25[0-5]|1\d\d)(?:\.(\d|[1-9]\d|2[0-4]\d|25[0-5]|1\d\d)){3})$^", $editip) && !preg_match("/^\s*((([0-9A-Fa-f]{1,4}:){7}(([0-9A-Fa-f]{1,4})|:))|(([0-9A-Fa-f]{1,4}:){6}(:|((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})|(:[0-9A-Fa-f]{1,4})))|(([0-9A-Fa-f]{1,4}:){5}((:((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})?)|((:[0-9A-Fa-f]{1,4}){1,2})))|(([0-9A-Fa-f]{1,4}:){4}(:[0-9A-Fa-f]{1,4}){0,1}((:((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})?)|((:[0-9A-Fa-f]{1,4}){1,2})))|(([0-9A-Fa-f]{1,4}:){3}(:[0-9A-Fa-f]{1,4}){0,2}((:((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})?)|((:[0-9A-Fa-f]{1,4}){1,2})))|(([0-9A-Fa-f]{1,4}:){2}(:[0-9A-Fa-f]{1,4}){0,3}((:((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})?)|((:[0-9A-Fa-f]{1,4}){1,2})))|(([0-9A-Fa-f]{1,4}:)(:[0-9A-Fa-f]{1,4}){0,4}((:((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})?)|((:[0-9A-Fa-f]{1,4}){1,2})))|(:(:[0-9A-Fa-f]{1,4}){0,5}((:((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})?)|((:[0-9A-Fa-f]{1,4}){1,2})))|(((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})))(%.+)?\s*$/", $editip)) Error::showMessage('Invalid IP address.');
 							$iplist = explode(';', $pai->getOption('banned_ips'));
 
 							if (in_array($editip, $iplist)) Error::showMessage('You have already blocked that IP.');
@@ -714,7 +727,7 @@ QUESTION || ANSWER</textarea></p>
 
 		##### ANTISPAM
 		case 'antispam':
-			if (!$pai->getOption('antispam_enable') != 'yes') Error::showMessage('Word blocking is not enabled.');
+			if (!$pai->getOption('antispam_enable')) Error::showMessage('Word blocking is not enabled.');
 
 			if (array_key_exists('action', $_GET)) {
 				switch($_GET['action']) {
@@ -742,7 +755,7 @@ QUESTION || ANSWER</textarea></p>
 							?>
 							<h2>Block a word</h2>
 
-							<p>Please note that by blocking a word, it will not be allowed at all in questions you are asked. Words are not starred out or censored, instead an error will appear asking the user to change their question. Some common spam content is automatically deleted, such as [url] and [link].</p>
+							<p>Please note that by blocking a word, it will not be allowed at all in questions you are asked. Words are not starred out or censored, instead an error will appear asking the user to change their question.</p>
 							<p><strong>Do not use symbols (such as &amp; \ / ( ) [ ] $ * ^ % &gt; &lt; ) in the word you want to block or the system will not work.</strong> You may however use spaces to block complete phrases.</p>
 							<p><strong>Note:</strong> the system is case insensitive. By blacklisting the word &quot;word&quot;, you will also be blacklisting &quot;WORD&quot;, &quot;wOrD&quot;, &quot;WorD&quot; and other case variants.</p>
 
@@ -948,7 +961,7 @@ else $pai->getQs(array('date'));
 
 #################### MISC FUNCTIONS ###################
 //CREDIT LINK. DO NOT REMOVE
-$display = '<p style="text-align: center;">Powered by <a href="http://amelie.nu/scripts/" title="Askably">Askably 3.1</a></p>';
+$display = '<p style="text-align: center;">Powered by <a href="http://amelie.nu/scripts/" title="PHPAskIt">PHPAskIt 3.1</a></p>';
 
 //TERMINATE SESSION (but not if answering a question!)
 if (!array_key_exists('inline', $_GET)) {

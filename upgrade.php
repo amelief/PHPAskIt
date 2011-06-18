@@ -1,8 +1,22 @@
 <?php
 // TODO ADD TIMEOUT
+
 /*
   ==============================================================================================
-  Askably 3.1 Â© 2005-2011 Amelie F.
+  This file is part of PHPAskIt 3.1, Copyright © 2005-2011 Amelie F.
+
+  PHPAskIt is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  PHPAskIt is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this PHPAskIt.  If not, see <http://www.gnu.org/licenses/>.
   ==============================================================================================
 */
 
@@ -26,7 +40,7 @@ if (!$pai_db->get('question', 'main')) { ?>
 }
 if ($pai->getOption('version') == '3.1') { ?>
 	<h1>Error</h1>
-	<p>Your Askably installation is already up to date. Please delete this file, you do not need to run it again.</p>
+	<p>Your PHPAskIt installation is already up to date. Please delete this file, you do not need to run it again.</p>
 	<?php
 	exit;
 }
@@ -34,7 +48,7 @@ if ($pai->getOption('version') == '3.1') { ?>
 $header = '<!DOCTYPE html>
 <html>
 <head>
-	<title>Askably 3.1: Upgrade to v3.1</title>
+	<title>PHPAskIt 3.1: Upgrade to v3.1</title>
 	<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
 	<style type="text/css">
 		body { color: #222; font: 0.7em/1.2em Verdana, Arial, Helvetica, sans-serif; text-align: center; }
@@ -61,7 +75,7 @@ $header = '<!DOCTYPE html>
 
 <body>
 
-	<h1 id="header"><a href="upgrade.php" title="Askably">Askably</a></h1>
+	<h1 id="header"><a href="upgrade.php" title="PHPAskIt">PHPAskIt</a></h1>
 	<ul id="navigation" class="center">
 		<li><a href="upgrade1.php" title="Upgrade" class="active">Upgrade</a></li>
 	</ul>';
@@ -195,10 +209,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['upgrade'])) {
 	$pai_db->query('UPDATE `' . $pai_db->getTable() . "_options` SET `option_value` = '" . md5($newpass . $pai->getMask()) . "' WHERE `option_name` = 'password' LIMIT 1");
 
 	echo $header . '<h2>Success</h2>
-	<p>Askably has been successfully upgraded to version 3.1.</p>';
+	<p>PHPAskIt has been successfully upgraded to version 3.1.</p>';
 	
-	if ($version == 1) echo '<p><strong>PLEASE NOTE:</strong> Due to the incompatibilities between Askably versions 1.0 or 1.1 and Askably 3.1, Askably was unable to import your old categories or settings. You should add new categories and change your settings from within your admin panel.</p>
-	<p>Because Askably could not import your settings, your old username and password for admin.php will no longer work. You should use the following details to gain access:</p>';
+	if ($version == 1) echo '<p><strong>PLEASE NOTE:</strong> Due to the incompatibilities between PHPAskIt versions 1.0 or 1.1 and PHPAskIt 3.1, PHPAskIt was unable to import your old categories or settings. You should add new categories and change your settings from within your admin panel.</p>
+	<p>Because PHPAskIt could not import your settings, your old username and password for admin.php will no longer work. You should use the following details to gain access:</p>';
 	else echo '<p><strong>PLEASE NOTE:</strong> Your password for admin.php has changed. Please use the details below to log in:</p>';
 
 	echo '<p>Username: <code>' . $pai->getOption('username') . '</code><br>
@@ -208,12 +222,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['upgrade'])) {
 else {
 	echo $header; ?>
 
-	<h2>Askably Upgrade</h2>
+	<h2>PHPAskIt Upgrade</h2>
 
-	<p>Please make sure to do a full backup of your files and database before upgrading. Please note that if you are upgrading from versions 1.x or 2.x of Askably, <strong>your layout customisations will not be retained.</strong></p>
+	<p>Please make sure to do a full backup of your files and database before upgrading. Please note that if you are upgrading from versions 1.x or 2.x of PHPAskIt, <strong>your layout customisations will not be retained.</strong></p>
 
 	<form action="upgrade1.php" method="post">
-		<p><input type="submit" name="upgrade" id="upgrade" value="Upgrade Askably &raquo;"></p>
+		<p><input type="submit" name="upgrade" id="upgrade" value="Upgrade PHPAskIt &raquo;"></p>
 	</form>
 	<?php
 }

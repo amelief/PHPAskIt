@@ -1,12 +1,25 @@
 <?php
 /*
   ==============================================================================================
-  Askably 3.1 Â© 2005-2011 Amelie F.
+  This file is part of PHPAskIt 3.1, Copyright © 2005-2011 Amelie F.
+
+  PHPAskIt is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  PHPAskIt is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this PHPAskIt.  If not, see <http://www.gnu.org/licenses/>.
   ==============================================================================================
 */
 
 ################################################################################################
-############################ CORE ASKABLY FUNCTIONS. DO _NOT_ EDIT. ############################
+############################ CORE PHPASKIT FUNCTIONS. DO _NOT_ EDIT. ############################
 ################################################################################################
 
 if (!defined('PAI_IN')) exit('<p>This file cannot be loaded directly.</p>');
@@ -19,14 +32,14 @@ $required_files[] = 'config.php';
 foreach($required_files as $file) {
 	if (!file_exists($file)) { ?>
 		<h1>Error</h1>
-		<p><strong><code><?php echo $file; ?></code></strong> could not be found. Without this file, the Askably cannot operate. Please make sure it is present.</p>
+		<p><strong><code><?php echo $file; ?></code></strong> could not be found. Without this file, the PHPAskIt cannot operate. Please make sure it is present.</p>
 		<?php
 		exit;
 	}
 	else require_once $file;
 }
 
-$display = '<p style="text-align: center;">Powered by <a href="http://amelie.nu/scripts/" title="Askably">Askably 3.1</a></p>';
+$display = '<p style="text-align: center;">Powered by <a href="http://amelie.nu/scripts/" title="PHPAskIt">PHPAskIt 3.1</a></p>';
 
 function cleaninput($data) {
 	global $pai_db;
@@ -42,7 +55,7 @@ function adminheader() {
 	?><!DOCTYPE html>
 <html>
 <head>
-	<title>Askably 3.1: Admin</title>
+	<title>PHPAskIt 3.1: Admin</title>
 	<meta charset="utf-8">
 	<style type="text/css">
 		body { color: #222; font: 0.7em/1.2em Verdana, Arial, Helvetica, sans-serif; text-align: center; }
@@ -212,7 +225,7 @@ function check_stuff() {
 	global $pai;
 	if (version_compare(PHP_VERSION, '5.0.0', '<')) { ?>
 		<h1>Error</h1>
-		<p>Askably requires PHP 5+ to run - your version is <?php echo PHP_VERSION; ?>. If you cannot upgrade your version, you may wish to use Askably v3.0 which supports PHP 4.</p>
+		<p>PHPAskIt requires PHP 5+ to run - your version is <?php echo PHP_VERSION; ?>. If you cannot upgrade your version, you may wish to use PHPAskIt v3.0 which supports PHP 4.</p>
 		<?php
 		exit;
 	}
@@ -230,14 +243,14 @@ function check_stuff() {
 	}
 	if ($pai->getOption('version') != '3.1') { ?>
 		<h1>Error</h1>
-		<p>You need to <a href="upgrade.php" title="Upgrade">upgrade Askably</a> before you can view this page.</p>
+		<p>You need to <a href="upgrade.php" title="Upgrade">upgrade PHPAskIt</a> before you can view this page.</p>
 		<?php
 		exit;
 	}
 	if (basename($_SERVER['PHP_SELF'] != 'admin.php')) {
 		if (file_exists('upgrade.php')) { ?>
 	 		<h1>Error</h1>
-	 		<p>Please delete <code>upgrade.php</code> if you are not upgrading from a previous version of Askably.</p>
+	 		<p>Please delete <code>upgrade.php</code> if you are not upgrading from a previous version of PHPAskIt.</p>
 	 		<?php
 	 		exit;
 		}
@@ -266,7 +279,7 @@ function nl2br_brfix($data) {
 $pai_db = new Database(PAI_HOST, PAI_USER, PAI_PASS, PAI_DB);
 $pai = new PAI();
 
-$display = '<p style="text-align: center;">Powered by <a href="http://amelie.nu/scripts/" title="Askably">Askably 3.1</a></p>';
+$display = '<p style="text-align: center;">Powered by <a href="http://amelie.nu/scripts/" title="PHPAskIt">PHPAskIt 3.1</a></p>';
 
 foreach($_SERVER as $key => $value) {
 	$_SERVER[$key] = clean_array($value);

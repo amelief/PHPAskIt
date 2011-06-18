@@ -1,12 +1,25 @@
 <?php
 /*
   ==============================================================================================
-  Askably 3.1 © 2005-2011 Amelie F.
+  This file is part of PHPAskIt 3.1, Copyright © 2005-2011 Amelie F.
+
+  PHPAskIt is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  PHPAskIt is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this PHPAskIt.  If not, see <http://www.gnu.org/licenses/>.
   ==============================================================================================
 */
 
 ################################################################################################
-############################ CORE ASKABLY FUNCTIONS. DO _NOT_ EDIT. ############################
+############################ CORE PHPASKIT FUNCTIONS. DO _NOT_ EDIT. ############################
 ################################################################################################
 
 
@@ -381,7 +394,7 @@ HTML;
 					if (array_key_exists('userlogon', $_POST) && array_key_exists('userpassword', $_POST) && !empty($_POST['userlogon']) && !empty($_POST['userpassword']) && $_SERVER['REQUEST_METHOD'] == 'POST') {
 						ob_start();
 						adminheader();
-						echo '<h1 id="header"><a href="admin.php" title="Back to main admin page">Askably</a></h1>
+						echo '<h1 id="header"><a href="admin.php" title="Back to main admin page">PHPAskIt</a></h1>
 
 						<ul id="navigation" class="center">
 							<li><a href="admin.php" class="active">Login</a></li>
@@ -421,7 +434,7 @@ HTML;
 					ob_start();
 					adminheader();
 
-					echo '<h1 id="header"><a href="admin.php" title="Back to main admin page">Askably</a></h1>
+					echo '<h1 id="header"><a href="admin.php" title="Back to main admin page">PHPAskIt</a></h1>
 					<ul id="navigation" class="center">
 						<li><a href="admin.php">Login</a></li>
 						<li><a href="admin.php?process=reset" title="Reset password" class="active">Lost password</a></li>
@@ -438,13 +451,13 @@ HTML;
 						if ($username == $this->getOption('username') && $email == $this->getOption('youraddress') && $word == $this->getOption('security_word')) {
 							$newpassword = substr(md5(substr(md5(microtime()), 5, 7)), 5, 7);
 							if ($pai_db->query('UPDATE `' . $pai_db->getTable() . "_options` SET `option_value` = '" . md5($newpassword . $this->getMask()) . "' WHERE `option_name` = 'password' LIMIT 1")) {
-								$msg = 'Your password to Askably has been reset. Your new password is: ' . $newpassword . "\n\nPlease login and change it as soon as possible.";
-								@mail($this->getOption('youraddress'), 'Askably: Password reset', $msg, 'From: Askably <' . $this->getOption('youraddress') . '>');
+								$msg = 'Your password to PHPAskIt has been reset. Your new password is: ' . $newpassword . "\n\nPlease login and change it as soon as possible.";
+								@mail($this->getOption('youraddress'), 'PHPAskIt: Password reset', $msg, 'From: PHPAskIt <' . $this->getOption('youraddress') . '>');
 								echo '<p>Your password has been reset and sent to you by email. Please <a href="admin.php" title="Log in">log in</a> and change it as soon as possible.</p>';
 							}
 							else echo '<p>Your password could not be reset.</p>';
 						}
-						else echo '<p>The username, e-mail address or security word entered does not match the ones in Askably\'s options. Please go back and try again.</p>';
+						else echo '<p>The username, e-mail address or security word entered does not match the ones in PHPAskIt\'s options. Please go back and try again.</p>';
 					}
 					else { ?>
 						<p>Please enter the username, e-mail address and the security word you provided in the options panel.</p>
@@ -507,7 +520,7 @@ HTML;
 		global $token, $pai_db;
 		adminheader();
 		?>
-		<h1 id="header"><a href="admin.php" title="Back to main admin page">Askably</a></h1>
+		<h1 id="header"><a href="admin.php" title="Back to main admin page">PHPAskIt</a></h1>
 
 		<ul id="navigation" class="center">
 			<li><a href="admin.php" class="active">Login</a></li>
@@ -526,7 +539,7 @@ HTML;
 
 			<p><input name="submitlogin" id="submitlogin" type="submit" value="Login"></p>
 		</form>
-		<p class="center">Powered by <a href="http://amelie.nu/scripts/" title="Askably">Askably 3.1</a></p>
+		<p class="center">Powered by <a href="http://amelie.nu/scripts/" title="PHPAskIt">PHPAskIt 3.1</a></p>
 		<?php
 		echo '</body></html>';
 		mysql_close($pai_db->getConnection());

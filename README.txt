@@ -1,33 +1,34 @@
 ~~~~~~~~~~~~~~~~~~
 ##
-## Askably 3.1 ##
-               ##
+## PHPAskIt 3.1 ##
+                ##
 ~~~~~~~~~~~~~~~~~~
 
 
 === PLEASE NOTE: ===
 
-This is a *DEVELOPMENT VERSION* of Askably. It's not alpha, beta or anything like that - it's not even reached testing yet. That means there WILL be bugs and possibly security issues, and you should really not use it on a production website. I take absolutely no responsibility for anything that does or does not happen as a result of you using development builds. For best results, please use the stable version of Askably available from http://amelie.nu/scripts.
+This is a *DEVELOPMENT VERSION* of PHPAskIt. It's not alpha, beta or anything like that - it's not even reached testing yet. That means there WILL be bugs and possibly security issues, and you should really not use it on a production website. I take absolutely no responsibility for anything that does or does not happen as a result of you using development builds. For best results, please use the stable version of PHPAskIt available from http://amelie.nu/scripts.
 
 ====================
 
 
-PLEASE BE SURE TO READ ALL OF THIS FILE BEFORE USING Askably.
+PLEASE BE SURE TO READ ALL OF THIS FILE BEFORE USING PHPAskIt.
 
 ===================================================================
-Askably (formerly PHPAskIt): Copyright © 2005-2011 Amelie F.
+PHPAskIt 3.1, Copyright © 2005-2011 Amelie F.
 
-You may:
-- Use and edit/modify Askably however you like, AS LONG AS THE CREDIT LINE STAYS INTACT AND UNEDITED
-- Tell other people about it
-- Ask for help regarding this script at any time
+PHPAskIt is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-You may not:
-- Redistribute this script in any way, shape or form without written permission from its creator, whether it has been modified or not
-- Claim ownership of this script, however much you have modified it
-- Earn money by installing, customising, modifying or troubleshooting this script for other people
-- Hold Askably's creator responsible for anything that arises from its use
-- Remove, modify, hide or use any other method to eliminate or render invisible the "Powered by Askably" line at the bottom of the index.php and admin.php files
+PHPAskIt is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with PHPAskIt.  If not, see <http://www.gnu.org/licenses/>.
 ===================================================================
 
 
@@ -51,7 +52,7 @@ CONTENTS OF THIS FILE:
 INTRODUCTION
 ----------------------------------------
 
-Askably is a question and answer script which incorporates categories and permalinks into your questions page. It is simple to customise and easy to set up, and makes managing your questions and answers so much easier.
+PHPAskIt is a question and answer script which incorporates categories and permalinks into your questions page. It is simple to customise and easy to set up, and makes managing your questions and answers so much easier.
 
 
 
@@ -62,9 +63,9 @@ VERSION 3.1
 - Another complete backend rewrite; optimised queries, code and general performance - now supports PHP5+ only
 - Enabled limited bbCode for better formatting of answers
 - Changed to Prototype and jQuery JavaScript frameworks for more advanced AJAX integration
-- Renamed to Askably after request from PHP team
 - Removed import scripts - now built-in
 - Layout tweaks - now HTML5 output with CSS3 effects (HTML4/CSS2 fallback)
+- Re-released under the GPL and ported development to GitHub
 
 VERSION 3.0
 - Complete backend rewrite, now uses object-oriented programming
@@ -124,9 +125,9 @@ VERSION 1.1
 REQUIREMENTS
 ----------------------------------------
 
-To install Askably, you will need PHP 5.0+ (earlier versions DO NOT WORK) and a MySQL 4.1+ database. Normally you will need to have a paid hosting plan for this, as most free hosts do not offer this service.
+To install PHPAskIt, you will need PHP 5.0+ (earlier versions DO NOT WORK) and a MySQL 4.1+ database. Normally you will need to have a paid hosting plan for this, as most free hosts do not offer this service.
 
-If you don't know what version of PHP or MySQL you have, ask your host or take a look at your control panel - it will normally tell you there. If you don't have PHP5, you can download Askably v3.0 which is PHP4 compatible.
+If you don't know what version of PHP or MySQL you have, ask your host or take a look at your control panel - it will normally tell you there. If you don't have PHP5, you can download PHPAskIt v3.0 which is PHP4 compatible.
 
 
 
@@ -161,11 +162,11 @@ INSTALLATION
 
 NOTES:
 
-If you are going to be using Askably on a WordPress-driven site, please go to step 7.
-If you are upgrading from a previous version of Askably (regardless of the above), please go to step 8.
+If you are going to be using PHPAskIt on a WordPress-driven site, please go to step 7.
+If you are upgrading from a previous version of PHPAskIt (regardless of the above), please go to step 8.
 
 
---------FOR NEW INSTALLATIONS OF Askably--------
+--------FOR NEW INSTALLATIONS OF PHPAskIt--------
 
 Before you upload the files to your server, take care to complete the following steps.
 
@@ -173,16 +174,16 @@ Before you upload the files to your server, take care to complete the following 
 
 2. Open config.php in a plain text editor such as Notepad for Windows. Change the values in quotes to those matching your database details. The file is commented out to help you know what to edit.
 
-You can change the $askably['table'] variable (the table name) to anything you like - it doesn't particularly matter since you do not need to remember this to use the script. However, if you already have an installation of Askably on your site, even if it is not in the same database, you will need to change it to something you have not used before as it is also the name of the login cookie. If you do not change it, you will have problems logging in.
+You can change the $phpaskit['table'] variable (the table name) to anything you like - it doesn't particularly matter since you do not need to remember this to use the script. However, if you already have an installation of PHPAskIt on your site, even if it is not in the same database, you will need to change it to something you have not used before as it is also the name of the login cookie. If you do not change it, you will have problems logging in.
 
-3. Once you have finished editing config.php, and that you have checked over the details to make sure they're correct, upload all the files and folders to your server. It does not matter where you put them, though you should remember for linking in your site. ;) You should put the import folder inside the folder where you install Askably; for example if you installed it in the folder /faq, then the import folder should be placed in the /faq folder as well.
+3. Once you have finished editing config.php, and that you have checked over the details to make sure they're correct, upload all the files and folders to your server. It does not matter where you put them, though you should remember for linking in your site. ;) You should put the import folder inside the folder where you install PHPAskIt; for example if you installed it in the folder /faq, then the import folder should be placed in the /faq folder as well.
 
 4. When the files have finished being uploaded, go to install.php in your browser. The url to this file will be wherever you uploaded it, eg. if you uploaded it to the folder /myfolder/questions/ then the url will look something like yoursite.com/myfolder/questions/install.php.
 
 install.php will take you through the rest of the setup process.
 
-You do not have to use the header and footer files supplied in the zip file. If you want to use your own header and footer files for your question page, enter the ABSOLUTE PATH to your files where specified in install.php. An absolute path usually looks like this: /home/username/public_html/folder/file.html, where "username" is replaced with the name you use to login to your FTP and control panel (your absolute path depends on your host - it may not look anything like this example). If you do not know your absolute path, ask your host about it. If you have header and footer files in the same directory as your Askably files, you can enter a relative path. A relative path normally looks like this: filename.html - basically just the name of the file you want to use. Please be aware that these header and footer files will only be used on the questions page, not the admin panel.
-Do NOT fill in these sections if you want to use your WordPress theme with Askably. Instead, fill in the absolute path to wp-blog-header.php (this file is in your WordPress folder).
+You do not have to use the header and footer files supplied in the zip file. If you want to use your own header and footer files for your question page, enter the ABSOLUTE PATH to your files where specified in install.php. An absolute path usually looks like this: /home/username/public_html/folder/file.html, where "username" is replaced with the name you use to login to your FTP and control panel (your absolute path depends on your host - it may not look anything like this example). If you do not know your absolute path, ask your host about it. If you have header and footer files in the same directory as your PHPAskIt files, you can enter a relative path. A relative path normally looks like this: filename.html - basically just the name of the file you want to use. Please be aware that these header and footer files will only be used on the questions page, not the admin panel.
+Do NOT fill in these sections if you want to use your WordPress theme with PHPAskIt. Instead, fill in the absolute path to wp-blog-header.php (this file is in your WordPress folder).
 
 5. After you have finished entering all your settings, click submit. Did you get a success message? Yes? Good! The script has been installed successfully. Log back into your FTP and delete the install.php and upgrade.php files (if you don't do this, you won't be able to use the script).
 
@@ -193,36 +194,36 @@ Didn't get a success message? The most likely problem is that you haven't entere
 
 --------INSTRUCTIONS FOR USE WITH WORDPRESS-DRIVEN SITES--------
 
-7. Askably must be set up slightly differently if you are using a WordPress-driven site.
+7. PHPAskIt must be set up slightly differently if you are using a WordPress-driven site.
 
 You are using a Wordpress-driven site if you want to use WordPress's headers and footers or themes functions on your questions page, for example.
 
-PLEASE NOTE: You CANNOT use a WordPress "Page" to manage your questions, even if you have PHP-running plugins such as runPHP or PHPExec installed. Askably DOES _NOT_ WORK WITHIN WORDPRESS PAGES. Do not try to include the script files into WP pages using a PHP include or other such method. Likewise, do not copy the code from the script files and paste it into a WordPress Page - THIS WILL NOT WORK.
+PLEASE NOTE: You CANNOT use a WordPress "Page" to manage your questions, even if you have PHP-running plugins such as runPHP or PHPExec installed. PHPAskIt DOES _NOT_ WORK WITHIN WORDPRESS PAGES. Do not try to include the script files into WP pages using a PHP include or other such method. Likewise, do not copy the code from the script files and paste it into a WordPress Page - THIS WILL NOT WORK.
 You must upload the script's pages separately and link them manually (i.e. you must link to index.php, you cannot rely on your WordPress page navigation to include these files).
 
 7.1. In config.php, you should specify your database settings.
 IMPORTANT:--- The database settings you must give are those of your WORDPRESS DATABASE. If you don't specify these, you'll find the scripts will conflict.
-The table name should be different to your WordPress ones, however. Make sure you name it something that you don't already have in that particular database, for example askably1 if it is your first Askably database, askably2 if it is your second installation, etc. You will not have to remember this name, but you should not have two tables named the same thing, whether it is in the same database or not. As explained in step 2, the table name is also the name of the login cookie and you will find logging in difficult if you have two installations with the same name.
+The table name should be different to your WordPress ones, however. Make sure you name it something that you don't already have in that particular database, for example phpaskit1 if it is your first PHPAskIt database, phpaskit2 if it is your second installation, etc. You will not have to remember this name, but you should not have two tables named the same thing, whether it is in the same database or not. As explained in step 2, the table name is also the name of the login cookie and you will find logging in difficult if you have two installations with the same name.
 
 7.2. You should then run through the rest of steps 3-6 above as normal.
 
 
---------UPGRADING FROM PREVIOUS VERSIONS OF Askably--------
+--------UPGRADING FROM PREVIOUS VERSIONS OF PHPAskIt--------
 
-8. To upgrade from a previous version of Askably (it doesn't matter which version), you should delete ALL your old files first, INCLUDING config.php and the header/footer.html files. You should then upload all of the new files - EXCEPT install.php - in their place. You should also back up your database.
+8. To upgrade from a previous version of PHPAskIt (it doesn't matter which version), you should delete ALL your old files first, INCLUDING config.php and the header/footer.html files. You should then upload all of the new files - EXCEPT install.php - in their place. You should also back up your database.
 
-8.1. Fill in the database variables in config.php, as in step 2 above. This should contain the same database information (including the table name) as your old config.php. Please note that the default table name has changed as a result of Askably's renaming. Make sure that you put in the correct details for the database table you were using previously.
+8.1. Fill in the database variables in config.php, as in step 2 above. This should contain the same database information (including the table name) as your old config.php. Please note that the default table name has changed as a result of PHPAskIt's renaming. Make sure that you put in the correct details for the database table you were using previously.
 
 8.2. If the script does not redirect you to the upgrade page, go to upgrade.php, which will take you through the rest of the upgrade process.
 
-Note: Do NOT attempt to run install.php on an old version of Askably, even if the script instructs you to do so. This will corrupt your data.
+Note: Do NOT attempt to run install.php on an old version of PHPAskIt, even if the script instructs you to do so. This will corrupt your data.
 
 
 
 IMPORTING QUESTIONS
 ----------------------------------------
 
-Askably comes with the ability to import questions from 3 previously popular scripts as well as the ability to add your own questions from a manual FAQ or other script. Currently, Askably supports the following scripts:
+PHPAskIt comes with the ability to import questions from 3 previously popular scripts as well as the ability to add your own questions from a manual FAQ or other script. Currently, PHPAskIt supports the following scripts:
 - Ask&Answer (formerly from posed.org)
 - Wak's Ask&Answer (formerly from luved.org)
 - FAQtastic (from scripts.inexistent.org)
@@ -234,9 +235,9 @@ To import questions, simpy head to the Import section in your admin panel and yo
 CUSTOMISATION
 ----------------------------------------
 
-To customise Askably, all you need to do is to edit the header.html and footer.html files to suit you and/or modify the templates in the admin panel. If you specified your own headers/footers in the setup process or options panel, you need only modify the templates.
+To customise PHPAskIt, all you need to do is to edit the header.html and footer.html files to suit you and/or modify the templates in the admin panel. If you specified your own headers/footers in the setup process or options panel, you need only modify the templates.
 
-Once you have customised/created your own header/footer files, upload them to the location you specified in the setup or options panel. If you didn't change the values or entered a relative filename (e.g. "header.html" rather than "/an/example/absolute/path/to/folder/askably/header.html"), this location will be the same as where you uploaded the .php files.
+Once you have customised/created your own header/footer files, upload them to the location you specified in the setup or options panel. If you didn't change the values or entered a relative filename (e.g. "header.html" rather than "/an/example/absolute/path/to/folder/phpaskit/header.html"), this location will be the same as where you uploaded the .php files.
 
 
 TEMPLATE VARIABLES AND STYLES
@@ -308,25 +309,27 @@ You may contact me personally at amelie@amelie.nu but please be warned that I ha
 CREDITS
 ----------------------------------------
 
-Askably would not have been possible without the help of the following wonderful people:
+PHPAskIt would not have been possible without the help of the following wonderful people:
 
 Amanda (http://punkified.net), Vixx (http://furious-angel.com), Jem (http://www.jemjabella.co.uk), Valerie (http://spoken-for.org), Katy, Rachael (http://rachaely.com) and Melissa (http://melly.me).
 
 The spinner/loading graphic is provided by http://www.ajaxload.info. Visit to get your own loading graphics!
 
-Askably makes use of the Prototype (prototypejs.org) and jQuery (jquery.com) Javascript libraries, and the Scriptaculous (script.aculo.us) effects bundle.
+PHPAskIt makes use of the Prototype (prototypejs.org) and jQuery (jquery.com) Javascript libraries, and the Scriptaculous (script.aculo.us) effects bundle.
 
 
 
 TERMS OF USE/DISCLAIMER
 --------------------------------------------------------
 
-Askably is a linkware script. You may use, modify and customise the script however you like as long as the link on the bottom of each page to Amelie.nu is maintained.
+PHPAskIt is a released under the terms of the GNU General Public License v3. 
 
-You may not claim ownership of this script, however much you have modified it. You may not request money for anything to do with this script either. The script is to remain free at all times. This includes requesting money for customising and/or installing, modifying or distributing Askably to/for others, whether this is a modified version of the script or not. If I am not making any money from my script, then neither should you.
+PHPAskIt is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
-If you are in any doubt as to whether what you wish to do with the script complies with the terms of use, please do not hesitate to contact me.
+PHPAskIt is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 
-Please be aware that I DO NOT accept any responsibility for anything that may happen to your site, server or computer as a result of you using this script. I do my best to fully test my scripts, but I cannot guarantee their safety and security. By using this script, you do so AT YOUR OWN RISK.
+You should have received a copy of the GNU General Public License along with PHPAskIt.  If not, see <http://www.gnu.org/licenses/>.
 
-Askably is Copyright © 2005-2010 Amelie F. All rights reserved.
+-----
+
+PHPAskIt is Copyright © 2005-2011 Amelie F.

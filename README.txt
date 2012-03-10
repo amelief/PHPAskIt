@@ -7,7 +7,7 @@
 
 === PLEASE NOTE: ===
 
-This is a *DEVELOPMENT VERSION* of PHPAskIt. It's not alpha, beta or anything like that - it's not even reached testing yet. That means there WILL be bugs and possibly security issues, and you should really not use it on a production website. I take absolutely no responsibility for anything that does or does not happen as a result of you using development builds. For best results, please use the stable version of PHPAskIt available from http://amelie.nu/scripts.
+This is a *DEVELOPMENT VERSION* of PHPAskIt. It's not alpha, beta or anything like that - it's not even reached testing yet. That means there WILL be bugs and possibly security issues, and you should really not use it on a production website. I take absolutely no responsibility for anything that does or does not happen as a result of you using development builds. For best results, please use the stable version of PHPAskIt available from http://amelierosalyn.com/scripts.
 
 ====================
 
@@ -15,7 +15,7 @@ This is a *DEVELOPMENT VERSION* of PHPAskIt. It's not alpha, beta or anything li
 PLEASE BE SURE TO READ ALL OF THIS FILE BEFORE USING PHPAskIt.
 
 ===================================================================
-PHPAskIt 3.1, Copyright © 2005-2011 Amelie F.
+PHPAskIt 3.1, Copyright © 2005-2012 Amelie F.
 
 PHPAskIt is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with PHPAskIt.  If not, see <http://www.gnu.org/licenses/>.
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ===================================================================
 
 
@@ -302,7 +302,7 @@ TROUBLESHOOTING
 
 Having problems? Spotted a bug? Something not working?
 
-You may contact me personally at amelie@amelie.nu but please be warned that I have limited time available to answer personal requests. I am active at the CodeGrrl forums (http://codegrrl.com/forums/) and will be able to answer any queries there. This is a better option than contacting me personally since questions asked and answered on the forums will be available for future reference, which may help others having similar problems. Your query may also be answered more quickly by other members.
+You may contact me personally at http://amelierosalyn.com/about/#contact but please be warned that I have limited time available to answer personal requests. I am active at the GWG forums (http://girlswhogeek.com/forums/) and will be able to answer any queries there. This is a better option than contacting me personally since questions asked and answered on the forums will be available for future reference, which may help others having similar problems. Your query may also be answered more quickly by other members.
 
 
 
@@ -311,7 +311,7 @@ CREDITS
 
 PHPAskIt would not have been possible without the help of the following wonderful people:
 
-Amanda (http://punkified.net), Vixx (http://furious-angel.com), Jem (http://www.jemjabella.co.uk), Valerie (http://spoken-for.org), Katy, Rachael (http://rachaely.com) and Melissa (http://melly.me).
+Amanda, Vixx (http://furious-angel.com), Jem (http://www.jemjabella.co.uk), Valerie (http://spoken-for.org), Katy, Rachael and Melissa (http://kirako.net).
 
 The spinner/loading graphic is provided by http://www.ajaxload.info. Visit to get your own loading graphics!
 
@@ -328,8 +328,8 @@ PHPAskIt is free software: you can redistribute it and/or modify it under the te
 
 PHPAskIt is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License along with PHPAskIt.  If not, see <http://www.gnu.org/licenses/>.
+You should have received a copy of the GNU General Public License along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -----
 
-PHPAskIt is Copyright © 2005-2011 Amelie F.
+PHPAskIt is Copyright © 2005-2012 Amelie F.

@@ -1,7 +1,7 @@
 <?php
 /*
   ==============================================================================================
-  This file is part of PHPAskIt 3.1, Copyright © 2005-2011 Amelie F.
+  This file is part of PHPAskIt 3.1, Copyright © 2005-2012 Amelie F.
 
   PHPAskIt is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -14,7 +14,7 @@
   GNU General Public License for more details.
 
   You should have received a copy of the GNU General Public License
-  along with this PHPAskIt.  If not, see <http://www.gnu.org/licenses/>.
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
   ==============================================================================================
 */
 
@@ -39,7 +39,7 @@ foreach($required_files as $file) {
 	else require_once $file;
 }
 
-$display = '<p style="text-align: center;">Powered by <a href="http://amelie.nu/scripts/" title="PHPAskIt">PHPAskIt 3.1</a></p>';
+$display = '<p style="text-align: center;">Powered by <a href="http://amelierosalyn.com/scripts/" title="PHPAskIt">PHPAskIt 3.1</a></p>';
 
 function cleaninput($data) {
 	global $pai_db;
@@ -279,7 +279,7 @@ function nl2br_brfix($data) {
 $pai_db = new Database(PAI_HOST, PAI_USER, PAI_PASS, PAI_DB);
 $pai = new PAI();
 
-$display = '<p style="text-align: center;">Powered by <a href="http://amelie.nu/scripts/" title="PHPAskIt">PHPAskIt 3.1</a></p>';
+$display = '<p style="text-align: center;">Powered by <a href="http://amelierosalyn.com/scripts/" title="PHPAskIt">PHPAskIt 3.1</a></p>';
 
 foreach($_SERVER as $key => $value) {
 	$_SERVER[$key] = clean_array($value);

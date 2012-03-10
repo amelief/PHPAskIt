@@ -1,7 +1,7 @@
 <?php
 /*
   ==============================================================================================
-  This file is part of PHPAskIt 3.1, Copyright © 2005-2011 Amelie F.
+  This file is part of PHPAskIt 3.1, Copyright © 2005-2012 Amelie F.
 
   PHPAskIt is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -14,7 +14,7 @@
   GNU General Public License for more details.
 
   You should have received a copy of the GNU General Public License
-  along with this PHPAskIt.  If not, see <http://www.gnu.org/licenses/>.
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
   ==============================================================================================
 */
 

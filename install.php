@@ -3,7 +3,7 @@
 
 /*
   ==============================================================================================
-  This file is part of PHPAskIt 3.1, Copyright © 2005-2012 Amelie F.
+  This file is part of PHPAskIt 3.1 by Amelie F.
 
   PHPAskIt is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -130,8 +130,8 @@ if (isset($_POST['submit']) && $_SERVER['REQUEST_METHOD'] == 'POST') {
 	$makeTable = <<<SQL
 CREATE TABLE IF NOT EXISTS `{$pai_db->getTable()}` (
 	`q_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-	`question` TEXT CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
-	`answer` TEXT CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
+	`question` TEXT CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '',
+	`answer` TEXT CHARACTER SET utf8 COLLATE utf8_general_ci,
 	`category` INT UNSIGNED NOT NULL DEFAULT 1,
 	`dateasked` DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
 	`ip` VARCHAR(20) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '',
@@ -145,7 +145,7 @@ SQL;
 	$makeCats = <<<SQL
 CREATE TABLE IF NOT EXISTS `{$pai_db->getTable()}_cats` (
 	`cat_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-	`cat_name` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
+	`cat_name` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '',
 	`default` TINYINT(1) NOT NULL DEFAULT 0,
 	PRIMARY KEY (`cat_id`),
 	KEY (`default`)
@@ -156,7 +156,7 @@ SQL;
 CREATE TABLE IF NOT EXISTS `{$pai_db->getTable()}_options` (
 	`opt_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
 	`option_name` VARCHAR(100) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '',
-	`option_value` TEXT CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
+	`option_value` TEXT CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '',
 	PRIMARY KEY (`opt_id`),
 	KEY (`option_name`),
 	KEY (`option_value`(10)

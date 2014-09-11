@@ -3,7 +3,7 @@
 
 /*
   ==============================================================================================
-  This file is part of PHPAskIt 3.1, Copyright © 2005-2012 Amelie F.
+  This file is part of PHPAskIt 3.1 by Amelie F.
 
   PHPAskIt is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

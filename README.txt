@@ -15,7 +15,7 @@ This is a *DEVELOPMENT VERSION* of PHPAskIt. It's not alpha, beta or anything li
 PLEASE BE SURE TO READ ALL OF THIS FILE BEFORE USING PHPAskIt.
 
 ===================================================================
-PHPAskIt 3.1, Copyright © 2005-2012 Amelie F.
+PHPAskIt 3.1 by Amelie F.
 
 PHPAskIt is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -332,4 +332,4 @@ You should have received a copy of the GNU General Public License along with thi
 
 -----
 
-PHPAskIt is Copyright © 2005-2012 Amelie F.
+PHPAskIt © 2014 Amelie F.

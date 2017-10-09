@@ -448,10 +448,10 @@ elseif (array_key_exists('manage', $_GET) && !empty($_GET['manage'])) {
 					$summary = stripslashes($summary);
 					$success_msg = stripslashes($success_msg);
 				}
-				$form = mysqli_real_escape_string($form);
-				$q = mysqli_real_escape_string($q);
-				$summary = mysqli_real_escape_string($summary);
-				$success_msg = mysqli_real_escape_string($success_msg);
+				$form = mysqli_real_escape_string($pai_db->getConnection(), $form);
+				$q = mysqli_real_escape_string($pai_db->getConnection(), $q);
+				$summary = mysqli_real_escape_string($pai_db->getConnection(), $summary);
+				$success_msg = mysqli_real_escape_string($pai_db->getConnection(), $success_msg);
 
 				if ($pai_db->query('UPDATE `' . $pai_db->getTable() . "_options` SET `option_value` = '" . $form . "' WHERE `option_name` = 'ask_template' LIMIT 1") && $pai_db->query('UPDATE `' . $pai_db->getTable() . "_options` SET `option_value` = '" . $q . "' WHERE `option_name` = 'q_template' LIMIT 1") && $pai_db->query('UPDATE`' . $pai_db->getTable() . "_options` SET `option_value` = '" . $summary . "' WHERE `option_name` = 'sum_template' LIMIT 1") && $pai_db->query('UPDATE`' . $pai_db->getTable() . "_options` SET `option_value` = '" . $success_msg . "' WHERE `option_name` = 'success_msg_template' LIMIT 1")) echo '<p>Templates edited.</p>';
 			}

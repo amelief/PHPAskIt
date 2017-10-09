@@ -50,7 +50,7 @@ $phpaskit['salt'] = '6743892djkdgjh'; // 'Salt' with which to encrypt your passw
 //---------------------------
 
 // TODO: DEBUG - REMOVE
-require '../../htpasswds/settings.php';
+//require '../../htpasswds/settings.php';
 
 define('PAI_HOST', $phpaskit['dbhost']);
 define('PAI_DB', $phpaskit['dbname']);

@@ -140,7 +140,7 @@ class Category implements Model {
 			echo '<p>Error: Please enter a name.</p>';
 			return false;
 		}
-		if ($pai_db->query('INSERT INTO `' . $pai_db->getTable() . "_cats` (`cat_name`, `default`) VALUES ('" . $this->name . "', '" . $this->isDefault() . "')")) {
+		if ($pai_db->query('INSERT INTO `' . $pai_db->getTable() . "_cats` (`cat_name`, `default`) VALUES ('" . $this->name . "', " . (int)$this->isDefault() . ')')) {
 			$this->setId(mysqli_insert_id($pai_db->getConnection()));
 			return true;
 		}
@@ -160,7 +160,7 @@ class Category implements Model {
 		global $pai_db;
 		if (!$this->checkId()) return false;
 		if (empty($this->name)) return false;
-		return $pai_db->query('UPDATE `' . $pai_db->getTable() . "_cats` SET `cat_name` = '" . $this->sqlEscape($this->name) . "', `default` = '" . $this->sqlEscape($this->default) . "' WHERE `cat_id` = " . $this->sqlEscape($this->id) . ' LIMIT 1');
+		return $pai_db->query('UPDATE `' . $pai_db->getTable() . "_cats` SET `cat_name` = '" . $this->sqlEscape($this->name) . "', `default` = " . (int)$this->sqlEscape($this->default) . " WHERE `cat_id` = " . $this->sqlEscape($this->id) . ' LIMIT 1');
 	}
 
 	/**

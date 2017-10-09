@@ -58,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['question'])) {
 		$bannedips = explode(';', $pai->getOption('banned_ips'));
 
 		foreach($bannedips as $ip) {
-			if ($question->getIp() == $ip) Error::showMessage('Sorry, this IP address has been banned from asking questions.');
+			if ($question->getIp() == $ip) PAIError::showMessage('Sorry, this IP address has been banned from asking questions.');
 		}
 	}
 
@@ -66,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['question'])) {
 		$bannedwords = $pai->getOption('banned_words');
 		if (substr($bannedwords, -1, 1) == '|') $bannedwords = substr_replace($bannedwords, '', -1, 1);
 
-		if (preg_match('/(' . $bannedwords . ')/i', strtolower($question->getQuestion()))) Error::showMessage('One of the words in your question has been disallowed by the site owner. Please go back and change your question, then try again.');
+		if (preg_match('/(' . $bannedwords . ')/i', strtolower($question->getQuestion()))) PAIError::showMessage('One of the words in your question has been disallowed by the site owner. Please go back and change your question, then try again.');
 	}
 
 	$question->create();
@@ -123,7 +123,7 @@ else {
 
 			pagination($perpage, 'date');
 
-			while($qs = mysql_fetch_object($getqs)) {
+			while($qs = mysqli_fetch_object($getqs)) {
 				$q = new Question($qs->q_id);
 				$q->show();
 			}
@@ -134,10 +134,10 @@ else {
 
 ####### ALL QUESTIONS FROM A PARTICULAR CATEGORY ######
 	elseif (isset($_GET['category']) && is_numeric($_GET['category'])) {
-		if (!$pai->getOption('enable_cats')) Error::showMessage('Category sorting is disabled.');
+		if (!$pai->getOption('enable_cats')) PAIError::showMessage('Category sorting is disabled.');
 
 		$cat = new Category((int)$_GET['category']);
-		if (!isset($cat)) Error::showMessage('Invalid category.');
+		if (!isset($cat)) PAIError::showMessage('Invalid category.');
 
 		$pai->askForm($_SERVER['PHP_SELF']);
 		pages();
@@ -155,7 +155,7 @@ else {
 			$getqs = $pai_db->query($query);
 			pagination($perpage, 'bycat');
 
-			while($qs = mysql_fetch_object($getqs)) {
+			while($qs = mysqli_fetch_object($getqs)) {
 				$q = new Question($qs->q_id);
 				$q->show();
 			}
@@ -167,8 +167,8 @@ else {
 ###################### SEARCH #########################
 	elseif (isset($_GET['search'])) {
 		$getsearch = cleaninput($_GET['search']);
-		if (empty($getsearch)) Error::showMessage('Please enter a valid search term.');
-		if (strlen($getsearch) < 4) Error::showMessage('Please enter more than four characters.');
+		if (empty($getsearch)) PAIError::showMessage('Please enter a valid search term.');
+		if (strlen($getsearch) < 4) PAIError::showMessage('Please enter more than four characters.');
 
 		$pai->askForm($_SERVER['PHP_SELF']);
 		pages();
@@ -187,7 +187,7 @@ else {
 			$getqs = $pai_db->query($query);
 			pagination($perpage, 'search');
 
-			while($qs = mysql_fetch_object($getqs)) {
+			while($qs = mysqli_fetch_object($getqs)) {
 				$q = new Question($qs->q_id);
 				$q->show();
 			}
@@ -201,7 +201,7 @@ else {
 
 		$q = new Question((int)$_GET['q']);
 
-		if (!isset($q) || (($q->getAnswer() == '' || $q->getAnswer() == null) && !$pai->getOption('show_unanswered'))) Error::showMessage('Invalid question.');
+		if (!isset($q) || (($q->getAnswer() == '' || $q->getAnswer() == null) && !$pai->getOption('show_unanswered'))) PAIError::showMessage('Invalid question.');
 		else $q->show();
 
 	}
@@ -212,7 +212,7 @@ else {
 		$pai->askForm($_SERVER['PHP_SELF']);
 		$pai->showSummary();
 	}
-	else Error::showMessage('Invalid query string.');
+	else PAIError::showMessage('Invalid query string.');
 }
 
 #######################################################

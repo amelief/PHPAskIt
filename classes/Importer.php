@@ -56,13 +56,13 @@ class Importer {
 				$this->importFromManual();
 				break;
 			default:
-				Error::showMessage('Invalid import type, please try again.');
+				PAIError::showMessage('Invalid import type, please try again.');
 		}
 	}
 
 	private function checkPath() {
-		if (empty($this->path)) Error::showMessage('Missing absolute path, please go back and fill in this field.');
-		if (strstr($this->path , 'http://')) Error::showMessage('Sorry, you can only use absolute paths for your ' . $this->getScriptName() . ' directory, URLs are not allowed. Please go back and enter an absolute path.');
+		if (empty($this->path)) PAIError::showMessage('Missing absolute path, please go back and fill in this field.');
+		if (strstr($this->path , 'http://')) PAIError::showMessage('Sorry, you can only use absolute paths for your ' . $this->getScriptName() . ' directory, URLs are not allowed. Please go back and enter an absolute path.');
 	}
 
 	private function getScriptName() {
@@ -91,18 +91,18 @@ class Importer {
 		echo '<h2>Importing from Ask&amp;Answer</h2>';
 
 		if (file_exists($this->path . 'config.php')) include $this->path . 'config.php';
-		else Error::showMessage('Ask&amp;Answer\'s <strong><code>config.php</code></strong> could not be found. Please make sure this file exists in the directory you have specified and try again.');
+		else PAIError::showMessage('Ask&amp;Answer\'s <strong><code>config.php</code></strong> could not be found. Please make sure this file exists in the directory you have specified and try again.');
 
 		$aaqs = array();
 
-		$getqs = mysql_query('SELECT * FROM `' . $table . '`');
+		$getqs = mysqli_query($con, 'SELECT * FROM `' . $table . '`');
 
-		if (mysql_num_rows($getqs) < 1) Error::showMessage('There are no questions in your Ask&amp;Answer database. No questions were imported.');
+		if (mysqli_num_rows($getqs) < 1) PAIError::showMessage('There are no questions in your Ask&amp;Answer database. No questions were imported.');
 
-		while($qs = mysql_fetch_object($getqs)) {
+		while($qs = mysqli_fetch_object($getqs)) {
 			$aaqs[] = $qs->question . ',' . $qs->answer . ',' . $qs->ip;
 		}
-		mysql_close();
+		mysqli_close($con);
 
 		$pai_db = new Database(PAI_HOST, PAI_USER, PAI_PASS, PAI_DB);
 
@@ -125,7 +125,7 @@ class Importer {
 		echo '<p>Found ' . count($aaqs) . ' question(s).</p>
 		<h3>Importing questions...</h3>';
 
-		if ($pai_db->query($sql)) echo '<p>' . mysql_affected_rows($pai_db->getConnection()) . ' question(s) successfully imported.</p>';
+		if ($pai_db->query($sql)) echo '<p>' . mysqli_affected_rows($pai_db->getConnection()) . ' question(s) successfully imported.</p>';
 		else echo '<p>Sorry, an error occured when importing your questions. Please check your database settings and try again.</p>';
 	}
 
@@ -136,7 +136,7 @@ class Importer {
 		echo '<h2>Importing from Wak\'s Ask&amp;Answer</h2>';
 
 		if (file_exists($this->path . 'functions.php')) @include $this->path . 'functions.php';
-		else Error::showMessage('Wak\'s Ask&amp;Answer\'s <strong><code>functions.php</code></strong> could not be found. Please make sure this file exists in your Wak\'s Ask&amp;Answer directory.');
+		else PAIError::showMessage('Wak\'s Ask&amp;Answer\'s <strong><code>functions.php</code></strong> could not be found. Please make sure this file exists in your Wak\'s Ask&amp;Answer directory.');
 
 		echo '<p>Found ' . count(getTotalAnswered()) . ' answered question(s).</p>';
 		echo '<h3>Importing questions...</h3>' . "\n\n<p>";
@@ -170,19 +170,19 @@ class Importer {
 		echo '<h2>Importing from Faqtastic</h2>';
 
 		if (file_exists($this->path . 'config.php')) @include $this->path . 'config.php';
-		else Error::showMessage('FAQtastic\'s <strong><code>config.php</code></strong> could not be found. Please make sure this file exists in the directory you have specified and try again.');
+		else PAIError::showMessage('FAQtastic\'s <strong><code>config.php</code></strong> could not be found. Please make sure this file exists in the directory you have specified and try again.');
 
 		$faqtasticqs = array();
 
-		$getqs = mysql_query('SELECT * FROM `' . $tablefaqs . '`', $db);
+		$getqs = mysqli_query($db, 'SELECT * FROM `' . $tablefaqs . '`');
 
-		if (mysql_num_rows($getqs) < 1) Error::showMessage('<p>There are no questions in your FAQtastic database. No questions were imported.</p>');
+		if (mysqli_num_rows($getqs) < 1) PAIError::showMessage('<p>There are no questions in your FAQtastic database. No questions were imported.</p>');
 
-		while($qs = mysql_fetch_object($getqs)) {
+		while($qs = mysqli_fetch_object($getqs)) {
 			$faqtasticqs[] = $qs->question . ',' . $qs->answer . ',' . $qs->ip;
 		}
 
-		mysql_close($db);
+		mysqli_close($db);
 		unset($db);
 
 		$pai_db = new Database(PAI_HOST, PAI_USER, PAI_PASS, PAI_DB);
@@ -206,7 +206,7 @@ class Importer {
 		echo '<p>Found ' . count($faqtasticqs) . ' question(s).</p>
 		<h3>Importing questions...</h3>';
 
-		if ($pai_db->query($sql)) echo '<p>' . mysql_affected_rows($pai_db->getConnection()) . ' question(s) successfully imported.</p>';
+		if ($pai_db->query($sql)) echo '<p>' . mysqli_affected_rows($pai_db->getConnection()) . ' question(s) successfully imported.</p>';
 		else echo '<p>Sorry, an error occured when importing your questions. Please check your database settings and try again.</p>';
 	}
 
@@ -216,7 +216,7 @@ class Importer {
 
 		echo '<h2>Manual import</h2>';
 
-		if (!array_key_exists('importme', $_POST) || empty($_POST['importme'])) Error::showMessage('No questions entered, please enter some and try again.');
+		if (!array_key_exists('importme', $_POST) || empty($_POST['importme'])) PAIError::showMessage('No questions entered, please enter some and try again.');
 
 		$c = new Category;
 		$sql = 'INSERT INTO `' . $pai_db->getTable() . '` VALUES ';
@@ -225,15 +225,15 @@ class Importer {
 		$i = 1;
 		foreach($questions as $q) {
 			$q = trim($q, "\r");
-			if (empty($q) || !preg_match('/^(.*)\|\|(.*)?$/', $q)) Error::showMessage('Invalid question format on line ' . $i . ': questions could not be imported. Please make sure each question is on a new line, separated from its answer with \'||\' and that there are no blank lines.');
+			if (empty($q) || !preg_match('/^(.*)\|\|(.*)?$/', $q)) PAIError::showMessage('Invalid question format on line ' . $i . ': questions could not be imported. Please make sure each question is on a new line, separated from its answer with \'||\' and that there are no blank lines.');
 
 			$qa = explode('||', $q);
-			$sql .= "('', '" . cleaninput($qa[0]) . "', '" . cleaninput($qa[1]) . "', " . $c->getDefault() . ", NOW(), '" . cleaninput($_SERVER['REMOTE_ADDR']) . "'),";
+			$sql .= "(NULL, '" . cleaninput($qa[0]) . "', '" . cleaninput($qa[1]) . "', " . $c->getDefault() . ", NOW(), '" . cleaninput($_SERVER['REMOTE_ADDR']) . "'),";
 			$i++;
 		}
 		if (substr($sql, -1, 1) == ',') $sql = substr_replace($sql, '', -1, 1);
 
-		if ($pai_db->query($sql)) echo '<p>' . mysql_affected_rows($pai_db->getConnection()) . ' question(s) were successfully imported into the database.</p>';
-		else Error::showMessage('An error occurred while importing your questions. Please check your question syntax and database settings, then try again.');
+		if ($pai_db->query($sql)) echo '<p>' . mysqli_affected_rows($pai_db->getConnection()) . ' question(s) were successfully imported into the database.</p>';
+		else PAIError::showMessage('An error occurred while importing your questions. Please check your question syntax and database settings, then try again.');
 	}
 } ?>

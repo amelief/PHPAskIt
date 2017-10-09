@@ -45,7 +45,7 @@ function cleaninput($data) {
 	global $pai_db;
 	$data = trim(htmlentities(strip_tags($data), ENT_QUOTES, 'UTF-8'));
 	if (get_magic_quotes_gpc()) $data = stripslashes($data);
-	return @mysql_real_escape_string($data, $pai_db->getConnection());
+	return @mysqli_real_escape_string($pai_db->getConnection(), $data);
 }
 function clean_array($data) {
 	return is_array($data) ? array_map('clean_array', $data) : cleaninput($data);
@@ -209,7 +209,7 @@ function check_pages($totalpages) {
 }
 function dopagination($query) {
 	global $totalpages, $perpage, $startfrom, $page, $pai_db, $pai;
-	$totalpages = mysql_num_rows($pai_db->query($query));
+	$totalpages = mysqli_num_rows($pai_db->query($query));
 	if (defined('ADMIN_PERPAGE')) {
 		$perpage = ceil($totalpages / ADMIN_PERPAGE);
 		check_pages($perpage);

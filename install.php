@@ -167,7 +167,7 @@ SQL;
 	$pai_db->query($makeCats) or exit('<p>Sorry, an error occurred when creating the category table. Please check your database settings and try again.</p>');
 	$pai_db->query($makeOpts) or exit('<p>Sorry, an error occurred when creating the settings table. Please check your database settings and try again.</p>');
 
-	if (mysql_num_rows($pai_db->query('SELECT `cat_id` FROM `' . $pai_db->getTable() . '_cats` LIMIT 1')) == 0) {
+	if (mysqli_num_rows($pai_db->query('SELECT `cat_id` FROM `' . $pai_db->getTable() . '_cats` LIMIT 1')) == 0) {
 		$pai_db->query('INSERT INTO `' . $pai_db->getTable() . "_cats` (`cat_name`, `default`) VALUES
 		('Random', 1),
 		('About me', 0),

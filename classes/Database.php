@@ -52,10 +52,10 @@ class Database {
 	 * @param string $mysqldb Database to use.
 	 */
 	public function __construct($mysqlhost, $mysqluser, $mysqlpass, $mysqldb) {
-		$this->connect = mysql_connect($mysqlhost, $mysqluser, $mysqlpass);
+		$this->connect = mysqli_connect($mysqlhost, $mysqluser, $mysqlpass);
 		if ($this->connect == false) exit('Error connecting to MySQL - please verify your connection details in config.php.');
-		if (mysql_select_db($mysqldb) == false) exit('Error accessing MySQL database - please verify your connection details in config.php.');
-		mysql_query("SET names 'utf8'", $this->connect) or exit('Could not execute query ' . mysql_error()); // TODO: DEBUG ONLY REMOVE
+		if (mysqli_select_db($this->connect, $mysqldb) == false) exit('Error accessing MySQL database - please verify your connection details in config.php.');
+		mysqli_query($this->connect, "SET names 'utf8'") or exit('Could not execute query ' . mysqli_error($this->connect)); // TODO: DEBUG ONLY REMOVE
 		$this->table = PAI_TABLE;
 	}
 
@@ -75,14 +75,14 @@ class Database {
 	 * @return resource The result.
 	 */
 	public function query($query) {
-		if ($this->connect == false) Error::showMessage('Error: could not connect to MySQL. Your server may be temporarily unavailable; please try again later.');
+		if ($this->connect == false) PAIError::showMessage('Error: could not connect to MySQL. Your server may be temporarily unavailable; please try again later.');
 
-		//return mysql_query($query, $this->connect);
+		//return mysqli_query($this->connect, $query);
 
 		// TODO: DEBUG ONLY - USE ABOVE FOR PRODUCTION
-		$result = mysql_query($query, $this->connect);
+		$result = mysqli_query($this->connect, $query);
 		if ($result == false) {
-			echo mysql_error();
+			echo mysqli_error($this->connect);
 			return false;
 		}
 		return $result;
@@ -105,8 +105,8 @@ class Database {
 		$query .= ' LIMIT 1';
 		$result = $this->query($query);
 
-		if (mysql_num_rows($result) > 0) {
-			$value = mysql_fetch_object($result);
+		if (mysqli_num_rows($result) > 0) {
+			$value = mysqli_fetch_object($result);
 			if ($value == true) return $value->$field;
 			else return false;
 		}

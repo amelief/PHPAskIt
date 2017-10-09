@@ -80,19 +80,19 @@ class PAI {
 	public function __construct() {
 		global $pai_db;
 		// TODO: combine these
-		$total = mysql_fetch_object($pai_db->query('SELECT COUNT(`q_id`) AS `num` FROM `' . $pai_db->getTable() . '`'));
+		$total = mysqli_fetch_object($pai_db->query('SELECT COUNT(`q_id`) AS `num` FROM `' . $pai_db->getTable() . '`'));
 		$this->total = $total->num;
 
-		$unanswered = mysql_fetch_object($pai_db->query('SELECT COUNT(`q_id`) AS `num` FROM `' . $pai_db->getTable() . "` WHERE `answer` = '' OR `answer` IS NULL"));
+		$unanswered = mysqli_fetch_object($pai_db->query('SELECT COUNT(`q_id`) AS `num` FROM `' . $pai_db->getTable() . "` WHERE `answer` = '' OR `answer` IS NULL"));
 		$this->unanswered = $unanswered->num;
 
 		$this->answered = $this->total - $this->unanswered;
 
-		$cats = mysql_fetch_object($pai_db->query('SELECT COUNT(`cat_id`) AS `num` FROM `' . $pai_db->getTable() . '_cats`'));
+		$cats = mysqli_fetch_object($pai_db->query('SELECT COUNT(`cat_id`) AS `num` FROM `' . $pai_db->getTable() . '_cats`'));
 		$this->cats = $cats->num;
 
 		$options = $pai_db->query('SELECT `option_name`, `option_value` FROM `' . $pai_db->getTable() . '_options`');
-		while($get_options = mysql_fetch_object($options)) {
+		while($get_options = mysqli_fetch_object($options)) {
 			$this->options[$get_options->option_name] = $get_options->option_value;
 		}
 		$this->mask = md5($this->options['security_word'] . PAI_SALT);
@@ -106,7 +106,7 @@ class PAI {
 	public function resetOptions() {
 		global $pai_db;
 		$options = $pai_db->query('SELECT `option_name`, `option_value` FROM `' . $pai_db->getTable() . '_options`');
-		while($get_options = mysql_fetch_object($options)) {
+		while($get_options = mysqli_fetch_object($options)) {
 			$this->options[$get_options->option_name] = $get_options->option_value;
 		}
 		$this->mask = md5($this->options['security_word'] . PAI_SALT);
@@ -233,9 +233,9 @@ class PAI {
 		global $pai_db;
 		if ($this->getOption('enable_cats') == 'yes') {
 			$getcats = $pai_db->query('SELECT * FROM `' . $pai_db->getTable() . '_cats` ORDER BY `cat_name` ASC');
-			if (mysql_num_rows($getcats) > 0) {
+			if (mysqli_num_rows($getcats) > 0) {
 				$cat = '<select name="category" id="category">' . "\n" . '<option value="">CHOOSE ONE:</option>';
-				while($cats = mysql_fetch_object($getcats)) {
+				while($cats = mysqli_fetch_object($getcats)) {
 					$cat .= "\n<option value=\"" . $cats->cat_id . '">' . $cats->cat_name . '</option>';
 				}
 				$cat .= '</select>';
@@ -273,7 +273,7 @@ class PAI {
 HTML;
 		$getcats = $pai_db->query('SELECT `' . $pai_db->getTable() . '_cats`.cat_id, COUNT(`' . $pai_db->getTable() . '`.`q_id`) AS `num` FROM `' . $pai_db->getTable() . '_cats` LEFT JOIN `' . $pai_db->getTable() . '` ON `' . $pai_db->getTable() . '_cats`.`cat_id` = `' . $pai_db->getTable() . '`.`category` GROUP BY `' . $pai_db->getTable() . '_cats`.`cat_id` ORDER BY `cat_name` ASC');
 
-		while ($cat = mysql_fetch_object($getcats)) {
+		while ($cat = mysqli_fetch_object($getcats)) {
 			$c = new Category($cat->cat_id);
 			$summary .= <<<HTML
 			<li><a href="?category={$c->getId()}" title="View questions in this category">{$c->getName()}</a> ({$cat->num})</li>
@@ -298,7 +298,7 @@ HTML;
 	public function getCategories($current_cat = '') {
 		global $pai_db;
 		$cats = $pai_db->query('SELECT * FROM `' . $pai_db->getTable() . '_cats`');
-		while($cat = mysql_fetch_object($cats)) { ?>
+		while($cat = mysqli_fetch_object($cats)) { ?>
 			<option value="<?php echo $cat->cat_id; ?>"<?php if ($cat->cat_id == $current_cat) echo ' selected="selected"'; ?>><?php echo $cat->cat_name; ?></option>
 			<?php
 		}
@@ -352,7 +352,7 @@ HTML;
 				header('Location: http://' . $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']) . '/admin.php?message=expired');
 				exit;
 			}
-			else Error::showMessage('Your session has expired. Please refresh the page to correct this problem.');
+			else PAIError::showMessage('Your session has expired. Please refresh the page to correct this problem.');
 		}
 	}
 
@@ -402,7 +402,7 @@ HTML;
 						</ul>
 						<div class="center">';
 
-						if (!array_key_exists('token', $_POST)) Error::showMessage('Your session has expired. Please reload the page to correct this issue.');
+						if (!array_key_exists('token', $_POST)) PAIError::showMessage('Your session has expired. Please reload the page to correct this issue.');
 						$this->checkToken();
 						if (cleaninput($_POST['userlogon']) == $this->getOption('username') && md5(cleaninput($_POST['userpassword']) . $this->getMask()) == $this->getOption('password')) {
 							setcookie($pai_db->getTable() . '_user', $this->getOption('username'), time()+(86400*365), '/');
@@ -441,7 +441,7 @@ HTML;
 					</ul>
 					<div class="center">';
 					if ($_SERVER['REQUEST_METHOD'] == 'POST' && array_key_exists('submit', $_POST) && array_key_exists('username', $_POST) && array_key_exists('email_address', $_POST) && array_key_exists('security_word', $_POST)) {
-						if (!array_key_exists('token', $_POST)) Error::showMessage('Your session has expired. Please reload the page to correct this issue.');
+						if (!array_key_exists('token', $_POST)) PAIError::showMessage('Your session has expired. Please reload the page to correct this issue.');
 
 						$this->checkToken();
 						ob_end_flush();
@@ -481,7 +481,7 @@ HTML;
 					break;
 
 				default:
-					Error::showMessage('Invalid process.');
+					PAIError::showMessage('Invalid process.');
 			}
 		}
 	}
@@ -542,14 +542,14 @@ HTML;
 		<p class="center">Powered by <a href="http://amelierosalyn.com/scripts/" title="PHPAskIt">PHPAskIt 3.1</a></p>
 		<?php
 		echo '</body></html>';
-		mysql_close($pai_db->getConnection());
+		mysqli_close($pai_db->getConnection());
 		exit;
 	}
 
 	public function getQs($type = array()) {
 		global $pai_db, $totalpages, $startfrom, $perpage;
 
-		if (empty($type)) Error::showMessage('Unable to load questions.');
+		if (empty($type)) PAIError::showMessage('Unable to load questions.');
 
 		switch($type[0]) {
 			case 'unanswered':
@@ -560,14 +560,14 @@ SQL;
 
 				break;
 			case 'category':
-				if (empty($type[1])) Error::showMessage('Invalid category');
+				if (empty($type[1])) PAIError::showMessage('Invalid category');
 
 				$query = 'SELECT `q_id` FROM `' . $pai_db->getTable() . '` WHERE `category` = ' . (int)cleaninput($_GET['category']);
 				$title = '%s %s found in the &quot;' . $type[1] . '&quot; category';
 
 				break;
 			case 'search':
-				if (empty($type[1])) Error::showMessage('Invalid search term');
+				if (empty($type[1])) PAIError::showMessage('Invalid search term');
 				$getsearch = $type[1];
 
 				$query = 'SELECT `q_id` FROM `' . $pai_db->getTable() . "` WHERE `question` LIKE '%" . $getsearch . "%' OR `answer` LIKE '%" . $getsearch . "%' OR `ip` LIKE '%" . $getsearch . "%'";
@@ -582,7 +582,7 @@ SQL;
 
 				break;
 			default:
-				Error::showMessage('No questions found.');
+				PAIError::showMessage('No questions found.');
 		}
 
 		ob_end_flush();
@@ -597,7 +597,7 @@ SQL;
 			$getqs = $pai_db->query($query);
 			pagination($perpage, $type[0]);
 			echo '<ul id="question-list">';
-			while($qs = mysql_fetch_object($getqs)) {
+			while($qs = mysqli_fetch_object($getqs)) {
 				$q = new Question($qs->q_id);
 				$q->show();
 			}

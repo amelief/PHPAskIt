@@ -114,7 +114,7 @@ class Category implements Model {
 	public function setName($name, $validation = false) {
 		if ($validation) {
 			$this->name = cleaninput($name);
-			if (empty($this->name)) Error::showMessage('Category name not submitted');
+			if (empty($this->name)) PAIError::showMessage('Category name not submitted');
 		}
 		else $this->name = $name;
 	}
@@ -141,7 +141,7 @@ class Category implements Model {
 			return false;
 		}
 		if ($pai_db->query('INSERT INTO `' . $pai_db->getTable() . "_cats` (`cat_name`, `default`) VALUES ('" . $this->name . "', '" . $this->isDefault() . "')")) {
-			$this->setId(mysql_insert_id($pai_db->getConnection()));
+			$this->setId(mysqli_insert_id($pai_db->getConnection()));
 			return true;
 		}
 		else {
@@ -172,7 +172,7 @@ class Category implements Model {
 	 */
 	public function sqlEscape($data) {
 		global $pai_db;
-		return mysql_real_escape_string(stripslashes($data), $pai_db->getConnection());
+		return mysqli_real_escape_string($pai_db->getConnection(), stripslashes($data));
 	}
 
 	/**
@@ -184,7 +184,7 @@ class Category implements Model {
 	public function delete() {
 		global $pai_db;
 		if (!$this->checkId()) return false;
-		if ($this->isDefault()) Error::showMessage('You cannot delete the default category.');
+		if ($this->isDefault()) PAIError::showMessage('You cannot delete the default category.');
 
 		if ($pai_db->query('DELETE FROM `' . $pai_db->getTable() . '_cats` WHERE `cat_id` = ' . $this->id . ' LIMIT 1')) {
 			// Move deleted questions to default category
@@ -213,8 +213,8 @@ class Category implements Model {
 		global $pai_db;
 		$default = $pai_db->query('SELECT `cat_id` FROM `' . $pai_db->getTable() . '_cats` WHERE `default` = 1 LIMIT 1');
 		if ($default == null || $default == false) return false;
-		elseif (mysql_num_rows($default) == 1) {
-			$d = mysql_fetch_object($default);
+		elseif (mysqli_num_rows($default) == 1) {
+			$d = mysqli_fetch_object($default);
 			return $d->cat_id;
 		}
 		else return false;
@@ -233,8 +233,8 @@ class Category implements Model {
 		if ($id == null || !is_numeric($id)) return false;
 		$query = $pai_db->query('SELECT ' . $fields . ' FROM `' . $pai_db->getTable() . '_cats` WHERE `cat_id` = ' . (int)$id . ' LIMIT 1');
 		if ($query == true) {
-			if (mysql_num_rows($query) > 0) {
-				$info = mysql_fetch_object($query);
+			if (mysqli_num_rows($query) > 0) {
+				$info = mysqli_fetch_object($query);
 				$this->setAll($info);
 				return true;
 			}
@@ -268,7 +268,7 @@ class Category implements Model {
 
 			$this->setName(cleaninput($_POST['newcat']));
 
-			if ($pai_db->get('cat_name', 'cats', "`cat_name` = '" . $_POST['newcat'] . "'")) Error::showMessage('You already have a category with that name.');
+			if ($pai_db->get('cat_name', 'cats', "`cat_name` = '" . $_POST['newcat'] . "'")) PAIError::showMessage('You already have a category with that name.');
 
 			if ($this->create()) echo '<p>The category has been added successfully.</p>';
 		}
@@ -301,32 +301,32 @@ class Category implements Model {
 
 			foreach($_POST as $key => $value) {
 				$$key = cleaninput($value);
-				if (empty($$key)) Error::showMessage('Missing parameter: ' . $key);
+				if (empty($$key)) PAIError::showMessage('Missing parameter: ' . $key);
 			}
-			if (!$this->checkId()) Error::showMessage('Invalid category.');
+			if (!$this->checkId()) PAIError::showMessage('Invalid category.');
 			$this->setName($catname);
 
 			if (isset($default) && is_numeric($default)) $this->setDefault((bool)$default);
 
-			if ($pai_db->get('cat_name', 'cats', "`cat_name` = '" . strtolower($catname) . "' AND cat_id != " . $this->getId())) Error::showMessage('You already have a category with that name.');
+			if ($pai_db->get('cat_name', 'cats', "`cat_name` = '" . strtolower($catname) . "' AND cat_id != " . $this->getId())) PAIError::showMessage('You already have a category with that name.');
 
 			if ($this->save()) echo '<p>Category updated successfully.</p>';
 		}
 		else {
-			if (!$this->checkId()) Error::showMessage('Invalid category.');
+			if (!$this->checkId()) PAIError::showMessage('Invalid category.');
 
 			$pai->checkToken();
 			ob_end_flush();
 
 			$_GET['id'] = (int)cleaninput($_GET['id']);
-			if (empty($_GET['id'])) Error::showMessage('Invalid category.'); ?>
+			if (empty($_GET['id'])) PAIError::showMessage('Invalid category.'); ?>
 
 			<h2>Edit your categories</h2>
 			<p>Type the new category name below:</p>
 
 			<?php
 			$getcats = $pai_db->query('SELECT * FROM `' . $pai_db->getTable() . '_cats` WHERE `cat_id` = ' . $_GET['id'] . ' LIMIT 1');
-			$theCat = mysql_fetch_object($getcats);
+			$theCat = mysqli_fetch_object($getcats);
 			$cat = new Category($theCat->cat_id); ?>
 
 			<form id="categoryedit" method="post" action="admin.php?manage=categories&amp;action=edit">

@@ -112,22 +112,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['upgrade'])) {
 		if ($version == 1) {
 			$dates = $pai_db->query('SELECT `id`, `dateasked` FROM `' . $pai_db->getTable() . '`');
 
-			while($convertdates = mysql_fetch_object($dates)) {
-				$pai_db->query('UPDATE `' . $pai_db->getTable() . "` SET `dateasked` = '" . @date('Y-m-d H:i:s', $convertdates->dateasked) . "' WHERE `id` = " . $convertdates->id . ' LIMIT 1') or exit(mysql_error($pai_db->getConnection()));
+			while($convertdates = mysqli_fetch_object($dates)) {
+				$pai_db->query('UPDATE `' . $pai_db->getTable() . "` SET `dateasked` = '" . @date('Y-m-d H:i:s', $convertdates->dateasked) . "' WHERE `id` = " . $convertdates->id . ' LIMIT 1') or exit(mysqli_error($pai_db->getConnection()));
 			}
 
-			$pai_db->query('ALTER TABLE `' . $pai_db->getTable() . '` CHANGE `dateasked` `dateasked` DATETIME NOT NULL') or exit(mysql_error($pai_db->getConnection()));
-			$pai_db->query('UPDATE `' . $pai_db->getTable() . '` SET `categoryofq` = 1') or exit(mysql_error($pai_db->getConnection()));
+			$pai_db->query('ALTER TABLE `' . $pai_db->getTable() . '` CHANGE `dateasked` `dateasked` DATETIME NOT NULL') or exit(mysqli_error($pai_db->getConnection()));
+			$pai_db->query('UPDATE `' . $pai_db->getTable() . '` SET `categoryofq` = 1') or exit(mysqli_error($pai_db->getConnection()));
 
 			$pai_db->query('CREATE TABLE IF NOT EXISTS `' . $pai_db->getTable() . "_cats`
 				(`cat_id` int(6) UNSIGNED NOT NULL auto_increment,
 				`cat_name` tinytext NOT NULL DEFAULT '',
-				PRIMARY KEY (`cat_id`))") or exit(mysql_error($pai_db->getConnection()));
+				PRIMARY KEY (`cat_id`))") or exit(mysqli_error($pai_db->getConnection()));
 
 			$pai_db->query('INSERT INTO `' . $pai_db->getTable() . "_cats` VALUES
 				('', 'Random'),
 				('', 'About me'),
-				('', 'About the site');") or exit(mysql_error($pai_db->getConnection()));
+				('', 'About the site');") or exit(mysqli_error($pai_db->getConnection()));
 
 			$pai_db->query('CREATE TABLE `' . $pai_db->getTable() . "_options`
 				(`opt_id` int(6) UNSIGNED NOT NULL auto_increment,
@@ -135,7 +135,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['upgrade'])) {
 				`option_value` text NOT NULL DEFAULT '',
 				PRIMARY KEY (`opt_id`),
 				KEY (`option_name`),
-				KEY (`option_value`(10)))") or exit(mysql_error($pai_db->getConnection()));
+				KEY (`option_value`(10)))") or exit(mysqli_error($pai_db->getConnection()));
 
 			$word = preg_replace('/([0-9])+)/', '', substr(md5(substr(md5(microtime()), 1, 3)), 3, 6));
 			$pai_db->query('INSERT INTO `' . $pai_db->getTable() . "_options` (`option_name`, `option_value`) VALUES
@@ -155,16 +155,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['upgrade'])) {
 				('is_wordpress', 'no'),
 				('notifybymail', 'no'),
 				('youraddress', ''),
-				('totalpage_faq', '10')") or exit(mysql_error($pai_db->getConnection()));
+				('totalpage_faq', '10')") or exit(mysqli_error($pai_db->getConnection()));
 		}
-		$pai_db->query('ALTER TABLE `' . $pai_db->getTable() . '` CHANGE `answer` `answer` TEXT NOT NULL') or exit(mysql_error($pai_db->getConnection()));
-		$pai_db->query('ALTER TABLE `' . $pai_db->getTable() . '` CHANGE `categoryofq` `category` TINYINT(4) UNSIGNED NOT NULL') or exit(mysql_error($pai_db->getConnection()));
-		$pai_db->query('ALTER TABLE `' . $pai_db->getTable() . '` CHANGE `id` `q_id` INT(6) UNSIGNED NOT NULL AUTO_INCREMENT') or exit(mysql_error($pai_db->getConnection()));
-		if ($version == 2) $pai_db->query('ALTER TABLE `' . $pai_db->getTable() . '` DROP PRIMARY KEY, ADD PRIMARY KEY(`q_id`)') or exit(mysql_error($pai_db->getConnection()));
-		else $pai_db->query('ALTER TABLE `' . $pai_db->getTable() . '` DROP KEY `id`, ADD PRIMARY KEY(`q_id`)') or exit(mysql_error($pai_db->getConnection()));
-		$pai_db->query('ALTER TABLE `' . $pai_db->getTable() . '` ADD KEY(`answer`(10)), ADD KEY(`category`), ADD KEY(`dateasked`)') or exit(mysql_error($pai_db->getConnection()));
+		$pai_db->query('ALTER TABLE `' . $pai_db->getTable() . '` CHANGE `answer` `answer` TEXT NOT NULL') or exit(mysqli_error($pai_db->getConnection()));
+		$pai_db->query('ALTER TABLE `' . $pai_db->getTable() . '` CHANGE `categoryofq` `category` TINYINT(4) UNSIGNED NOT NULL') or exit(mysqli_error($pai_db->getConnection()));
+		$pai_db->query('ALTER TABLE `' . $pai_db->getTable() . '` CHANGE `id` `q_id` INT(6) UNSIGNED NOT NULL AUTO_INCREMENT') or exit(mysqli_error($pai_db->getConnection()));
+		if ($version == 2) $pai_db->query('ALTER TABLE `' . $pai_db->getTable() . '` DROP PRIMARY KEY, ADD PRIMARY KEY(`q_id`)') or exit(mysqli_error($pai_db->getConnection()));
+		else $pai_db->query('ALTER TABLE `' . $pai_db->getTable() . '` DROP KEY `id`, ADD PRIMARY KEY(`q_id`)') or exit(mysqli_error($pai_db->getConnection()));
+		$pai_db->query('ALTER TABLE `' . $pai_db->getTable() . '` ADD KEY(`answer`(10)), ADD KEY(`category`), ADD KEY(`dateasked`)') or exit(mysqli_error($pai_db->getConnection()));
 
-		if ($version == 2) $pai_db->query('ALTER TABLE `' . $pai_db->getTable() . '_options` ADD KEY(`option_name`), ADD KEY(`option_value`(10))') or exit(mysql_error($pai_db->getConnection()));
+		if ($version == 2) $pai_db->query('ALTER TABLE `' . $pai_db->getTable() . '_options` ADD KEY(`option_name`), ADD KEY(`option_value`(10))') or exit(mysqli_error($pai_db->getConnection()));
 
 		$ask_template = '<p>[[question]] ';
 		$q_template = '<div class="question-container">
@@ -197,7 +197,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['upgrade'])) {
 			('q_template', '" . $q_template . "'),
 			('sum_template', '" . $sum_template . "'),
 			('success_msg_template', '" . $success_msg . "'),
-			('version', '3.1');") or exit(mysql_error($pai_db->getConnection()));
+			('version', '3.1');") or exit(mysqli_error($pai_db->getConnection()));
 
 		$pai_db->query('OPTIMIZE TABLE `' . $pai_db->getTable() . '`, `' . $pai_db->getTable() . '_cats`, `' . $pai_db->getTable() . '_options`');
 	}

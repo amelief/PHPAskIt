@@ -103,7 +103,7 @@ class Question implements Model {
 			return false;
 		}
 		if ($pai_db->query('INSERT INTO `' . $pai_db->getTable() . "` (`question`, `category`, `dateasked`, `ip`) VALUES ('" . $this->question . "', '" . $this->category . "', NOW(), '" . $this->ip . "')")) {
-			$this->setId(mysql_insert_id($pai_db->getConnection()));
+			$this->setId(mysqli_insert_id($pai_db->getConnection()));
 			return true;
 		}
 		else {
@@ -134,7 +134,7 @@ class Question implements Model {
 	 */
 	public function sqlEscape($data) {
 		global $pai_db;
-		return mysql_real_escape_string(stripslashes($data), $pai_db->getConnection());
+		return mysqli_real_escape_string($pai_db->getConnection(), stripslashes($data));
 	}
 
 	/**
@@ -204,7 +204,7 @@ class Question implements Model {
 	public function setQuestion($question, $validation = true) {
 		if ($validation) {
 			$this->question = cleaninput($question);
-			if (empty($this->question)) Error::showMessage('Question not submitted');
+			if (empty($this->question)) PAIError::showMessage('Question not submitted');
 		}
 		else $this->question = $question;
 	}
@@ -321,8 +321,8 @@ class Question implements Model {
 		if ($id == null || !is_numeric($id)) return false;
 		$query = $pai_db->query('SELECT ' . $fields . ' FROM `' . $pai_db->getTable() . '` WHERE `q_id` = ' . (int)$id . ' LIMIT 1');
 		if ($query == true) {
-			if (mysql_num_rows($query) > 0) {
-				$info = mysql_fetch_object($query);
+			if (mysqli_num_rows($query) > 0) {
+				$info = mysqli_fetch_object($query);
 				$this->setAll($info);
 				return true;
 			}
@@ -501,7 +501,7 @@ class Question implements Model {
 			$pai->checkToken();
 			foreach($_POST as $key => $value) {
 				$$key = cleaninput($value);
-				if (empty($value)) Error::showMessage('Missing parameter: ' . $key);
+				if (empty($value)) PAIError::showMessage('Missing parameter: ' . $key);
 			}
 
 			$this->setQuestion($question, false);
@@ -516,7 +516,7 @@ class Question implements Model {
 					echo '<p>Question modified.</p>';
 				}
 			}
-			else Error::showMessage('Could not modify question.');
+			else PAIError::showMessage('Could not modify question.');
 		}
 		else {
 			$pai->checkToken();
@@ -552,7 +552,7 @@ class Question implements Model {
 
 			foreach($_POST as $key => $value) {
 				$$key = cleaninput($value);
-				if ($key != 'answer' && empty($value)) Error::showMessage('Missing parameter: ' . $key);
+				if ($key != 'answer' && empty($value)) PAIError::showMessage('Missing parameter: ' . $key);
 			}
 
 			$answer = str_replace("\\r", "\r", $answer);
@@ -571,7 +571,7 @@ class Question implements Model {
 					echo '<p>Your answer has been saved.</p>';
 				}
 			}
-			else Error::showMessage('Could not save answer.');
+			else PAIError::showMessage('Could not save answer.');
 		}
 		else {
 			$pai->checkToken();
@@ -601,20 +601,20 @@ class Question implements Model {
 	 */
 	public function editCategory() {
 		global $pai, $token, $pai_db;
-		if (!$pai->getOption('enable_cats')) Error::showMessage('Categories are disabled.');
+		if (!$pai->getOption('enable_cats')) PAIError::showMessage('Categories are disabled.');
 
 		if ($_SERVER['REQUEST_METHOD'] == 'POST' && array_key_exists('submit_category', $_POST)) {
 			$pai->checkToken();
 
 			foreach($_POST as $key => $value) {
 				$$key = cleaninput($value);
-				if (empty($value)) Error::showMessage('Missing parameter: ' . $key);
+				if (empty($value)) PAIError::showMessage('Missing parameter: ' . $key);
 			}
 
-			if (!$this->checkId()) Error::showMessage('Invalid question.');
+			if (!$this->checkId()) PAIError::showMessage('Invalid question.');
 
 			$cat = new Category((int)$category);
-			if (!$cat->checkId()) Error::showMessage('Invalid category.');
+			if (!$cat->checkId()) PAIError::showMessage('Invalid category.');
 
 			$this->setCategory($cat->getId());
 			if ($this->save()) {
@@ -627,7 +627,7 @@ class Question implements Model {
 					echo '<p>The category for this question has been successfully modified.</p>';
 				}
 			}
-			else Error::showMessage('Could not save category.');
+			else PAIError::showMessage('Could not save category.');
 		}
 		else {
 			$pai->checkToken(); ?>
@@ -653,7 +653,7 @@ class Question implements Model {
 
 	public static function doDelete($question) {
 		$q = new Question((int)$question);
-		if ($q == null || !$q->checkId()) Error::showMessage('Invalid question.');
+		if ($q == null || !$q->checkId()) PAIError::showMessage('Invalid question.');
 		if ($q->delete()) {
 			if (array_key_exists('inline', $_GET)) {
 				ob_end_clean();
@@ -669,19 +669,19 @@ class Question implements Model {
 				ob_end_clean();
 				echo 'Error'; // will pop an alert
 			}
-			else Error::showMessage('The question could not be deleted at this time.');
+			else PAIError::showMessage('The question could not be deleted at this time.');
 		}
 	}
 
 	public static function edit($what) {
-		if (!in_array($what, array('question', 'answer', 'category'))) Error::showMessage('Invalid action');
+		if (!in_array($what, array('question', 'answer', 'category'))) PAIError::showMessage('Invalid action');
 
 		// I have no idea why this is like this... Could've used the same var but that would be far too sensible
 		if (array_key_exists('id', $_POST)) $question = new Question((int)$_POST['id']);
 		elseif (array_key_exists('qu', $_GET)) $question = new Question((int)$_GET['qu']);
 
-		if ($question != null && $question->checkId()) call_user_func(array($question, 'edit' . ucfirst($what))); // yay callbacks
-		else Error::showMessage('Invalid question');
+		if (isset($question) && $question->checkId()) call_user_func(array($question, 'edit' . ucfirst($what))); // yay callbacks
+		else PAIError::showMessage('Invalid question');
 	}
 }
 ?>

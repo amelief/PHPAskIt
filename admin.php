@@ -134,8 +134,8 @@ if (array_key_exists('sort', $_GET) && $_GET['sort'] == 'unanswered') $pai->getQ
 
 ####### ALL QUESTIONS FROM A PARTICULAR CATEGORY ######
 elseif (array_key_exists('category', $_GET) && !empty($_GET['category']) && is_numeric($_GET['category'])) {
-	if (!$pai->getOption('enable_cats')) Error::showMessage('Categories are disabled. To enable them, go to the <a href="?manage=options" title="Options page">options panel</a> and check &quot;enable categories&quot;.');
-	if (!$cat = $pai_db->get('cat_name', 'cats', '`cat_id` = ' . (int)cleaninput($_GET['category']))) Error::showMessage('Invalid category.', false);
+	if (!$pai->getOption('enable_cats')) PAIError::showMessage('Categories are disabled. To enable them, go to the <a href="?manage=options" title="Options page">options panel</a> and check &quot;enable categories&quot;.');
+	if (!$cat = $pai_db->get('cat_name', 'cats', '`cat_id` = ' . (int)cleaninput($_GET['category']))) PAIError::showMessage('Invalid category.', false);
 
 	$pai->getQs(array('category', $cat));
 }
@@ -144,7 +144,7 @@ elseif (array_key_exists('category', $_GET) && !empty($_GET['category']) && is_n
 ##################### SEARCH ##########################
 elseif (array_key_exists('search', $_GET)) {
 	$getsearch = cleaninput($_GET['search']);
-	if (empty($getsearch)) Error::showMessage('No search term entered.');
+	if (empty($getsearch)) PAIError::showMessage('No search term entered.');
 
 	$pai->getQs(array('search', $getsearch));
 }
@@ -155,7 +155,7 @@ elseif (array_key_exists('q', $_GET) && !empty($_GET['q']) && is_numeric($_GET['
 	ob_end_flush();
 
 	$q = new Question((int)$_GET['q']);
-	if (!isset($q) || $q == null) Error::showMessage('Invalid question.');
+	if (!isset($q) || $q == null) PAIError::showMessage('Invalid question.');
 
 	echo '<ul id="question-list">';
 	$q->show();
@@ -188,11 +188,11 @@ elseif (array_key_exists('manage', $_GET) && !empty($_GET['manage'])) {
 						$$key = cleaninput($value);
 					}
 					if (!empty($password)) {
-						if ($confirm_pass != $password) Error::showMessage('Passwords did not match, try again.');
+						if ($confirm_pass != $password) PAIError::showMessage('Passwords did not match, try again.');
 
-						if (!preg_match('/^([_a-z0-9@\.-]+)$/i', $_POST['password'])) Error::showMessage('Password contains invalid characters.');
+						if (!preg_match('/^([_a-z0-9@\.-]+)$/i', $_POST['password'])) PAIError::showMessage('Password contains invalid characters.');
 					}
-					if (empty($youraddress) || !preg_match('/^([_a-z0-9-]+)(\.[_a-z0-9-]+)*@([a-z0-9-]+)(\.[a-z0-9-]+)*(\.[a-z]{2,4})$/i', $youraddress)) Error::showMessage('Please enter a valid email address.');
+					if (empty($youraddress) || !preg_match('/^([_a-z0-9-]+)(\.[_a-z0-9-]+)*@([a-z0-9-]+)(\.[a-z0-9-]+)*(\.[a-z]{2,4})$/i', $youraddress)) PAIError::showMessage('Please enter a valid email address.');
 
 					$tooeasy = array('phpaskit', 'pai', 'abc123', '123abc', 'q&amp;a', 'question', 'questions', 'questionsandanswers', 'questionandanswer', 'q &amp; a', 'questionsandanswer', 'questionandanswers', 'questions and answer', 'question and answer', 'question and answers', 'questions and answers', 'qanda', 'q and a', 'q & a', 'security word', 'security', 'blah', 'yeah', 'password', 'word', 'test', 'phpaskit');
 
@@ -258,9 +258,9 @@ elseif (array_key_exists('manage', $_GET) && !empty($_GET['manage'])) {
 					}
 
 					if ($is_wordpress == 'yes') {
-						if (empty($is_wp_blog_header)) Error::showMessage('Please enter your absolute path to wp-blog-header.php if you wish to use WordPress Themes. If not, please uncheck the appropriate option.');
-						elseif (strstr($is_wp_blog_header, 'http://')) Error::showMessage('Please enter an absolute path to wp-blog-header.php, NOT a URL.');
-						elseif (!file_exists($is_wp_blog_header)) Error::showMessage('Your path to wp-blog-header.php appears to be incorrect, as PHPAskIt cannot find it. Please go back and try again.');
+						if (empty($is_wp_blog_header)) PAIError::showMessage('Please enter your absolute path to wp-blog-header.php if you wish to use WordPress Themes. If not, please uncheck the appropriate option.');
+						elseif (strstr($is_wp_blog_header, 'http://')) PAIError::showMessage('Please enter an absolute path to wp-blog-header.php, NOT a URL.');
+						elseif (!file_exists($is_wp_blog_header)) PAIError::showMessage('Your path to wp-blog-header.php appears to be incorrect, as PHPAskIt cannot find it. Please go back and try again.');
 					}
 
 					$update = array();
@@ -300,9 +300,9 @@ elseif (array_key_exists('manage', $_GET) && !empty($_GET['manage'])) {
 					echo '<p>Options updated.</p>';
 				}
 				elseif (empty($_POST['currentpass'])) {
-					Error::showMessage('You did not enter your current password. You cannot change the options if you do not enter this. Please go back and try again.');
+					PAIError::showMessage('You did not enter your current password. You cannot change the options if you do not enter this. Please go back and try again.');
 				}
-				else Error::showMessage('Incorrect current password supplied. Please press the back button on your browser to try again.');
+				else PAIError::showMessage('Incorrect current password supplied. Please press the back button on your browser to try again.');
 			}
 			else {
 				ob_end_flush();
@@ -400,7 +400,7 @@ elseif (array_key_exists('manage', $_GET) && !empty($_GET['manage'])) {
 				$success_msg = strip_tags($_POST['success_msg'], '<header> <section> <nav> <menu> <footer> <a> <div> <p> <img> <span> <b> <i> <u> <em> <strong> <table> <tr> <td> <th> <br> <br /> <acronym> <abbr> <hr> <hr /> <big> <small> <blockquote> <center> <cite> <fieldset> <ul> <li> <ol> <font> <h1> <h2> <h3> <h4> <h5> <h6> <h7> <q> <thead> <tfoot> <sub> <tt> <tbody> <sup> <kbd> <del> <ins>');
 
 				$no = '/(onclick|ondblclick|onload|onfocus|onblur|onmouse|onkey=|javascript|alert)/i';
-				if (preg_match($no, $form) || preg_match($no, $q) || preg_match($no, $summary) || preg_match($no, $success_msg)) Error::showMessage('Please don\'t use JavaScript in your templates.');
+				if (preg_match($no, $form) || preg_match($no, $q) || preg_match($no, $summary) || preg_match($no, $success_msg)) PAIError::showMessage('Please don\'t use JavaScript in your templates.');
 
 				if (empty($form)) {
 					$form = '<p>[[question]] ';
@@ -448,10 +448,10 @@ elseif (array_key_exists('manage', $_GET) && !empty($_GET['manage'])) {
 					$summary = stripslashes($summary);
 					$success_msg = stripslashes($success_msg);
 				}
-				$form = mysql_real_escape_string($form);
-				$q = mysql_real_escape_string($q);
-				$summary = mysql_real_escape_string($summary);
-				$success_msg = mysql_real_escape_string($success_msg);
+				$form = mysqli_real_escape_string($form);
+				$q = mysqli_real_escape_string($q);
+				$summary = mysqli_real_escape_string($summary);
+				$success_msg = mysqli_real_escape_string($success_msg);
 
 				if ($pai_db->query('UPDATE `' . $pai_db->getTable() . "_options` SET `option_value` = '" . $form . "' WHERE `option_name` = 'ask_template' LIMIT 1") && $pai_db->query('UPDATE `' . $pai_db->getTable() . "_options` SET `option_value` = '" . $q . "' WHERE `option_name` = 'q_template' LIMIT 1") && $pai_db->query('UPDATE`' . $pai_db->getTable() . "_options` SET `option_value` = '" . $summary . "' WHERE `option_name` = 'sum_template' LIMIT 1") && $pai_db->query('UPDATE`' . $pai_db->getTable() . "_options` SET `option_value` = '" . $success_msg . "' WHERE `option_name` = 'success_msg_template' LIMIT 1")) echo '<p>Templates edited.</p>';
 			}
@@ -527,7 +527,7 @@ elseif (array_key_exists('manage', $_GET) && !empty($_GET['manage'])) {
 					if (!isset($abspath)) $abspath = '';
 					$imp = new Importer($_POST['import_from'], $abspath);
 				}
-				else Error::showMessage('Oops! Looks like you forgot to select an option. Please go back and try again.');
+				else PAIError::showMessage('Oops! Looks like you forgot to select an option. Please go back and try again.');
 			}
 			else { ?>
 				<h2>Import questions</h2>
@@ -579,7 +579,7 @@ QUESTION || ANSWER</textarea></p>
 
 		##### BLOCKED IPS
 		case 'ips':
-			if (!$pai->getOption('ipban_enable')) Error::showMessage('IP banning is currently disabled.');
+			if (!$pai->getOption('ipban_enable')) PAIError::showMessage('IP banning is currently disabled.');
 
 			if (array_key_exists('action', $_GET)) {
 				switch($_GET['action']) {
@@ -597,13 +597,13 @@ QUESTION || ANSWER</textarea></p>
 							else $pai->killToken();
 							ob_end_flush();
 
-							if (!isset($newip) || empty($newip)) Error::showMessage('Please enter an IP address.');
+							if (!isset($newip) || empty($newip)) PAIError::showMessage('Please enter an IP address.');
 							// Match IPv4 and IPv6 - yes, some people are actually using IPv6 (as they should!)
-							if (!preg_match("^((\d|[1-9]\d|2[0-4]\d|25[0-5]|1\d\d)(?:\.(\d|[1-9]\d|2[0-4]\d|25[0-5]|1\d\d)){3})$^", $newip) && !preg_match("/^\s*((([0-9A-Fa-f]{1,4}:){7}(([0-9A-Fa-f]{1,4})|:))|(([0-9A-Fa-f]{1,4}:){6}(:|((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})|(:[0-9A-Fa-f]{1,4})))|(([0-9A-Fa-f]{1,4}:){5}((:((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})?)|((:[0-9A-Fa-f]{1,4}){1,2})))|(([0-9A-Fa-f]{1,4}:){4}(:[0-9A-Fa-f]{1,4}){0,1}((:((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})?)|((:[0-9A-Fa-f]{1,4}){1,2})))|(([0-9A-Fa-f]{1,4}:){3}(:[0-9A-Fa-f]{1,4}){0,2}((:((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})?)|((:[0-9A-Fa-f]{1,4}){1,2})))|(([0-9A-Fa-f]{1,4}:){2}(:[0-9A-Fa-f]{1,4}){0,3}((:((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})?)|((:[0-9A-Fa-f]{1,4}){1,2})))|(([0-9A-Fa-f]{1,4}:)(:[0-9A-Fa-f]{1,4}){0,4}((:((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})?)|((:[0-9A-Fa-f]{1,4}){1,2})))|(:(:[0-9A-Fa-f]{1,4}){0,5}((:((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})?)|((:[0-9A-Fa-f]{1,4}){1,2})))|(((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})))(%.+)?\s*$/", $newip)) Error::showMessage('Invalid IP address.');
+							if (!preg_match("^((\d|[1-9]\d|2[0-4]\d|25[0-5]|1\d\d)(?:\.(\d|[1-9]\d|2[0-4]\d|25[0-5]|1\d\d)){3})$^", $newip) && !preg_match("/^\s*((([0-9A-Fa-f]{1,4}:){7}(([0-9A-Fa-f]{1,4})|:))|(([0-9A-Fa-f]{1,4}:){6}(:|((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})|(:[0-9A-Fa-f]{1,4})))|(([0-9A-Fa-f]{1,4}:){5}((:((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})?)|((:[0-9A-Fa-f]{1,4}){1,2})))|(([0-9A-Fa-f]{1,4}:){4}(:[0-9A-Fa-f]{1,4}){0,1}((:((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})?)|((:[0-9A-Fa-f]{1,4}){1,2})))|(([0-9A-Fa-f]{1,4}:){3}(:[0-9A-Fa-f]{1,4}){0,2}((:((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})?)|((:[0-9A-Fa-f]{1,4}){1,2})))|(([0-9A-Fa-f]{1,4}:){2}(:[0-9A-Fa-f]{1,4}){0,3}((:((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})?)|((:[0-9A-Fa-f]{1,4}){1,2})))|(([0-9A-Fa-f]{1,4}:)(:[0-9A-Fa-f]{1,4}){0,4}((:((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})?)|((:[0-9A-Fa-f]{1,4}){1,2})))|(:(:[0-9A-Fa-f]{1,4}){0,5}((:((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})?)|((:[0-9A-Fa-f]{1,4}){1,2})))|(((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})))(%.+)?\s*$/", $newip)) PAIError::showMessage('Invalid IP address.');
 
 							$existingips = explode(';', $pai->getOption('banned_ips'));
 
-							if (in_array($newip, $existingips)) Error::showMessage('You have already blocked that IP address.');
+							if (in_array($newip, $existingips)) PAIError::showMessage('You have already blocked that IP address.');
 
 							if (strlen($pai->getOption('banned_ips')) > 0) $iplist = $pai->getOption('banned_ips') . $newip . ';';
 							else $iplist = $newip . ';';
@@ -626,7 +626,7 @@ QUESTION || ANSWER</textarea></p>
 						break;
 
 					case 'edit':
-						if (!array_key_exists('ip', $_GET) || !is_numeric($_GET['ip'])) Error::showMessage('Invalid IP.');
+						if (!array_key_exists('ip', $_GET) || !is_numeric($_GET['ip'])) PAIError::showMessage('Invalid IP.');
 
 						$ip = (int)cleaninput($_GET['ip']);
 
@@ -635,10 +635,10 @@ QUESTION || ANSWER</textarea></p>
 							ob_end_flush();
 
 							$editip = cleaninput($_POST['editip']);
-							if (!preg_match("^((\d|[1-9]\d|2[0-4]\d|25[0-5]|1\d\d)(?:\.(\d|[1-9]\d|2[0-4]\d|25[0-5]|1\d\d)){3})$^", $editip) && !preg_match("/^\s*((([0-9A-Fa-f]{1,4}:){7}(([0-9A-Fa-f]{1,4})|:))|(([0-9A-Fa-f]{1,4}:){6}(:|((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})|(:[0-9A-Fa-f]{1,4})))|(([0-9A-Fa-f]{1,4}:){5}((:((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})?)|((:[0-9A-Fa-f]{1,4}){1,2})))|(([0-9A-Fa-f]{1,4}:){4}(:[0-9A-Fa-f]{1,4}){0,1}((:((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})?)|((:[0-9A-Fa-f]{1,4}){1,2})))|(([0-9A-Fa-f]{1,4}:){3}(:[0-9A-Fa-f]{1,4}){0,2}((:((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})?)|((:[0-9A-Fa-f]{1,4}){1,2})))|(([0-9A-Fa-f]{1,4}:){2}(:[0-9A-Fa-f]{1,4}){0,3}((:((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})?)|((:[0-9A-Fa-f]{1,4}){1,2})))|(([0-9A-Fa-f]{1,4}:)(:[0-9A-Fa-f]{1,4}){0,4}((:((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})?)|((:[0-9A-Fa-f]{1,4}){1,2})))|(:(:[0-9A-Fa-f]{1,4}){0,5}((:((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})?)|((:[0-9A-Fa-f]{1,4}){1,2})))|(((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})))(%.+)?\s*$/", $editip)) Error::showMessage('Invalid IP address.');
+							if (!preg_match("^((\d|[1-9]\d|2[0-4]\d|25[0-5]|1\d\d)(?:\.(\d|[1-9]\d|2[0-4]\d|25[0-5]|1\d\d)){3})$^", $editip) && !preg_match("/^\s*((([0-9A-Fa-f]{1,4}:){7}(([0-9A-Fa-f]{1,4})|:))|(([0-9A-Fa-f]{1,4}:){6}(:|((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})|(:[0-9A-Fa-f]{1,4})))|(([0-9A-Fa-f]{1,4}:){5}((:((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})?)|((:[0-9A-Fa-f]{1,4}){1,2})))|(([0-9A-Fa-f]{1,4}:){4}(:[0-9A-Fa-f]{1,4}){0,1}((:((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})?)|((:[0-9A-Fa-f]{1,4}){1,2})))|(([0-9A-Fa-f]{1,4}:){3}(:[0-9A-Fa-f]{1,4}){0,2}((:((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})?)|((:[0-9A-Fa-f]{1,4}){1,2})))|(([0-9A-Fa-f]{1,4}:){2}(:[0-9A-Fa-f]{1,4}){0,3}((:((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})?)|((:[0-9A-Fa-f]{1,4}){1,2})))|(([0-9A-Fa-f]{1,4}:)(:[0-9A-Fa-f]{1,4}){0,4}((:((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})?)|((:[0-9A-Fa-f]{1,4}){1,2})))|(:(:[0-9A-Fa-f]{1,4}){0,5}((:((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})?)|((:[0-9A-Fa-f]{1,4}){1,2})))|(((25[0-5]|2[0-4]\d|[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3})))(%.+)?\s*$/", $editip)) PAIError::showMessage('Invalid IP address.');
 							$iplist = explode(';', $pai->getOption('banned_ips'));
 
-							if (in_array($editip, $iplist)) Error::showMessage('You have already blocked that IP.');
+							if (in_array($editip, $iplist)) PAIError::showMessage('You have already blocked that IP.');
 
 							if ($ip < count($iplist) && !empty($iplist[$ip])) {
 								$iplist[$ip] = $editip;
@@ -652,7 +652,7 @@ QUESTION || ANSWER</textarea></p>
 
 								if ($pai_db->query('UPDATE `' . $pai_db->getTable() . "_options` SET `option_value` = '" . $newips . "' WHERE `option_name` = 'banned_ips'")) echo '<p>IP address edited successfully.</p>';
 							}
-							else Error::showMessage('There is no blocked IP address with that ID.');
+							else PAIError::showMessage('There is no blocked IP address with that ID.');
 						}
 						else {
 							$pai->checkToken();
@@ -669,12 +669,12 @@ QUESTION || ANSWER</textarea></p>
 								</form>
 								<?php
 							}
-							else Error::showMessage('There is no blocked IP address with that ID.');
+							else PAIError::showMessage('There is no blocked IP address with that ID.');
 						}
 						break;
 
 					case 'delete':
-						if (!array_key_exists('ip', $_GET) || !is_numeric($_GET['ip'])) Error::showMessage('Invalid IP.');
+						if (!array_key_exists('ip', $_GET) || !is_numeric($_GET['ip'])) PAIError::showMessage('Invalid IP.');
 
 						$pai->checkToken();
 						ob_end_flush();
@@ -693,11 +693,11 @@ QUESTION || ANSWER</textarea></p>
 
 							if ($pai_db->query('UPDATE `' . $pai_db->getTable() . "_options` SET `option_value` = '" . $newips . "' WHERE `option_name` = 'banned_ips'")) echo '<p>The IP address has successfully been unblocked and will now be able to ask you questions.</p>';
 						}
-						else Error::showMessage('There is no blocked IP with that ID.');
+						else PAIError::showMessage('There is no blocked IP with that ID.');
 						break;
 
 					default:
-						Error::showMessage('Invalid action.');
+						PAIError::showMessage('Invalid action.');
 				}
 			}
 			else {
@@ -727,7 +727,7 @@ QUESTION || ANSWER</textarea></p>
 
 		##### ANTISPAM
 		case 'antispam':
-			if (!$pai->getOption('antispam_enable')) Error::showMessage('Word blocking is not enabled.');
+			if (!$pai->getOption('antispam_enable')) PAIError::showMessage('Word blocking is not enabled.');
 
 			if (array_key_exists('action', $_GET)) {
 				switch($_GET['action']) {
@@ -740,10 +740,10 @@ QUESTION || ANSWER</textarea></p>
 							$replace = array('&', '<', '>', '\\', '[', ']', '/', '"', '*', '\$', '(', ')', '%', '^', '{', '}', '|');
 							$newword = cleaninput(str_replace($replace, '', strtolower($_POST['newword'])));
 
-							if (empty($newword)) Error::showMessage('No word submitted.');
+							if (empty($newword)) PAIError::showMessage('No word submitted.');
 
 							$wordlist = explode('|', $pai->getOption('banned_words'));
-							if (in_array($newword, $wordlist)) Error::showMessage('You have already blocked that word.');
+							if (in_array($newword, $wordlist)) PAIError::showMessage('You have already blocked that word.');
 
 							if (strlen($pai->getOption('banned_words')) > 0) $wordlist = $pai->getOption('banned_words') . $newword . '|';
 							else $wordlist = $newword . '|';
@@ -771,7 +771,7 @@ QUESTION || ANSWER</textarea></p>
 						break;
 
 					case 'edit':
-						if (!array_key_exists('word', $_GET) || !is_numeric($_GET['word'])) Error::showMessage('Invalid word.');
+						if (!array_key_exists('word', $_GET) || !is_numeric($_GET['word'])) PAIError::showMessage('Invalid word.');
 
 						$word = (int)cleaninput($_GET['word']);
 
@@ -782,11 +782,11 @@ QUESTION || ANSWER</textarea></p>
 							$replace = array('&', '<', '>', '\\', '[', ']', '/', '"', '*', '\$', '(', ')', '%', '^', '{', '}', '|', '#');
 							$editword = cleaninput(str_replace($replace, '', strtolower($_POST['editword'])));
 
-							if (empty($editword)) Error::showMessage('No word submitted.');
+							if (empty($editword)) PAIError::showMessage('No word submitted.');
 
 							$wordlist = explode('|', $pai->getOption('banned_words'));
 
-							if (in_array($editword, $wordlist)) Error::showMessage('You have already blocked that word.');
+							if (in_array($editword, $wordlist)) PAIError::showMessage('You have already blocked that word.');
 
 							if ($word < count($wordlist) && !empty($wordlist[$word])) {
 								$wordlist[$word] = $editword;
@@ -799,7 +799,7 @@ QUESTION || ANSWER</textarea></p>
 
 								if ($pai_db->query('UPDATE `' . $pai_db->getTable() . "_options` SET `option_value` = '" . $newwords . "' WHERE `option_name` = 'banned_words'")) echo '<p>Word edited successfully.</p>';
 							}
-							else Error::showMessage('There is no blocked word with that ID');
+							else PAIError::showMessage('There is no blocked word with that ID');
 						}
 						else {
 							$pai->checkToken();
@@ -818,12 +818,12 @@ QUESTION || ANSWER</textarea></p>
 
 								<?php
 							}
-							else Error::showMessage('There is no blocked word with that ID.');
+							else PAIError::showMessage('There is no blocked word with that ID.');
 						}
 						break;
 
 					case 'delete':
-						if (!array_key_exists('word', $_GET) || !is_numeric($_GET['word'])) Error::showMessage('No word submitted.');
+						if (!array_key_exists('word', $_GET) || !is_numeric($_GET['word'])) PAIError::showMessage('No word submitted.');
 
 						$pai->checkToken();
 						ob_end_flush();
@@ -843,11 +843,11 @@ QUESTION || ANSWER</textarea></p>
 
 							if ($pai_db->query('UPDATE `' . $pai_db->getTable() . "_options` SET `option_value` = '" . $newwords . "' WHERE `option_name` = 'banned_words'")) echo '<p>The word has successfully been unblocked and will now be allowed in questions.</p>';
 						}
-						else Error::showMessage('There is no blocked word with that ID.');
+						else PAIError::showMessage('There is no blocked word with that ID.');
 						break;
 
 					default:
-						Error::showMessage('Invalid action.');
+						PAIError::showMessage('Invalid action.');
 				}
 			}
 			else {
@@ -877,7 +877,7 @@ QUESTION || ANSWER</textarea></p>
 
 		##### CATEGORIES
 		case 'categories':
-			if (!$pai->getOption('enable_cats')) Error::showMessage('Categories are disabled.');
+			if (!$pai->getOption('enable_cats')) PAIError::showMessage('Categories are disabled.');
 
 			if (array_key_exists('action', $_GET)) {
 				switch($_GET['action']) {
@@ -890,17 +890,17 @@ QUESTION || ANSWER</textarea></p>
 						if (array_key_exists('id', $_POST)) $cat = new Category((int)$_POST['id']);
 						elseif (array_key_exists('id', $_GET)) $cat = new Category((int)$_GET['id']);
 						if (isset($cat)) $cat->edit();
-						else Error::showMessage('Invalid category.');
+						else PAIError::showMessage('Invalid category.');
 						break;
 
 					case 'delete':
 						if (array_key_exists('id', $_GET)) $cat = new Category((int)$_GET['id']);
 						if (isset($cat)) $cat->delete();
-						else Error::showMessage('Invalid category.');
+						else PAIError::showMessage('Invalid category.');
 						break;
 
 					default:
-						Error::showMessage('Invalid action.');
+						PAIError::showMessage('Invalid action.');
 				}
 			}
 			else {
@@ -911,9 +911,9 @@ QUESTION || ANSWER</textarea></p>
 
 				<?php
 				$getcats = $pai_db->query('SELECT `' . $pai_db->getTable() . '_cats`.cat_id, COUNT(`' . $pai_db->getTable() . '`.`q_id`) AS `num` FROM `' . $pai_db->getTable() . '_cats` LEFT JOIN `' . $pai_db->getTable() . '` ON `' . $pai_db->getTable() . '_cats`.`cat_id` = `' . $pai_db->getTable() . '`.`category` GROUP BY `' . $pai_db->getTable() . '_cats`.`cat_id` ORDER BY `cat_name` ASC');
-				if (mysql_num_rows($getcats) > 0) {
+				if (mysqli_num_rows($getcats) > 0) {
 					echo '<ul>';
-					while($cat = mysql_fetch_object($getcats)) {
+					while($cat = mysqli_fetch_object($getcats)) {
 						$the_cat = new Category($cat->cat_id);
 						echo '<li><strong>' . $the_cat->getName();
 						if ($the_cat->isDefault()) echo ' (default)';
@@ -929,7 +929,7 @@ QUESTION || ANSWER</textarea></p>
 			break;
 
 		default:
-			Error::showMessage('Invalid action.');
+			PAIError::showMessage('Invalid action.');
 	}
 }
 elseif (array_key_exists('reset', $_GET)) {

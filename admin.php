@@ -442,12 +442,6 @@ elseif (array_key_exists('manage', $_GET) && !empty($_GET['manage'])) {
 					}
 				}
 
-				if (get_magic_quotes_gpc()) {
-					$form = stripslashes($form);
-					$q = stripslashes($q);
-					$summary = stripslashes($summary);
-					$success_msg = stripslashes($success_msg);
-				}
 				$form = mysqli_real_escape_string($pai_db->getConnection(), $form);
 				$q = mysqli_real_escape_string($pai_db->getConnection(), $q);
 				$summary = mysqli_real_escape_string($pai_db->getConnection(), $summary);

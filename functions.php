@@ -44,7 +44,6 @@ $display = '<p style="text-align: center;">Powered by <a href="http://amelierosa
 function cleaninput($data) {
 	global $pai_db;
 	$data = trim(htmlentities(strip_tags($data), ENT_QUOTES, 'UTF-8'));
-	if (get_magic_quotes_gpc()) $data = stripslashes($data);
 	return @mysqli_real_escape_string($pai_db->getConnection(), $data);
 }
 function clean_array($data) {
